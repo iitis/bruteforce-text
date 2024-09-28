@@ -1,0 +1,209 @@
+\documentclass[preprint,12pt, a4paper]{elsarticle}
+
+\usepackage{amssymb}
+\usepackage{todonotes}
+\usepackage{float}
+\usepackage{listings}
+\usepackage{hyperref}
+\setlength{\parindent}{0pt}
+\lstdefinestyle{mystyle}{
+    basicstyle        = \ttfamily\footnotesize,
+    breakatwhitespace = false,
+    breaklines        = true,
+    captionpos        = b,
+    keepspaces        = true,
+    numbersep         = 5pt,
+    showspaces        = false,
+    showstringspaces  = false,
+    showtabs          = false,
+    keywordstyle      = \color{blue},
+    stringstyle       = \color{green},
+    commentstyle      = \color{red}\ttfamily
+}
+
+\lstset{style=mystyle}
+
+\restylefloat{table}
+\journal{SoftwareX}
+
+\begin{document}
+\renewcommand{\labelenumii}{\arabic{enumi}.\arabic{enumii}}
+
+\begin{frontmatter}
+\title{GPU based brute-force solver for QUBO and Ising instances}
+
+\author[1]{Konrad Ja\l{}owiecki}
+\author[1]{{\L}ukasz Pawela}
+\author[1]{Bart{\l}omiej Gardas}
+\author[2]{Artur Przybysz}
+\author[2]{Jan Tuziemski}
+
+\address[1]{Institute of Theoretical and Applied Informatics, Polish Academy of
+Sciences, Ba{\l}tycka 5, 44-100 Gliwice, Poland}
+
+\begin{abstract}
+%% Text of abstract 
+We introduce a library for brute-force solving of QUBO and Ising model
+instances. The library provides a fast, distributed, GPU-based search of the
+entire state space and guarantees finding the optimal solution for a give
+problem. This comes at the price of computation time and scaling with problem
+size. Nonetheless, we are still able to solve a 60 variable instance in
+$2.5\cdot10^5$ seconds using only 8 H100 GPUs without any restrictions on the
+density of the instance. 
+\end{abstract}
+\textit{Your main body of text (sections 1-5 below) should be a maximum 6 pages in total
+(excluding metadata, tables, figures, references) with a 3000-word limit (we ask
+that more priority is placed on the word limit versus the page count). Though we
+strictly insist on the author following the template, in exceptional
+circumstances, we can be flexible with the page numbers and word limit. In such
+cases, it should be discussed with the managing editor or publisher prior to
+submission.}
+\begin{keyword}
+%% keywords here, in the form: keyword \sep keyword
+QUBO \sep spin--glass \sep discrete optimization \sep quantum annealing
+
+%% PACS codes here, in the form: \PACS code \sep code
+
+%% MSC codes here, in the form: \MSC code \sep code
+%% or \MSC[2008] code \sep code (2000 is the default)
+
+\end{keyword}
+
+\end{frontmatter}
+
+%\linenumbers
+
+\section*{Metadata}
+\label{}
+
+\begin{table}[!h]
+\begin{tabular}{|l|p{6.5cm}|p{6.5cm}|}
+\hline
+\textbf{Nr.} & \textbf{Code metadata description} & \textbf{Please fill in this column} \\
+\hline
+C1 & Current code version & 0.0.3 \\
+\hline
+C2 & Permanent link to code/repository used for this code version & For example:
+\url{https://github.com/euro-hpc-pl/omnisolver-bruteforce} \\
+\hline
+C4 & Legal Code License & Apace 2.0 \\
+\hline
+C5 & Code versioning system used & git \\
+\hline
+C6 & Software code languages, tools, and services used & Python, C++ \\
+\hline
+C7 & Compilation requirements, operating environments \& dependencies & Linux, \texttt{Python >= 3.9}, \texttt{dimod} \\
+\hline
+C8 & If available Link to developer documentation/manual & F\url{https://omnisolver.readthedocs.io/} \\
+\hline
+C9 & Support email for questions & \verb|lpawela@iitis.pl|\\
+\hline
+\end{tabular}
+\caption{Code metadata}
+\label{codeMetadata} 
+\end{table}
+
+\section{Motivation and significance}
+
+The fast-growing field of quantum information is steadily bringing us closer to
+realizing practical quantum computers. Presently, we are in an era defined by
+the so-called Noisy Intermediate-Scale Quantum (NISQ)~\cite{preskill2018quantum}
+devices. Unsurprisingly, these machines have attracted interest from both
+scientific and business communities. This attention has resulted in numerous
+proposed potential applications for NISQ devices. Implementing these
+applications necessitates the development of appropriate software, which
+introduces its own set of challenges. One such obstacle, which this work aims to
+address, is the expense associated with testing on actual NISQ devices.
+
+With the development of this field comes the challenge of preparing problems with
+known ground truth, used in further testing. One way to approach this problem is the
+usage of instances with known, planted, solutions~\cite{}. Yet, this limits the classes
+of instances one can study. Our approach allows finding optimal solutions for arbitrary
+instances, regardless of their density.
+
+\section{Software description}\label{sec:software-desc}
+\textit{Describe the software. Provide enough detail to help the reader understand its impact. }
+
+\subsection{Software architecture}
+\textit{  Give a short overview of the overall software architecture; provide a pictorial overview where possible; for example, an image showing the components. If necessary, provide implementation details.}
+
+ \subsection{Software functionalities}
+\textit{  Present the major functionalities of the software.}
+  
+ \subsection{Sample code snippets analysis (optional)}
+
+
+\section{Illustrative examples}
+The library is available on PyPi os \texttt{omnisolver-bruteforce}. It can be
+used as a part of \texttt{omnisolver}~\cite{} or as a standalone package
+programmatically. Here, we provide an example for the latter case. The provided
+example generates random test instances, solves them using the distributed
+solver and saves the results in a \texttt{json} file.
+
+As described in Section~\ref{sec:software-desc} the distribution and
+communication between computational nodes is handled by \texttt{ray}. Below we
+provide code and \texttt{ray} commands required to initialize the distributed
+environment.
+
+\lstinputlisting[language=Python,caption={Example code for a distributed solver},label={lst:bf-code}]{code/bf.py}
+
+ADD RAY CMDs
+
+After completion of the above script, the runtime results are shown in Fig.~\ref{fig:runtimes}
+
+\begin{figure}
+\centering
+\includegraphics[width=\textwidth]{distributed.pdf}
+\caption{Runtime of the distributed bruteforce solver as a function of the input system size.}\label{fig:runtimes}
+\end{figure}
+\section{Impact}
+The main contribution of this software lies in providing a distributed, scalable
+brute-force solver for QUBO and Ising instances. With the current development of
+NISQ devices, especially the D-Wave annealer it allows for extensive testing of
+such architectures by providing instances with a known ground truth. In the
+current landscape of computational architectures this is crucial as there are
+many emerging potential applications of this particular computing approach. As
+such, rigorous testing is a necessity.
+
+As our approach introduces virtually no communication overhead during the
+computation, the computation can be distributed along many nodes and GPUs. For
+instance, large AI training clusters can contain up to $10^5$ GPUs. This means
+that in under an hour it could find a solution for an instance with 67 variables
+which means, provided the instance is fully connected, that it could solve an
+instance larger than the largest fully connected instance that can be embedded on
+the D-Wave Chimera architecture.
+
+SOMETHING MORE ABOUT EMBEDDING
+
+\section{Conclusions}
+Our library provides the quantum computing community with the possibility to
+certify solutions to arbitrary QUBO and Ising problems. Furthermore, being
+part of a large framework, the software allows for smooth integration
+with other algorithms aimed the these types of problems.
+
+
+\section{Conflict of Interest}
+No conflict of interest exists: We wish to confirm that there are no known
+conflicts of interest associated with this publication and there has been no
+significant financial support for this work that could have influenced its
+outcome.
+
+\section*{Acknowledgements}
+ADD GRANTS
+We gratefully acknowledge Poland's high-performance computing infrastructure
+PLGrid (HPC Centers: Cyfronet Athena) for providing computer facilities and
+support within computational grant no. PLG/2023/016318.
+
+%% The Appendices part is started with the command \appendix;
+%% appendix sections are then done as normal sections
+%% \appendix
+
+%% \section{}
+%% \label{}
+
+\bibliographystyle{elsarticle-num} 
+\bibliography{bruteforce.bib}
+
+\end{document}
+\endinput
+
