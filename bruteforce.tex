@@ -105,25 +105,24 @@ C9 & Support email for questions & \verb|lpawela@iitis.pl|\\
 
 \section{Motivation and significance}
 
-The fast-growing field of quantum information is steadily bringing us closer to
-realizing practical quantum computers. Presently, we are in an era defined by
-the so-called Noisy Intermediate-Scale Quantum (NISQ)~\cite{preskill2018quantum}
-devices. Unsurprisingly, these machines have attracted interest from both
-scientific and business communities. This attention has resulted in numerous
-proposed potential applications for NISQ devices. Implementing these
-applications necessitates the development of appropriate software, which
-introduces its own set of challenges. One such obstacle, which this work aims to
-address, is the expense of verification of realistic NISQ devices. 
-In most cases checking correctness of results obtained with NISQ devices requires classical computation that scales 
-exponentialy with the problem size.   
-
+The fast-growing field of quantum technologies is steadily bringing us closer to
+realizing practical quantum computers, which promise to provide computational advantage at certain tasks such as 
+combinatorial optimization~\cite{Pirnay2023superpolynomial}, solving SDP problems~\cite{BrandaoSDP}, or quantum chemistry~\cite{QuantumChemistrySpeedup}. 
+Presently, the available devices are referred to as the Noisy Intermediate-Scale Quantum (NISQ)
+devices ~\cite{preskill2018quantum}. Although they do not offer capabilities of a fully-fledged quantum computer, these machines have attracted interest from both
+scientific and business communities, what resulted in numerous
+proposals for their applications. Implementation of these
+applications requires development of appropriate software, what
+introduces its own set of challenges. This work aims to
+address a particular difficulty arising in the context of binary optimization problems, namely the expense of results verification of realistic NISQ devices. 
+In most cases such a verification requires classical computation that scales 
+exponentially with the problem size.   
 %With the development of this field comes the challenge of preparing problems with
 %known ground truth, used in further testing. 
-This raises a question: How can one overcome the difficulty associated with the results verification? 
-One way to approach this problem is the
-usage of instances with known, planted, solutions~\cite{}. Yet, this limits the classes
-of instances one can study. Our approach allows finding optimal solutions for arbitrary
-instances, regardless of their density. This significantly pushes the limits of the direct device verification.
+%This raises a question: How can one overcome the difficulty associated with the results verification? 
+One way to overcome this difficulty is to use instances with known, planted, solutions~\cite{}. Yet, this limits the classes
+of instances one use in verification. Our contribution is the QUBO/Ising solver that allows to find optimal solutions for arbitrary
+instances, regardless of their density. This significantly pushes the limits of the direct NISQ device verification.
 
 \section{Software description}\label{sec:software-desc}
 \textit{Describe the software. Provide enough detail to help the reader understand its impact. }
