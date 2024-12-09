@@ -42,14 +42,14 @@
 Sciences, Ba{\l}tycka 5, 44-100 Gliwice, Poland}
 
 \begin{abstract}
-%% Text of abstract 
+%% Text of abstract
 We introduce a library for brute-force solving of QUBO and Ising model
 instances. The library provides a fast, distributed, GPU-based search of the
 entire state space and guarantees finding the optimal solution for a give
 problem. This comes at the price of computation time and scaling with problem
 size. Nonetheless, we are still able to solve a 60 variable instance in
 $2.5\cdot10^5$ seconds using only 8 H100 GPUs without any restrictions on the
-density of the instance. 
+density of the instance.
 \end{abstract}
 \textit{Your main body of text (sections 1-5 below) should be a maximum 6 pages in total
 (excluding metadata, tables, figures, references) with a 3000-word limit (we ask
@@ -100,7 +100,7 @@ C9 & Support email for questions & \verb|lpawela@iitis.pl|\\
 \hline
 \end{tabular}
 \caption{Code metadata}
-\label{codeMetadata} 
+\label{codeMetadata}
 \end{table}
 
 \section{Motivation and significance}
@@ -128,11 +128,41 @@ instances, regardless of their density. This significantly pushes the limits of 
 \textit{Describe the software. Provide enough detail to help the reader understand its impact. }
 
 \subsection{Software architecture}
-\textit{  Give a short overview of the overall software architecture; provide a pictorial overview where possible; for example, an image showing the components. If necessary, provide implementation details.}
+Our distributed bruteforce solver is built on top of our \texttt{omnisolver} framework. The solver utilizes massive
+parallelization on two levels:
+\begin{itemize}
+    \item Parallelization via usage of CUDA-enabled GPUs.
+    \item Parallelization across multiple GPUs and/or multiple hosts.
+\end{itemize}
 
+There exists numerous libraries for utilizing CUDA from Python programs. However we found out
+that for our use case the easiest way was to write the performance--critical parts of our code in
+C++ and then use Cython as a glue.
+
+For the distributed workloads, the subproblems are constructed by fixing \texttt{num\_fixed\_vars}
+variables to each of the possible values from $\{0, 1\}$. For $k$ fixed variables there are $2^k$
+such subproblems, each with $N-k$ variables. The subproblems are distributed to workers, residing
+either on the same host or on different network--connected hosts, via the ray framework. Once
+the solution of all the subproblems are gathered, the merging of the results happens on the driving
+host, i.e. the merging part of the algorithm is not parallelized. The distributed workflow is
+exemplified in Fig. \ref{fig:arch}.
+
+\begin{figure}
+    \includegraphics[width=\textwidth]{figs/omnisolver-distributed-diagram.pdf}
+    \caption{
+        Visualization of an example execution of distributed bruteforce solver. The user supplies
+        input QUBO, which is split into smaller subproblems by the controller. Then, the subproblems
+        are scattered among the workers and solved using standalone GPU-enabled bruteforce sampler.
+        Once all results are gathered, the controller merges solutions to obtain the ground state of
+        the original problem. In the example, the problem was split into 4 subproblems which were
+        distributed among two workers, but the solver does not make any assumptions on ray cluster
+        size, and the number of subproblems is a user supplied parameter.
+    }
+    \label{fig:arch}
+\end{figure}
  \subsection{Software functionalities}
 \textit{  Present the major functionalities of the software.}
-  
+
  \subsection{Sample code snippets analysis (optional)}
 
 
@@ -204,7 +234,7 @@ support within computational grant no. PLG/2023/016318.
 %% \section{}
 %% \label{}
 
-\bibliographystyle{elsarticle-num} 
+\bibliographystyle{elsarticle-num}
 \bibliography{bruteforce.bib}
 
 \end{document}
