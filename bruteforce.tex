@@ -51,13 +51,13 @@ size. Nonetheless, we are still able to solve a 60 variable instance in
 $2.5\cdot10^5$ seconds using only 8 H100 GPUs without any restrictions on the
 density of the instance.
 \end{abstract}
-\textit{Your main body of text (sections 1-5 below) should be a maximum 6 pages in total
-(excluding metadata, tables, figures, references) with a 3000-word limit (we ask
-that more priority is placed on the word limit versus the page count). Though we
-strictly insist on the author following the template, in exceptional
-circumstances, we can be flexible with the page numbers and word limit. In such
-cases, it should be discussed with the managing editor or publisher prior to
-submission.}
+% \textit{Your main body of text (sections 1-5 below) should be a maximum 6 pages in total
+% (excluding metadata, tables, figures, references) with a 3000-word limit (we ask
+% that more priority is placed on the word limit versus the page count). Though we
+% strictly insist on the author following the template, in exceptional
+% circumstances, we can be flexible with the page numbers and word limit. In such
+% cases, it should be discussed with the managing editor or publisher prior to
+% submission.}
 \begin{keyword}
 %% keywords here, in the form: keyword \sep keyword
 QUBO \sep spin--glass \sep discrete optimization \sep quantum annealing
@@ -86,7 +86,7 @@ C1 & Current code version & 0.0.3 \\
 C2 & Permanent link to code/repository used for this code version & For example:
 \url{https://github.com/euro-hpc-pl/omnisolver-bruteforce} \\
 \hline
-C4 & Legal Code License & Apace 2.0 \\
+C4 & Legal Code License & Apache 2.0 \\
 \hline
 C5 & Code versioning system used & git \\
 \hline
@@ -94,7 +94,7 @@ C6 & Software code languages, tools, and services used & Python, C++ \\
 \hline
 C7 & Compilation requirements, operating environments \& dependencies & Linux, \texttt{Python >= 3.9}, \texttt{dimod} \\
 \hline
-C8 & If available Link to developer documentation/manual & F\url{https://omnisolver.readthedocs.io/} \\
+C8 & If available Link to developer documentation/manual & \url{https://omnisolver.readthedocs.io/} \\
 \hline
 C9 & Support email for questions & \verb|lpawela@iitis.pl|\\
 \hline
@@ -118,11 +118,11 @@ address a particular difficulty arising in the context of binary optimization pr
 In most cases such a verification requires classical computation that scales 
 exponentially with the problem size.   
 %With the development of this field comes the challenge of preparing problems with
-%known ground truth, used in further testing. 
-%This raises a question: How can one overcome the difficulty associated with the results verification? 
-One way to overcome this difficulty is to use instances with known, planted, solutions~\cite{}. Yet, this limits the classes
-of instances one use in verification. Our contribution is the QUBO/Ising solver that allows to find optimal solutions for arbitrary
-instances, regardless of their density. This significantly pushes the limits of the direct NISQ device verification.
+%known ground truth, used in further testing.
+% This raises a question: How can one overcome the difficulty associated with the results verification?
+One way to overcome this difficulty is to use instances with known, planted, solutions~\cite{PhysRevE.101.023316}. 
+Yet, this limits the classes of instances one can study. Our approach allows finding optimal solutions for arbitrary
+instances, regardless of their density. This significantly pushes the limits of the direct device verification.
 
 \section{Software description}\label{sec:software-desc}
 \textit{Describe the software. Provide enough detail to help the reader understand its impact. }
@@ -135,16 +135,15 @@ parallelization on two levels:
     \item Parallelization across multiple GPUs and/or multiple hosts.
 \end{itemize}
 
-There exists numerous libraries for utilizing CUDA from Python programs. However we found out
-that for our use case the easiest way was to write the performance--critical parts of our code in
-C++ and then use Cython as a glue.
+There are numerous libraries available for utilizing CUDA in Python programs. 
+However, we found that for our use case, the easiest approach was to write the performance-critical parts of our code in C++ and use Cython as the integration layer.
 
 For the distributed workloads, the subproblems are constructed by fixing \texttt{num\_fixed\_vars}
 variables to each of the possible values from $\{0, 1\}$. For $k$ fixed variables there are $2^k$
 such subproblems, each with $N-k$ variables. The subproblems are distributed to workers, residing
-either on the same host or on different network--connected hosts, via the ray framework. Once
-the solution of all the subproblems are gathered, the merging of the results happens on the driving
-host, i.e. the merging part of the algorithm is not parallelized. The distributed workflow is
+either on the same host or on different network--connected hosts, via the Ray framework \cite{DBLP:journals/corr/abs-1712-05889}. 
+Once the solutions of all the subproblems are gathered, the results are merged on the driving
+host. In other words, the merging part of the algorithm is not parallelized. The distributed workflow is
 exemplified in Fig. \ref{fig:arch}.
 
 \begin{figure}
@@ -155,7 +154,7 @@ exemplified in Fig. \ref{fig:arch}.
         are scattered among the workers and solved using standalone GPU-enabled bruteforce sampler.
         Once all results are gathered, the controller merges solutions to obtain the ground state of
         the original problem. In the example, the problem was split into 4 subproblems which were
-        distributed among two workers, but the solver does not make any assumptions on ray cluster
+        distributed among two workers, but the solver does not make any assumptions on Ray cluster
         size, and the number of subproblems is a user supplied parameter.
     }
     \label{fig:arch}
@@ -167,16 +166,14 @@ exemplified in Fig. \ref{fig:arch}.
 
 
 \section{Illustrative examples}
-The library is available on PyPi os \texttt{omnisolver-bruteforce}. It can be
-used as a part of \texttt{omnisolver}~\cite{} or as a standalone package
+The library is available on PyPi as \texttt{omnisolver-bruteforce}. It can be
+used as a part of \texttt{omnisolver}~\cite{jalowiecki2021omnisolver} or as a standalone package
 programmatically. Here, we provide an example for the latter case. The provided
 example generates random test instances, solves them using the distributed
 solver and saves the results in a \texttt{json} file.
 
-As described in Section~\ref{sec:software-desc} the distribution and
-communication between computational nodes is handled by \texttt{ray}. Below we
-provide code and \texttt{ray} commands required to initialize the distributed
-environment.
+As described in Section~\ref{sec:software-desc} the distribution and communication between computational nodes is handled by \texttt{Ray}. 
+Below we provide code and \texttt{Ray} commands required to initialize the distributed environment.
 
 \lstinputlisting[language=Python,caption={Example code for a distributed solver},label={lst:bf-code}]{code/bf.py}
 
