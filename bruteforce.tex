@@ -201,9 +201,16 @@ instance, large AI training clusters can contain up to $10^5$ GPUs. This means
 that in under an hour it could find a solution for an instance with 67 variables
 which means, provided the instance is fully connected, that it could solve an
 instance larger than the largest fully connected instance that can be embedded on
-the D-Wave Chimera architecture.
+the D-Wave Chimera architecture. Embedding is the required  preprocessing, in which an instance of 
+QUBO or Ising problem is encoded into the graph that represents the topology of quantum
+annealer qubits. In general, the problem of embedding a general graph $G$ into a graph $H$ is NP-hard (as hard as
+the initial problem of finding ground state of the QUBO/Ising model). In the case of Chimera topology the maximal instance that can be solved on 2048 D-Wave 2000Q annealer has 
+65 variables, solving an instance with 67 variables would require a 2312 qubit device in Chimera topology. For more recent D-Wave annealers a 67 variables instance can be, in principle, embedded into
+Advantage and Advantage2 devices, provided that sufficient number of appropriately connected qubits is available: 622 qubits for D-Wave Advantage (Pegasus topology), and 468 qubits for D-Wave Advantage (Zephyr topology).
+In these cases possibility of embedding is determined by the location of the idle qubits (not operating) qubits - it may happen that the qubits necessary for the embedding are the idle ones.       
 
-SOMETHING MORE ABOUT EMBEDDING
+
+
 
 \section{Conclusions}
 Our library provides the quantum computing community with the possibility to
