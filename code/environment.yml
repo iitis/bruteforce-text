@@ -1,0 +1,9 @@
+name: omnisolver-bruteforce-bench
+channels:
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pip
+  - numpy
+  - dimod>=0.12
+  - ray-default>=2.9
