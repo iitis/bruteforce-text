@@ -1,10 +1,10 @@
 \documentclass[preprint,12pt, a4paper]{elsarticle}
 
 \usepackage{amssymb}
-\usepackage{todonotes}
 \usepackage{float}
 \usepackage{listings}
 \usepackage{hyperref}
+\usepackage{xcolor}
 \setlength{\parindent}{0pt}
 \lstdefinestyle{mystyle}{
     basicstyle        = \ttfamily\footnotesize,
@@ -30,71 +30,71 @@
 \renewcommand{\labelenumii}{\arabic{enumi}.\arabic{enumii}}
 
 \begin{frontmatter}
-\title{GPU based brute-force solver for QUBO and Ising instances}
+\title{omnisolver-bruteforce: a distributed GPU exhaustive solver plugin update for Omnisolver\tnoteref{refers}}
+\tnotetext[refers]{Refers to the previous Omnisolver publication~\cite{jalowiecki2021omnisolver}.}
 
 \author[1]{Konrad Ja\l{}owiecki}
 \author[1]{{\L}ukasz Pawela}
 \author[1]{Bart{\l}omiej Gardas}
-\author[2]{Artur Przybysz}
-\author[2]{Jan Tuziemski}
+\author[1]{Jan Tuziemski}
 
 \address[1]{Institute of Theoretical and Applied Informatics, Polish Academy of
 Sciences, Ba{\l}tycka 5, 44-100 Gliwice, Poland}
 
 \begin{abstract}
-%% Text of abstract
-We introduce a library for brute-force solving of QUBO and Ising model
-instances. The library provides a fast, distributed, GPU-based search of the
-entire state space and guarantees finding the optimal solution for a give
-problem. This comes at the price of computation time and scaling with problem
-size. Nonetheless, we are still able to solve a 60 variable instance in
-$2.5\cdot10^5$ seconds using only 8 H100 GPUs without any restrictions on the
-density of the instance.
+This manuscript reports a software update in the Omnisolver ecosystem introduced
+in~\cite{jalowiecki2021omnisolver}. We present \texttt{omnisolver-bruteforce}, a
+dedicated Omnisolver plugin providing exact exhaustive search for QUBO and Ising
+instances on CUDA-enabled GPUs, including distributed execution with Ray. The
+update addresses the main practical limitation of the fast ground-state path:
+numerical instability for larger instances (\(N \geq 40\)) when energies are
+tracked through long chains of incremental updates. In the release-candidate
+code branch \texttt{lp/recompute-energy}, we stabilize this path with periodic
+exact energy recomputation (re-anchoring), compensated subtraction in the
+incremental updates, and refresh of best-state buffers after re-anchoring. The
+public sampler API remains unchanged. The updated implementation keeps the
+distributed exhaustive-search capability and solves a dense \(N=60\) instance in
+around three days on eight NVIDIA H100 GPUs.
 \end{abstract}
-% \textit{Your main body of text (sections 1-5 below) should be a maximum 6 pages in total
-% (excluding metadata, tables, figures, references) with a 3000-word limit (we ask
-% that more priority is placed on the word limit versus the page count). Though we
-% strictly insist on the author following the template, in exceptional
-% circumstances, we can be flexible with the page numbers and word limit. In such
-% cases, it should be discussed with the managing editor or publisher prior to
-% submission.}
+
 \begin{keyword}
-%% keywords here, in the form: keyword \sep keyword
-QUBO \sep spin--glass \sep discrete optimization \sep quantum annealing
-
-%% PACS codes here, in the form: \PACS code \sep code
-
-%% MSC codes here, in the form: \MSC code \sep code
-%% or \MSC[2008] code \sep code (2000 is the default)
-
+QUBO \sep spin--glass \sep discrete optimization \sep exhaustive search \sep
+Omnisolver plugin \sep software update
 \end{keyword}
 
 \end{frontmatter}
-
-%\linenumbers
 
 \section*{Metadata}
 \label{}
 
 \begin{table}[!h]
-\begin{tabular}{|l|p{6.5cm}|p{6.5cm}|}
+\begin{tabular}{|l|p{6.2cm}|p{6.8cm}|}
 \hline
-\textbf{Nr.} & \textbf{Code metadata description} & \textbf{Please fill in this column} \\
+\textbf{Nr.} & \textbf{Code metadata description} & \textbf{Value} \\
 \hline
-C1 & Current code version & 0.0.3 \\
+C1 & Current code version & \texttt{0.0.4-1-g71d521d} (release-candidate branch
+\texttt{lp/recompute-energy}) \\
 \hline
-C2 & Permanent link to code/repository used for this code version & For example:
-\url{https://github.com/euro-hpc-pl/omnisolver-bruteforce} \\
+C2 & Permanent link to code/repository used for this code version &
+\url{https://github.com/euro-hpc-pl/omnisolver-bruteforce/tree/71d521dca8a0207267cff56d343b1f3ffcbf05b2}
+\\
+\hline
+C3 & Permanent link to reproducible capsule (if available) & Not available for this version. \\
 \hline
 C4 & Legal Code License & Apache 2.0 \\
 \hline
 C5 & Code versioning system used & git \\
 \hline
-C6 & Software code languages, tools, and services used & Python, C++ \\
+C6 & Software code languages, tools, and services used & Python, C++, Cython,
+CUDA, Ray \\
 \hline
-C7 & Compilation requirements, operating environments \& dependencies & Linux, \texttt{Python >= 3.9}, \texttt{dimod} \\
+C7 & Compilation requirements, operating environments \& dependencies & Linux,
+CUDA Toolkit, \texttt{Python >= 3.10}, \texttt{omnisolver >= 0.0.4},
+\texttt{dimod}, \texttt{numba}, \texttt{numpy} \\
 \hline
-C8 & If available Link to developer documentation/manual & \url{https://omnisolver.readthedocs.io/} \\
+C8 & If available Link to developer documentation/manual &
+\url{https://euro-hpc-pl.github.io/omnisolver/},
+\url{https://github.com/euro-hpc-pl/omnisolver-bruteforce} \\
 \hline
 C9 & Support email for questions & \verb|lpawela@iitis.pl|\\
 \hline
@@ -105,142 +105,226 @@ C9 & Support email for questions & \verb|lpawela@iitis.pl|\\
 
 \section{Motivation and significance}
 
-The fast-growing field of quantum technologies is steadily bringing us closer to
-realizing practical quantum computers, which promise to provide computational advantage at certain tasks such as 
-combinatorial optimization~\cite{Pirnay2023superpolynomial}, solving SDP problems~\cite{BrandaoSDP}, or quantum chemistry~\cite{QuantumChemistrySpeedup}. 
-Presently, the available devices are referred to as the Noisy Intermediate-Scale Quantum (NISQ)
-devices ~\cite{preskill2018quantum}. Although they do not offer capabilities of a fully-fledged quantum computer, these machines have attracted interest from both
-scientific and business communities, what resulted in numerous
-proposals for their applications. Implementation of these
-applications requires development of appropriate software, what
-introduces its own set of challenges. This work aims to
-address a particular difficulty arising in the context of binary optimization problems, namely the expense of results verification of realistic NISQ devices. 
-In most cases such a verification requires classical computation that scales 
-exponentially with the problem size.   
-%With the development of this field comes the challenge of preparing problems with
-%known ground truth, used in further testing.
-% This raises a question: How can one overcome the difficulty associated with the results verification?
-One way to overcome this difficulty is to use instances with known, planted, solutions~\cite{PhysRevE.101.023316}. 
-Yet, this limits the classes of instances one can study. Our approach allows finding optimal solutions for arbitrary
-instances, regardless of their density. This significantly pushes the limits of the direct device verification.
+Omnisolver provides a unified framework for binary quadratic model solvers,
+including shared command-line and input/output
+interfaces~\cite{jalowiecki2021omnisolver}. This paper is not a new submission
+of that framework; it is a software update paper introducing and documenting one
+specific solver plugin: \texttt{omnisolver-bruteforce}.
 
-\section{Software description}\label{sec:software-desc}
-\textit{Describe the software. Provide enough detail to help the reader understand its impact. }
+The role of this plugin is to provide exact reference solutions for QUBO and
+Ising instances. Such exact solutions are essential when benchmarking
+approximate methods and when verifying results produced by NISQ-oriented
+workflows~\cite{preskill2018quantum}. The exhaustive-search approach guarantees
+optimality, but practical performance depends on careful GPU implementation and
+distributed orchestration.
 
-\subsection{Software architecture}
-Our distributed bruteforce solver is built on top of our \texttt{omnisolver} framework. The solver utilizes massive
-parallelization on two levels:
+Before this update, the main limitation in the fast ground-state mode was
+numeric drift for larger instances (\(N \geq 40\)). That mode uses incremental
+energy updates along Gray-code trajectories; for long trajectories in
+\texttt{float32}, rounding errors may accumulate and degrade energy accuracy.
+The release-candidate branch \texttt{lp/recompute-energy} addresses this issue
+while preserving the existing API and distributed scaling model.
+
+The key update contributions are:
 \begin{itemize}
-    \item Parallelization via usage of CUDA-enabled GPUs.
-    \item Parallelization across multiple GPUs and/or multiple hosts.
+    \item Numerical stabilization of the \texttt{num\_states=1} GPU path via
+    compensated updates and periodic exact energy recomputation.
+    \item Synchronization of best-state buffers with recomputed energies to keep
+    candidate minima consistent.
+    \item Guardrails in kernel-step logic and 64-bit-safe bit operations for
+    large-state enumeration.
+    \item Extended GPU tests validating energy correctness against exact
+    recomputation and \texttt{dimod.ExactSolver} on representative instances.
 \end{itemize}
 
-There are numerous libraries available for utilizing CUDA in Python programs. 
-However, we found that for our use case, the easiest approach was to write the performance-critical parts of our code in C++ and use Cython as the integration layer.
+\section{Software description}\label{sec:software-desc}
 
-For the distributed workloads, the subproblems are constructed by fixing \texttt{num\_fixed\_vars}
-variables to each of the possible values from $\{0, 1\}$. For $k$ fixed variables there are $2^k$
-such subproblems, each with $N-k$ variables. The subproblems are distributed to workers, residing
-either on the same host or on different network--connected hosts, via the Ray framework \cite{DBLP:journals/corr/abs-1712-05889}. 
-Once the solutions of all the subproblems are gathered, the results are merged on the driving
-host. In other words, the merging part of the algorithm is not parallelized. The distributed workflow is
-exemplified in Fig. \ref{fig:arch}.
+\subsection{Software architecture}
+The plugin exposes two sampler classes:
+\begin{itemize}
+    \item \texttt{BruteforceGPUSampler}: single-node GPU exhaustive search.
+    \item \texttt{DistributedBruteforceGPUSampler}: distributed exhaustive
+    search over multiple GPUs and/or hosts via
+    Ray~\cite{DBLP:journals/corr/abs-1712-05889}.
+\end{itemize}
+
+Performance-critical kernels are implemented in CUDA/C++, and exposed to Python
+through a Cython wrapper. The plugin follows Omnisolver's plugin mechanism, so
+users can call it from Python or from Omnisolver's CLI without custom glue code.
+
+For distributed runs, the solver fixes \texttt{num\_fixed\_vars} variables and
+enumerates all \(2^k\) fixed assignments. Each assignment defines a subproblem
+with \(N-k\) unfixed variables solved by the GPU sampler. Ray schedules
+subproblems across workers; partial results are gathered and merged on the
+controller node. The workflow is shown in Fig.~\ref{fig:arch}.
 
 \begin{figure}
     \includegraphics[width=\textwidth]{figs/omnisolver-distributed-diagram.pdf}
-    \caption{
-        Visualization of an example execution of distributed bruteforce solver. The user supplies
-        input QUBO, which is split into smaller subproblems by the controller. Then, the subproblems
-        are scattered among the workers and solved using standalone GPU-enabled bruteforce sampler.
-        Once all results are gathered, the controller merges solutions to obtain the ground state of
-        the original problem. In the example, the problem was split into 4 subproblems which were
-        distributed among two workers, but the solver does not make any assumptions on Ray cluster
-        size, and the number of subproblems is a user supplied parameter.
-    }
+    \caption{ Distributed execution of \texttt{omnisolver-bruteforce}. The input
+        BQM is partitioned into fixed-variable subproblems, dispatched to Ray
+        workers, solved by GPU samplers, and merged into the final low-energy
+        result. }
     \label{fig:arch}
 \end{figure}
- \subsection{Software functionalities}
-\textit{  Present the major functionalities of the software.}
 
- \subsection{Sample code snippets analysis (optional)}
+\subsection{Update-specific algorithmic changes}
+The update focuses on the ground-only fast path (\texttt{num\_states=1}) in the
+GPU backend. The previous implementation relied solely on incremental energy
+differences along Gray-code steps. For \(N \geq 40\) in \texttt{float32}, this
+could accumulate numerical error.
 
+The updated backend introduces three stabilization mechanisms:
+\begin{itemize}
+    \item \textbf{Compensated subtraction} during incremental updates to reduce
+    cancellation error.
+    \item \textbf{Periodic re-anchoring}, i.e., recomputing exact energies from
+    states at controlled intervals.
+    \item \textbf{Best-buffer refresh} after re-anchoring, ensuring tracked
+    minima remain consistent with recomputed energies.
+\end{itemize}
+
+In this branch, stabilization is automatically enabled for the large-\(N\)
+\texttt{float32} ground-only configuration: \texttt{num\_states=1},
+\texttt{dtype=float32}, \(N \geq 40\). No public method signature changed in
+this update.
+
+\subsection{Software functionalities}
+Major plugin functionalities are:
+\begin{itemize}
+    \item exact exhaustive search for BINARY and SPIN BQMs (with internal
+    vartype conversion),
+    \item low-energy-spectrum mode (\texttt{num\_states>1}) and optimized
+    ground-state mode (\texttt{num\_states=1}),
+    \item distributed decomposition with Ray through \texttt{num\_fixed\_vars},
+    \item Python API and Omnisolver CLI integration as the
+    \texttt{bruteforce-gpu} solver,
+    \item \texttt{dimod.SampleSet} output with runtime metadata (\texttt{solve\_time\_in\_seconds}).
+\end{itemize}
+
+\subsection{Validation in the update branch}
+The update branch includes additional GPU tests for correctness of the
+stabilized path. They verify that returned energies are consistent with CPU-side
+exact energy evaluation and that ground-state results agree with
+\texttt{dimod.ExactSolver} on tractable small instances. An opt-in performance
+guard test is also included to ensure the stabilization path remains practical
+in representative workloads.
 
 \section{Illustrative examples}
-The library is available on PyPi as \texttt{omnisolver-bruteforce}. It can be
-used as a part of \texttt{omnisolver}~\cite{jalowiecki2021omnisolver} or as a standalone package
-programmatically. Here, we provide an example for the latter case. The provided
-example generates random test instances, solves them using the distributed
-solver and saves the results in a \texttt{json} file.
+The package is distributed as \texttt{omnisolver-bruteforce} on PyPI and can be
+used standalone or through Omnisolver. Listing~\ref{lst:bf-code} shows an
+example script that generates random instances and runs the distributed solver.
 
-As described in Section~\ref{sec:software-desc} the distribution and communication between computational nodes is handled by \texttt{Ray}. 
-Below we provide code and \texttt{Ray} commands required to initialize the distributed environment.
+\lstinputlisting[
+language=Python,
+caption={Example distributed benchmark script for \texttt{omnisolver-bruteforce}},
+label={lst:bf-code}
+]{code/bf.py}
 
-\lstinputlisting[language=Python,caption={Example code for a distributed solver},label={lst:bf-code}]{code/bf.py}
+Example Ray startup commands for an 8-GPU, two-node setup (4 GPUs per node) are:
 
-ADD RAY CMDs
+\begin{lstlisting}[language=bash,caption={Example Ray commands for distributed execution},label={lst:ray-commands}]
+# Head node
+ray stop --force
+ray start --head --port=6379 --num-gpus=4
 
-After completion of the above script, the runtime results are shown in Fig.~\ref{fig:runtimes}
+# Worker node
+ray stop --force
+ray start --address='<HEAD_NODE_IP>:6379' --num-gpus=4
+
+# Run benchmark script from the project root
+python code/bf.py --start 60 --stop 40 --step -2 --skip-existing
+\end{lstlisting}
+
+Representative runtime results of this distributed workflow are shown in
+Fig.~\ref{fig:runtimes}.
 
 \begin{figure}
 \centering
 \includegraphics[width=\textwidth]{distributed.pdf}
-\caption{Runtime of the distributed bruteforce solver as a function of the input system size.}\label{fig:runtimes}
+\caption{Runtime of the distributed \texttt{omnisolver-bruteforce} solver as a function of problem size.}
+\label{fig:runtimes}
 \end{figure}
+
 \section{Impact}
-The main contribution of this software lies in providing a distributed, scalable
-brute-force solver for QUBO and Ising instances. With the current development of
-NISQ devices, especially the D-Wave annealer it allows for extensive testing of
-such architectures by providing instances with a known ground truth. In the
-current landscape of computational architectures this is crucial as there are
-many emerging potential applications of this particular computing approach. As
-such, rigorous testing is a necessity.
+This update contributes a production-ready exhaustive solver plugin inside the
+Omnisolver ecosystem. It combines exactness guarantees with distributed GPU
+execution, making it useful as a certification and benchmarking backend for
+QUBO/Ising research pipelines.
 
-As our approach introduces virtually no communication overhead during the
-computation, the computation can be distributed along many nodes and GPUs. For
-instance, large AI training clusters can contain up to $10^5$ GPUs. This means
-that in under an hour it could find a solution for an instance with 67 variables
-which means, provided the instance is fully connected, that it could solve an
-instance larger than the largest fully connected instance that can be embedded on
-the D-Wave Chimera architecture. Embedding is the required  preprocessing, in which an instance of 
-QUBO or Ising problem is encoded into the graph that represents the topology of quantum
-annealer qubits. In general, the problem of embedding a general graph $G$ into a graph $H$ is NP-hard (as hard as
-the initial problem of finding ground state of the QUBO/Ising model). In the case of Chimera topology the maximal instance that can be solved on 2048 D-Wave 2000Q annealer has 
-65 variables, solving an instance with 67 variables would require a 2312 qubit device in Chimera topology. For more recent D-Wave annealers a 67 variables instance can be, in principle, embedded into
-Advantage and Advantage2 devices, provided that sufficient number of appropriately connected qubits is available: 622 qubits for D-Wave Advantage (Pegasus topology), and 468 qubits for D-Wave Advantage (Zephyr topology).
-In these cases possibility of embedding is determined by the location of the idle qubits (not operating) qubits - it may happen that the qubits necessary for the embedding are the idle ones.       
+The key practical outcome is that the previously observed instability region for
+large-\(N\) fast ground-state runs is addressed in the release-candidate branch.
+This substantially improves reliability of exact-energy reporting in the regime
+where exhaustive verification is most computationally expensive.
 
+The solver retains the previously demonstrated large-instance capability: a
+dense \(N=60\) instance can be solved in around three days on \(8\times\) NVIDIA
+H100 GPUs. This makes exhaustive verification feasible for problem sizes that
+are beyond the range of simple single-device brute-force baselines.
 
+\section{Discussion and future extensions}
+The update improves numerical robustness in the \texttt{num\_states=1} path,
+but it does not change the exponential complexity of exhaustive search. In
+practice, this solver remains most useful as a ground-truth backend for
+benchmarking, debugging, and verification of approximate pipelines.
 
+\subsection{Threats to validity}
+The reported runtime envelope and numerical behavior depend on the hardware and
+software stack, including GPU model, CUDA version, compiler flags, and Ray
+runtime configuration. In particular, the \(N=60\) result on \(8\times\)H100
+should be interpreted as a hardware-specific operating point rather than a
+universal runtime guarantee.
+
+The stabilization path is validated in this update branch using representative
+test instances and exact-energy cross-checks, but pathological coefficient
+distributions can still stress \texttt{float32} arithmetic. For high-risk use
+cases, users should validate with additional seeds and, where feasible, compare
+against \texttt{float64} or exact small-scale baselines.
+
+\subsection{When exhaustive bruteforce is not the right tool}
+This solver is not intended for routine large-scale optimization where strict
+latency constraints or limited GPU resources dominate. Because exhaustive search
+scales exponentially, approximate or heuristic solvers are typically a better
+primary method when the objective is fast near-optimal solutions for larger
+instances.
+
+In practical workflows, \texttt{omnisolver-bruteforce} is best used as a
+calibration and certification backend: to validate solver quality on selected
+instances, estimate optimality gaps, and debug model encodings.
+
+A first extension path is broader precision policy control. The current
+stabilization is automatically enabled for large-\(N\) \texttt{float32}
+ground-only runs. Future versions can expose explicit user controls for
+re-anchoring cadence and compensated-update modes, so users can tune stability
+and runtime for specific hardware and instance families.
+
+A second extension path is distributed post-processing. The present design
+gathers subproblem results and merges them on the controller node. For very
+large clusters, hierarchical merge strategies or tree reductions can reduce
+controller bottlenecks and improve scalability.
+
+A third extension path is stronger reproducibility packaging. Publishing a
+versioned benchmark capsule with fixed seeds, hardware descriptors, and command
+presets would make cross-platform validation of both runtime and numerical
+behavior easier for the community.
 
 \section{Conclusions}
-Our library provides the quantum computing community with the possibility to
-certify solutions to arbitrary QUBO and Ising problems. Furthermore, being
-part of a large framework, the software allows for smooth integration
-with other algorithms aimed the these types of problems.
-
+We presented \texttt{omnisolver-bruteforce} as a SoftwareX update in the
+Omnisolver line of software. The update keeps the existing user API and
+distributed architecture while resolving the main numerical-stability limitation
+of the fast ground-only GPU path for \(N \geq 40\). As a result, the plugin
+remains a practical exact solver for large QUBO/Ising benchmarking workloads,
+including the \(N=60\), \(8\times\)H100 operating point.
 
 \section{Conflict of Interest}
-No conflict of interest exists: We wish to confirm that there are no known
-conflicts of interest associated with this publication and there has been no
-significant financial support for this work that could have influenced its
-outcome.
+No conflict of interest exists. The authors confirm that there are no known
+financial or personal relationships that could have appeared to influence the
+work reported in this paper.
 
 \section*{Acknowledgements}
-ADD GRANTS
-We gratefully acknowledge Poland's high-performance computing infrastructure
-PLGrid (HPC Centers: Cyfronet Athena) for providing computer facilities and
-support within computational grant no. PLG/2023/016318.
 
-%% The Appendices part is started with the command \appendix;
-%% appendix sections are then done as normal sections
-%% \appendix
-
-%% \section{}
-%% \label{}
 
 \bibliographystyle{elsarticle-num}
 \bibliography{bruteforce.bib}
 
 \end{document}
 \endinput
-
