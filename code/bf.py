@@ -1,18 +1,43 @@
-from omnisolver.bruteforce.gpu import BruteforceGPUSampler
 from dimod.serialization import coo
 from pathlib import Path
 import numpy as np
 import argparse
 import json
 
-try:
-    from omnisolver.bruteforce.gpu.distributed import DistributedBruteforceGPUSampler
-except Exception:  # pragma: no cover - optional dependency path (ray)
-    DistributedBruteforceGPUSampler = None
+BruteforceGPUSampler = None
+DistributedBruteforceGPUSampler = None
 
 # Paths to input instances and results
 RESULTS = Path("results")
 INSTANCES = Path("instances")
+
+
+def load_samplers():
+    global BruteforceGPUSampler
+    global DistributedBruteforceGPUSampler
+    if BruteforceGPUSampler is not None:
+        return
+
+    try:
+        from omnisolver.bruteforce.gpu import BruteforceGPUSampler as _BruteforceGPUSampler
+    except ModuleNotFoundError as exc:
+        if exc.name == "pkg_resources":
+            raise RuntimeError(
+                "Missing Python module 'pkg_resources'. Install setuptools "
+                "(e.g. `conda install setuptools<81` in your benchmark env)."
+            ) from exc
+        raise
+
+    BruteforceGPUSampler = _BruteforceGPUSampler
+
+    try:
+        from omnisolver.bruteforce.gpu.distributed import (
+            DistributedBruteforceGPUSampler as _DistributedBruteforceGPUSampler,
+        )
+    except Exception:  # pragma: no cover - optional dependency path (ray)
+        _DistributedBruteforceGPUSampler = None
+
+    DistributedBruteforceGPUSampler = _DistributedBruteforceGPUSampler
 
 # Json encoder for NumPy objects
 class NpEncoder(json.JSONEncoder):
@@ -46,6 +71,7 @@ def generate(start, stop, step, regenerate_existing_instances=False):
 
 # Main code launching the brute-force solver
 def bench(start, stop, step, sampler_mode="distributed", skip_existing=True):
+    load_samplers()
     RESULTS.mkdir(parents=True, exist_ok=True)
     for d in range(start, stop + step, step):
         i_path = INSTANCES / f"{d}.txt"
