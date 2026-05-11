@@ -1,10 +1,11 @@
-\documentclass[preprint,12pt, a4paper]{elsarticle}
+\documentclass[preprint,12pt,a4paper]{elsarticle}
 
 \usepackage{amssymb}
 \usepackage{float}
 \usepackage{listings}
 \usepackage{hyperref}
 \usepackage{xcolor}
+\usepackage{lineno}
 \setlength{\parindent}{0pt}
 \lstdefinestyle{mystyle}{
     basicstyle        = \ttfamily\footnotesize,
@@ -20,21 +21,21 @@
     stringstyle       = \color{green},
     commentstyle      = \color{red}\ttfamily
 }
-
 \lstset{style=mystyle}
 
 \restylefloat{table}
 \journal{SoftwareX}
 
 \begin{document}
-\renewcommand{\labelenumii}{\arabic{enumi}.\arabic{enumii}}
 
 \begin{frontmatter}
-\title{omnisolver-bruteforce: a distributed GPU exhaustive solver plugin update for Omnisolver\tnoteref{refers}}
-\tnotetext[refers]{Refers to the previous Omnisolver publication~\cite{jalowiecki2021omnisolver}.}
+
+\title{Version 2 -- Omnisolver: An extensible interface to Ising spin--glass and QUBO solvers}
 
 \author[1]{Konrad Ja\l{}owiecki}
-\author[1]{{\L}ukasz Pawela}
+\author[1]{{\L}ukasz Pawela\corref{cor1}}
+\ead{lpawela@iitis.pl}
+\cortext[cor1]{Corresponding author}
 \author[1]{Bart{\l}omiej Gardas}
 \author[1]{Jan Tuziemski}
 
@@ -42,304 +43,202 @@
 Sciences, Ba{\l}tycka 5, 44-100 Gliwice, Poland}
 
 \begin{abstract}
-This manuscript reports a software update of the Omnisolver
-ecosystem~\cite{jalowiecki2021omnisolver}, introducing
-\texttt{omnisolver-bruteforce}: a dedicated Omnisolver plugin that provides
-exact exhaustive search for QUBO and Ising instances on CUDA-enabled GPUs, with
-optional distributed execution across multiple GPUs and hosts via Ray. The
-plugin builds on the single-GPU brute-force kernel
-of~\cite{jalowiecki2021brute} and extends it in three ways: (i) integration as
-a first-class plugin in the Omnisolver framework with a uniform Python and CLI
-interface, (ii) distributed multi-GPU execution through a Ray-based
-fixed-variable decomposition, and (iii) a stabilized \texttt{float32}
-ground-state path that addresses the main practical pitfall of the original
-implementation, namely numerical drift of incremental energy updates for
-\(N \geq 40\). Stabilization combines compensated subtraction, periodic exact
-energy re-anchoring, and best-buffer refresh, and is enabled automatically in
-the affected regime; the public sampler API is unchanged. On dense random
-Ising instances we measure exhaustive solve times up to \(N=58\) on
-\(8\times\) NVIDIA H100 GPUs and project an \(N=60\) wall-clock of
-\(\approx\!3\) days under the doubling rule \(t_{N+1}=2\,t_N\). The exhaustive
-backend is positioned as a ground-truth oracle for benchmarking
-state-of-the-art classical heuristics such as the Simulated Bifurcation
-Machine~\cite{goto2016bifurcation,goto2019combinatorial,goto2021high}, which
-recent comparative
-studies~\cite{tuziemski2026limits,pawlowski2025closing} use to probe the
-quantum--classical scaling gap.
+This software update extends Omnisolver~\cite{jalowiecki2021omnisolver} with
+\texttt{omnisolver-bruteforce}, a first-class plugin providing exact exhaustive
+search for QUBO and Ising instances on CUDA-enabled GPUs, with optional
+distributed multi-GPU execution via Ray. The plugin lifts the single-GPU
+brute-force kernel of~\cite{jalowiecki2021brute} into the Omnisolver framework
+and stabilizes its fast \texttt{float32} ground-state path via compensated
+incremental updates, periodic exact energy re-anchoring, and best-buffer
+refresh. Stabilization activates automatically for \(N \geq 40\); the public
+sampler API is unchanged. On dense random Ising instances we measure
+exhaustive solve times up to \(N=58\) on \(8\times\) NVIDIA H100 GPUs and
+project \(\approx\!3\) days at \(N=60\) under the empirical
+\(t_{N+1}=2\,t_N\) rule, making the plugin a practical ground-truth oracle
+for state-of-the-art classical heuristics such as the Simulated Bifurcation
+Machine.
 \end{abstract}
 
 \begin{keyword}
-QUBO \sep spin--glass \sep discrete optimization \sep exhaustive search \sep
-Omnisolver plugin \sep software update
+QUBO \sep Ising \sep exhaustive search \sep GPU \sep Omnisolver plugin \sep
+software update
 \end{keyword}
 
 \end{frontmatter}
 
-\section*{Metadata}
-\label{}
+\section*{Refers to}
+K.~Ja\l{}owiecki, {\L}.~Pawela, ``Omnisolver: An extensible interface to Ising
+spin--glass and QUBO solvers,'' \emph{SoftwareX} \textbf{24}, 101559 (2023).
+DOI: \url{https://doi.org/10.1016/j.softx.2023.101559}.
 
-\begin{table}[!h]
+\section*{Metadata}
+\label{metadata}
+
+\begin{table}[H]
 \begin{tabular}{|l|p{6.2cm}|p{6.8cm}|}
 \hline
 \textbf{Nr.} & \textbf{Code metadata description} & \textbf{Value} \\
 \hline
-C1 & Current code version & \texttt{0.0.4-1-g71d521d} (release-candidate branch
-\texttt{lp/recompute-energy}) \\
+C1 & Current code version & v0.0.5 \\
 \hline
 C2 & Permanent link to code/repository used for this code version &
-\url{https://github.com/euro-hpc-pl/omnisolver-bruteforce/tree/71d521dca8a0207267cff56d343b1f3ffcbf05b2}
-\\
+\url{https://github.com/euro-hpc-pl/omnisolver-bruteforce} \\
 \hline
-C3 & Permanent link to reproducible capsule (if available) & Not available for this version. \\
+C3 & Legal Code License & Apache License 2.0 \\
 \hline
-C4 & Legal Code License & Apache 2.0 \\
+C4 & Code versioning system used & git \\
 \hline
-C5 & Code versioning system used & git \\
-\hline
-C6 & Software code languages, tools, and services used & Python, C++, Cython,
+C5 & Software code languages, tools, and services used & Python, C++, Cython,
 CUDA, Ray \\
 \hline
-C7 & Compilation requirements, operating environments \& dependencies & Linux,
+C6 & Compilation requirements, operating environments \& dependencies & Linux,
 CUDA Toolkit, \texttt{Python >= 3.10}, \texttt{omnisolver >= 0.0.4},
 \texttt{dimod}, \texttt{numba}, \texttt{numpy} \\
 \hline
-C8 & If available Link to developer documentation/manual &
-\url{https://euro-hpc-pl.github.io/omnisolver/},
-\url{https://github.com/euro-hpc-pl/omnisolver-bruteforce} \\
+C7 & Link to developer documentation/manual &
+\url{https://euro-hpc-pl.github.io/omnisolver/} \\
 \hline
-C9 & Support email for questions & \verb|lpawela@iitis.pl|\\
+C8 & Support email for questions & \verb|lpawela@iitis.pl| \\
 \hline
 \end{tabular}
 \caption{Code metadata}
 \label{codeMetadata}
 \end{table}
 
-\section{Motivation and significance}
+\linenumbers
+
+\section{Description of the software-update}
+\label{sec:description}
 
 Omnisolver~\cite{jalowiecki2021omnisolver} is a plugin-based framework that
-provides a uniform Python and command-line interface to a range of Ising/QUBO
-solvers, abstracting away their input/output conventions and integrating with
-\texttt{dimod}. The original SoftwareX publication established the framework and
-its first set of plugins (e.g.\ simulated annealing). The present paper is a
-software update of that framework: it introduces and documents
+exposes a uniform Python and command-line interface to QUBO/Ising solvers,
+integrated with \texttt{dimod}. The original publication established the
+framework and its first plugins. This update introduces
 \texttt{omnisolver-bruteforce}, a dedicated plugin that lifts a previously
-stand-alone single-GPU exhaustive solver~\cite{jalowiecki2021brute} to a
-first-class component of the Omnisolver ecosystem, adds distributed multi-GPU
-execution, and stabilizes the numerical behavior of its fast ground-state path.
+stand-alone single-GPU exhaustive solver~\cite{jalowiecki2021brute} into a
+first-class Omnisolver component, adds distributed multi-GPU execution
+through Ray~\cite{DBLP:journals/corr/abs-1712-05889}, and stabilizes the
+numerical behavior of its fast ground-state path.
 
-The role of an exhaustive solver in this ecosystem is to provide
-\emph{certified} reference solutions for QUBO and Ising instances. Such
-ground-truth answers are essential when benchmarking approximate or heuristic
-methods, when verifying results from NISQ-oriented
-workflows~\cite{preskill2018quantum}, and when assessing claims of quantum
-runtime advantage. In particular, the Simulated Bifurcation Machine (SBM), a
-classical heuristic based on simulating adiabatic bifurcations in a network of
-nonlinear oscillators~\cite{goto2016bifurcation,goto2019combinatorial,
-goto2021high}, has emerged as the state-of-the-art classical baseline for
-dense QUBO/Ising problems. Recent comparative
-studies~\cite{tuziemski2026limits,pawlowski2025closing} use the SBM to probe
-the quantum--classical scaling gap and conclude that, on widely benchmarked
-families of instances, the SBM matches or surpasses the scaling of current
-quantum annealers. Such conclusions rely on knowing the true optimum on
-representative instances --- which is precisely what an exhaustive GPU solver
-delivers, up to the largest \(N\) that fits the compute budget.
+\paragraph{Why an exhaustive solver in Omnisolver.}
+An exhaustive backend provides \emph{certified} reference solutions for
+QUBO/Ising instances. Such ground-truth answers are essential for
+benchmarking approximate or heuristic methods, for verifying NISQ-oriented
+workflows~\cite{preskill2018quantum}, and for assessing claims of quantum
+runtime advantage. The Simulated Bifurcation Machine
+(SBM)~\cite{goto2016bifurcation,goto2019combinatorial,goto2021high}, the
+state-of-the-art classical baseline for dense QUBO/Ising problems, is used by
+recent comparative studies~\cite{tuziemski2026limits,pawlowski2025closing} to
+probe the quantum--classical scaling gap. Such conclusions rely on the
+ability to certify the true optimum on representative instances, which an
+exhaustive GPU solver delivers.
 
-The plugin builds on the CUDA brute-force kernel
-of~\cite{jalowiecki2021brute}, which already demonstrated GPU-accelerated
-exhaustive enumeration of spin configurations on a single device. The main
-practical limitation of that implementation, when carried over to large dense
-instances, is numerical drift in the fast ground-state mode
-(\texttt{num\_states=1}): energies are tracked through long Gray-code chains
-of incremental \texttt{float32} updates, and for \(N \geq 40\) the
-accumulated rounding error becomes large enough to misrank the ground state in
-adversarial cases. This is the central pitfall the update addresses, while
-also packaging the kernel as a plugin and adding distributed orchestration.
-
-The key update contributions are:
-\begin{itemize}
-    \item \textbf{First-class Omnisolver plugin.} The CUDA brute-force kernel
-    is exposed through Omnisolver's plugin mechanism with a uniform Python and
-    CLI interface, returning a \texttt{dimod.SampleSet} with runtime metadata.
-    \item \textbf{Distributed multi-GPU execution.} A Ray-based controller
-    splits a problem into \(2^k\) fixed-variable subproblems, dispatches them to
-    GPU workers, and merges partial results, enabling exhaustive search at
-    sizes previously out of reach for a single device.
-    \item \textbf{Numerical stabilization of the fast ground-state path.}
-    Compensated subtraction in incremental updates, periodic exact energy
-    re-anchoring, and best-state buffer refresh after re-anchoring eliminate
-    the \texttt{float32} drift observed for \(N \geq 40\); the stabilization is
-    automatically enabled in the affected regime, with no API change.
-    \item \textbf{Hardening for large state enumeration.} Kernel-step
-    bookkeeping and 64-bit-safe bit operations support spin configurations of
-    sizes well beyond the original single-GPU regime.
-    \item \textbf{Extended validation.} Additional GPU tests cross-check
-    energies against from-scratch exact recomputation and against
-    \texttt{dimod.ExactSolver} on tractable instances; for our largest cases,
-    we additionally verify that the SBM reaches the certified ground state
-    (Section~\ref{sec:precision}).
-\end{itemize}
-
-\section{Software description}\label{sec:software-desc}
-
-\subsection{Software architecture}
+\paragraph{Architecture.}
 The plugin exposes two sampler classes:
+\texttt{BruteforceGPUSampler} (single-node, single-GPU) and
+\texttt{DistributedBruteforceGPUSampler} (multi-GPU/multi-node via Ray). The
+distributed sampler fixes \texttt{num\_fixed\_vars}\,\(=k\) variables and
+enumerates all \(2^{k}\) fixed assignments; each becomes a subproblem with
+\(N-k\) unfixed variables, solved by the GPU kernel on a worker. Partial
+solutions are merged on the controller node. Performance-critical kernels are
+implemented in CUDA/C++ and exposed to Python via Cython.
+
+\paragraph{Update contributions.}
 \begin{itemize}
-    \item \texttt{BruteforceGPUSampler}: single-node GPU exhaustive search.
-    \item \texttt{DistributedBruteforceGPUSampler}: distributed exhaustive
-    search over multiple GPUs and/or hosts via
-    Ray~\cite{DBLP:journals/corr/abs-1712-05889}.
+    \item \textbf{First-class Omnisolver plugin}: the brute-force kernel is
+    available through Omnisolver's plugin mechanism with a uniform Python and
+    CLI interface, returning \texttt{dimod.SampleSet} with runtime metadata.
+    \item \textbf{Distributed multi-GPU execution} via a Ray-based fixed-variable
+    decomposition, enabling exhaustive search at sizes beyond a single device.
+    \item \textbf{Stabilized fast ground-state path}: compensated incremental
+    updates, periodic exact energy re-anchoring, and best-buffer refresh
+    eliminate the \texttt{float32} drift previously observed for \(N \geq 40\)
+    in the \texttt{num\_states=1} mode. Stabilization is activated
+    automatically in the affected regime; the API is unchanged.
+    \item \textbf{Hardening for large-state enumeration}: 64-bit-safe bit
+    operations and kernel-step bookkeeping support spin configurations of
+    sizes well beyond the original single-GPU regime.
+    \item \textbf{Extended validation}: GPU tests cross-check energies against
+    from-scratch exact recomputation and against \texttt{dimod.ExactSolver} on
+    tractable instances.
 \end{itemize}
 
-Performance-critical kernels are implemented in CUDA/C++, and exposed to Python
-through a Cython wrapper. The plugin follows Omnisolver's plugin mechanism, so
-users can call it from Python or from Omnisolver's CLI without custom glue code.
+\paragraph{Performance.}
+Figure~\ref{fig:runtimes} reports wall-clock solve times of the distributed
+sampler on dense random Ising instances measured on \(8\times\) NVIDIA H100
+GPUs. The \(O(2^N)\) doubling per added spin is clearly visible from
+\(N\!\approx\!46\) onwards. The largest measured size, \(N=58\), takes
+\(\approx\!67{,}900\) s ($\approx 18.9$ h); under the empirical rule
+\(t_{N+1}=2\,t_N\) this projects to \(\approx\!3\) days for \(N=60\) on the
+same hardware. Constant-factor deviations from exact doubling (kernel launch
+overhead, host/device transfer, Ray scheduling) can shift the absolute number
+but not the asymptotic scaling.
 
-For distributed runs, the solver fixes \texttt{num\_fixed\_vars} variables and
-enumerates all \(2^k\) fixed assignments. Each assignment defines a subproblem
-with \(N-k\) unfixed variables solved by the GPU sampler. Ray schedules
-subproblems across workers; partial results are gathered and merged on the
-controller node. The workflow is shown in Fig.~\ref{fig:arch}.
-
-\begin{figure}
-    \includegraphics[width=\textwidth]{figs/omnisolver-distributed-diagram.pdf}
-    \caption{ Distributed execution of \texttt{omnisolver-bruteforce}. The input
-        BQM is partitioned into fixed-variable subproblems, dispatched to Ray
-        workers, solved by GPU samplers, and merged into the final low-energy
-        result. }
-    \label{fig:arch}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{distributed.pdf}
+\caption{Wall-clock runtime of \texttt{omnisolver-bruteforce} in distributed
+    mode on a dense random Ising instance, measured on \(8\times\) NVIDIA H100
+    GPUs. The asymptotic \(O(2^N)\) scaling is visible for \(N \geq 46\).}
+\label{fig:runtimes}
 \end{figure}
 
-\subsection{Update-specific algorithmic changes}
-The update focuses on the ground-only fast path (\texttt{num\_states=1}) in the
-GPU backend. The previous implementation relied solely on incremental energy
-differences along Gray-code steps. For \(N \geq 40\) in \texttt{float32}, this
-could accumulate numerical error.
+\paragraph{Precision of the reported energies.}
+Because the GPU backend operates in \texttt{float32} on the fast ground-state
+path, returned energies are subject to incremental-update roundoff. We
+re-evaluate the energy of each returned spin configuration from scratch in
+\texttt{float64}. For the two largest instances (\(N=56,58\)), the absolute
+deviation between reported and recomputed energies stays below
+\(2\times 10^{-6}\) on energies of magnitude \(\mathcal{O}(10^{2})\) ---
+roughly eight significant digits, consistent with the expected accuracy of
+the stabilized \texttt{float32} accumulator. Using the same recomputation we
+cross-check an SBM run on the same instances: the recomputed energies of the
+brute-force and SBM solutions agree to within \(6\times 10^{-6}\), and the
+returned spin configurations are bit-identical (Hamming distance \(0\)) at
+both \(N=56\) and \(N=58\). On these instances the SBM reaches the
+exact ground state certified by exhaustive search, and the residual
+energy-value differences are explained entirely by single-precision roundoff.
 
-The updated backend introduces three stabilization mechanisms:
-\begin{itemize}
-    \item \textbf{Compensated subtraction} during incremental updates to reduce
-    cancellation error.
-    \item \textbf{Periodic re-anchoring}, i.e., recomputing exact energies from
-    states at controlled intervals.
-    \item \textbf{Best-buffer refresh} after re-anchoring, ensuring tracked
-    minima remain consistent with recomputed energies.
-\end{itemize}
+\paragraph{Usage.}
+The plugin is distributed as \texttt{omnisolver-bruteforce} on PyPI and is
+usable either stand-alone or through the Omnisolver CLI as the
+\texttt{bruteforce-gpu} solver. A minimal Python example and example Ray
+startup commands for a multi-GPU benchmark are provided in~\ref{app:examples}; complete
+documentation and the benchmark script used to produce
+Fig.~\ref{fig:runtimes} are available in the GitHub repository (C2).
 
-In this branch, stabilization is automatically enabled for the large-\(N\)
-\texttt{float32} ground-only configuration: \texttt{num\_states=1},
-\texttt{dtype=float32}, \(N \geq 40\). No public method signature changed in
-this update.
+\section*{Acknowledgements}
 
-\subsection{Software functionalities}
-Major plugin functionalities are:
-\begin{itemize}
-    \item exact exhaustive search for BINARY and SPIN BQMs (with internal
-    vartype conversion),
-    \item low-energy-spectrum mode (\texttt{num\_states>1}) and optimized
-    ground-state mode (\texttt{num\_states=1}),
-    \item distributed decomposition with Ray through \texttt{num\_fixed\_vars},
-    \item Python API and Omnisolver CLI integration as the
-    \texttt{bruteforce-gpu} solver,
-    \item \texttt{dimod.SampleSet} output with runtime metadata (\texttt{solve\_time\_in\_seconds}).
-\end{itemize}
+\appendix
+\section{Example usage and benchmark commands}\label{app:examples}
 
-\subsection{Validation in the update branch}
-The update branch includes additional GPU tests for correctness of the
-stabilized path. They verify that returned energies are consistent with CPU-side
-exact energy evaluation and that ground-state results agree with
-\texttt{dimod.ExactSolver} on tractable small instances. An opt-in performance
-guard test is also included to ensure the stabilization path remains practical
-in representative workloads.
+A minimal distributed-sampler invocation (used by the benchmark script in
+C2) is:
 
-\section{Illustrative examples}
-The package is distributed as \texttt{omnisolver-bruteforce} on PyPI and can be
-used stand-alone or through Omnisolver. Listing~\ref{lst:bf-code} shows an
-example script that generates random instances and runs the distributed solver.
-
-\begin{lstlisting}[language=Python,caption={Example distributed benchmark script for \texttt{omnisolver-bruteforce}},label={lst:bf-code}]
+\begin{lstlisting}[language=Python,caption={Minimal distributed brute-force example},label={lst:bf-min}]
 from omnisolver.bruteforce.gpu.distributed import DistributedBruteforceGPUSampler
 from dimod.serialization import coo
-from pathlib import Path
-import numpy as np
-import argparse
-import json
 
-RESULTS = Path("results")
-INSTANCES = Path("instances")
+with open("instance.txt") as fd:
+    bqm = coo.load(fd, vartype="SPIN")
 
-
-class NpEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, np.integer):
-            return int(obj)
-        if isinstance(obj, np.floating):
-            return float(obj)
-        if isinstance(obj, np.ndarray):
-            return obj.tolist()
-        return super(NpEncoder, self).default(obj)
-
-
-def generate(start, stop, step, skip_existing=True):
-    INSTANCES.mkdir(parents=True, exist_ok=True)
-    for d in range(start, stop + step, step):
-        o_path = INSTANCES / f"{d}.txt"
-        if skip_existing and o_path.is_file():
-            continue
-        J = 2 * (np.random.rand(d, d) - 0.5)
-        with open(o_path, "w") as fd:
-            for i in range(d):
-                for j in range(i, d):
-                    fd.write(f"{i} {j} {J[i, j]}\n")
-
-
-def bench(start, stop, step, skip_existing=True):
-    RESULTS.mkdir(parents=True, exist_ok=True)
-    for d in range(start, stop + step, step):
-        i_path = INSTANCES / f"{d}.txt"
-        o_path = RESULTS / f"{d}.json"
-        if not i_path.is_file():
-            continue
-        if skip_existing and o_path.is_file():
-            continue
-        with open(i_path) as fd:
-            bqm = coo.load(fd, vartype="SPIN")
-        sampler = DistributedBruteforceGPUSampler()
-        result = sampler.sample(
-            bqm,
-            num_states=1,
-            num_fixed_vars=3,
-            suffix_size=23,
-            grid_size=8192,
-            block_size=1024,
-            partial_diff_buffer_depth=10,
-            num_steps_per_kernel=8192,
-        )
-        state = result.samples()[0, range(d)]
-        result.info.update({"num_variables": d, "state": state, "energy": result.first.energy})
-        with open(o_path, "w") as fd:
-            json.dump(result.info, fd, indent=4, cls=NpEncoder)
-
-
-def main():
-    parser = argparse.ArgumentParser(
-        description="Perform benchmark of distributed bruteforce solver from start to stop with step"
-    )
-    parser.add_argument("--start", type=int, default=60)
-    parser.add_argument("--stop", type=int, default=40)
-    parser.add_argument("--step", type=int, default=-2)
-    parser.add_argument("--skip-existing", action="store_true")
-    args = parser.parse_args()
-    generate(args.start, args.stop, args.step, args.skip_existing)
-    bench(args.start, args.stop, args.step, args.skip_existing)
-
-
-if __name__ == "__main__":
-    main()
+sampler = DistributedBruteforceGPUSampler()
+result = sampler.sample(
+    bqm,
+    num_states=1,
+    num_fixed_vars=3,
+    suffix_size=23,
+    grid_size=8192,
+    block_size=1024,
+    partial_diff_buffer_depth=10,
+    num_steps_per_kernel=8192,
+)
+print(result.first.energy, result.info["solve_time_in_seconds"])
 \end{lstlisting}
 
-Example Ray startup commands for an 8-GPU, two-node setup (4 GPUs per node) are:
+Example Ray startup for an 8-GPU two-node setup (4 GPUs per node):
 
-\begin{lstlisting}[language=bash,caption={Example Ray commands for distributed execution},label={lst:ray-commands}]
+\begin{lstlisting}[language=bash,caption={Example Ray commands},label={lst:ray-commands}]
 # Head node
 ray stop --force
 ray start --head --port=6379 --num-gpus=4
@@ -347,145 +246,14 @@ ray start --head --port=6379 --num-gpus=4
 # Worker node
 ray stop --force
 ray start --address='<HEAD_NODE_IP>:6379' --num-gpus=4
-
-# Run benchmark script from the project root
-python code/bf.py --start 60 --stop 40 --step -2 --skip-existing
 \end{lstlisting}
 
-Representative runtime results of this distributed workflow are shown in
-Fig.~\ref{fig:runtimes}.
-
-\begin{figure}
-\centering
-\includegraphics[width=\textwidth]{distributed.pdf}
-\caption{Runtime of the distributed \texttt{omnisolver-bruteforce} solver as a
-    function of problem size \(N\) on a dense random Ising instance, measured
-    on \(8\times\) NVIDIA H100 GPUs. The exponential \(O(2^N)\) scaling is
-    clearly visible for \(N \geq 46\).}
-\label{fig:runtimes}
-\end{figure}
-
-\subsection{Precision of the reported energies}
-\label{sec:precision}
-Because the GPU brute-force backend operates in \texttt{float32} for the
-\texttt{num\_states=1} fast path, the energy returned by the sampler is subject
-to incremental-update roundoff. To quantify this, we re-evaluate the energy of
-each returned spin configuration from scratch in \texttt{float64} and compare
-it to the value reported by the solver. For the two largest instances
-(\(N=56,58\)), the absolute deviation between the reported and recomputed
-energies is below \(2\times 10^{-6}\) on energies of magnitude
-\(\mathcal{O}(10^{2})\), i.e. roughly eight significant digits, consistent with
-the expected accuracy of stabilized \texttt{float32} accumulation. The same
-recomputation is used to cross-check the SBM result on the same spin state:
-the recomputed energies of the brute-force and SBM solutions agree to within
-\(6\times 10^{-6}\), and the returned spin configurations are bit-identical
-(Hamming distance \(0\)) at both \(N=56\) and \(N=58\). Thus, on these
-instances the SBM does reach the ground state certified by exhaustive search,
-and the residual discrepancies between the two reported energies are explained
-entirely by single-precision roundoff rather than by either solver missing the
-optimum.
-
-\section{Impact}
-This update contributes a production-ready exhaustive solver plugin inside the
-Omnisolver ecosystem. It combines exactness guarantees with distributed GPU
-execution, making it useful as a certification and benchmarking backend for
-QUBO/Ising research pipelines.
-
-The key practical outcomes are: (i) the CUDA brute-force kernel
-of~\cite{jalowiecki2021brute} is now available as a uniform Omnisolver plugin,
-removing the integration cost for downstream pipelines; (ii) distributed
-multi-GPU execution extends the tractable problem size beyond the original
-single-device regime; and (iii) the previously observed instability region for
-large-\(N\) fast ground-state runs is closed, substantially improving the
-reliability of exact-energy reporting in the very regime where exhaustive
-verification is most computationally expensive.
-
-On dense random Ising instances we measure exhaustive solve times up to
-\(N=58\), reaching \(\approx\!67{,}900\) s (about 18.9 h) on \(8\times\)
-NVIDIA H100 GPUs. The runtime curve is consistent with the expected
-\(O(2^N)\) doubling per added spin, so under the empirical rule
-\(t_{N+1}=2\,t_N\) an \(N=60\) instance is projected to take of the order of
-\(\approx\!3\) days on the same hardware. This makes exhaustive verification
-feasible at problem sizes that are well beyond single-device brute-force
-baselines, and directly supports comparative studies of state-of-the-art
-classical heuristics such as the SBM~\cite{tuziemski2026limits,
-pawlowski2025closing}, where knowing the certified optimum on representative
-instances is a prerequisite for meaningful scaling claims.
-
-\section{Discussion and future extensions}
-The update improves numerical robustness in the \texttt{num\_states=1} path,
-but it does not change the exponential complexity of exhaustive search. In
-practice, this solver remains most useful as a ground-truth backend for
-benchmarking, debugging, and verification of approximate pipelines.
-
-\subsection{Threats to validity}
-The reported runtime envelope and numerical behavior depend on the hardware and
-software stack, including GPU model, CUDA version, compiler flags, and Ray
-runtime configuration. In particular, the projected \(N=60\) wall-clock of
-\(\approx\!3\) days is an extrapolation from the measured \(N=58\) point under
-the doubling rule and should be interpreted as a hardware-specific operating
-point on \(8\times\)H100, not a universal runtime guarantee. Pre-asymptotic
-deviations from exact doubling --- caused by kernel launch overhead, host/device
-transfer, and Ray scheduling --- can shift the actual time at \(N=60\) by a
-constant factor without changing the asymptotic \(O(2^N)\) scaling.
-
-The stabilization path is validated in this update branch using representative
-test instances and exact-energy cross-checks, but pathological coefficient
-distributions can still stress \texttt{float32} arithmetic. For high-risk use
-cases, users should validate with additional seeds and, where feasible, compare
-against \texttt{float64} or exact small-scale baselines.
-
-\subsection{When exhaustive bruteforce is not the right tool}
-This solver is not intended for routine large-scale optimization where strict
-latency constraints or limited GPU resources dominate. Because exhaustive search
-scales exponentially, approximate or heuristic solvers are typically a better
-primary method when the objective is fast near-optimal solutions for larger
-instances.
-
-In practical workflows, \texttt{omnisolver-bruteforce} is best used as a
-calibration and certification backend: to validate solver quality on selected
-instances, estimate optimality gaps, and debug model encodings.
-
-A first extension path is broader precision policy control. The current
-stabilization is automatically enabled for large-\(N\) \texttt{float32}
-ground-only runs. Future versions can expose explicit user controls for
-re-anchoring cadence and compensated-update modes, so users can tune stability
-and runtime for specific hardware and instance families.
-
-A second extension path is distributed post-processing. The present design
-gathers subproblem results and merges them on the controller node. For very
-large clusters, hierarchical merge strategies or tree reductions can reduce
-controller bottlenecks and improve scalability.
-
-A third extension path is stronger reproducibility packaging. Publishing a
-versioned benchmark capsule with fixed seeds, hardware descriptors, and command
-presets would make cross-platform validation of both runtime and numerical
-behavior easier for the community.
-
-\section{Conclusions}
-We presented \texttt{omnisolver-bruteforce} as a software update to the
-Omnisolver line of software~\cite{jalowiecki2021omnisolver}. The update
-integrates the CUDA brute-force kernel of~\cite{jalowiecki2021brute} as a
-first-class Omnisolver plugin, adds distributed multi-GPU execution through
-Ray, and resolves the main numerical-stability limitation of the fast
-ground-only GPU path for \(N \geq 40\), all without changing the public sampler
-API. On dense random Ising instances we measure exhaustive solve times up to
-\(N=58\) on \(8\times\)H100 and project an \(N=60\) wall-clock of
-\(\approx\!3\) days under the empirical \(O(2^N)\) doubling rule. The plugin
-thereby provides a practical exact-solver backend for QUBO/Ising benchmarking,
-in particular as a ground-truth reference for state-of-the-art classical
-heuristics such as the SBM~\cite{tuziemski2026limits,pawlowski2025closing}.
-
-\section{Conflict of Interest}
-No conflict of interest exists. The authors confirm that there are no known
-financial or personal relationships that could have appeared to influence the
-work reported in this paper.
-
-\section*{Acknowledgements}
-
+\section*{Declaration of competing interest}
+The authors declare that they have no known competing financial interests or
+personal relationships that could have appeared to influence the work
+reported in this paper.
 
 \bibliographystyle{elsarticle-num}
 \bibliography{bruteforce.bib}
 
 \end{document}
-\endinput
