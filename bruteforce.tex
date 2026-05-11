@@ -180,6 +180,23 @@ same hardware. Constant-factor deviations from exact doubling (kernel launch
 overhead, host/device transfer, Ray scheduling) can shift the absolute number
 but not the asymptotic scaling.
 
+\paragraph{Scaling outlook on larger allocations.}
+The fixed-variable decomposition is embarrassingly parallel: each of the
+\(2^k\) fixed assignments defines an independent GPU subproblem, with no
+inter-worker communication during the search and only a trivial merge step on
+the controller. As a back-of-the-envelope projection, scaling our 8-GPU
+baseline to \(2^{16}\) GPUs (an allocation in reach of leadership-class
+systems, with the natural choice \(k=16\) placing one subproblem per worker)
+would reduce \(N=58\) from \(\approx\!18.9\) h to \(\approx\!8\) s, and the
+projected \(N=64\) time from \(\approx\!50\) days to \(\approx\!9\) min.
+Under a one-month wall-clock budget on the same \(2^{16}\) GPU allocation,
+the doubling rule places certifiable exhaustive search at
+\(N \lesssim 76\). This linear-in-GPU-count outlook is consistent with the
+algorithmic structure; in practice, controller-side merge bandwidth, Ray
+scheduling overhead, and per-kernel launch latency would set the true
+scaling ceiling, especially as \(2^k\) approaches the number of available
+workers.
+
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.9\textwidth]{distributed.pdf}
