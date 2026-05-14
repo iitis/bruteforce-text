@@ -61,7 +61,7 @@ and stabilizes its fast \texttt{float32} ground-state path through compensated
 incremental updates, periodic exact energy re-anchoring, and best-buffer
 refresh. Stabilization activates automatically for \(N \geq 40\); the public
 sampler API is unchanged. On dense random Ising instances, we measure
-exhaustive solve times up to \(N=58\) on \(8\times\) NVIDIA H100 GPUs and
+exhaustive solve times up to \(N=58\) on \(8\times\) NVIDIA H100 (96\,GB) GPUs and
 project \(\approx\!3\) days at \(N=60\) under the empirical
 \(t_{N+1}=2\,t_N\) rule, making the plugin a practical ground-truth oracle
 for state-of-the-art classical heuristics such as the Simulated Bifurcation
@@ -165,7 +165,7 @@ implemented in CUDA/C++ and exposed to Python via Cython.
     eliminate the \texttt{float32} drift previously observed for \(N \geq 40\)
     in the \texttt{num\_states=1} mode. Stabilization is activated
     automatically in the affected regime; the API is unchanged.
-    \item \textbf{Hardening for large-state enumeration}: 64-bit-safe bit
+    \item \textbf{Hardening for large-\(N\) enumeration}: 64-bit-safe bit
     operations and kernel-step bookkeeping support spin configurations of
     sizes well beyond the original single-GPU regime.
     \item \textbf{Extended validation}: GPU tests cross-check energies against
@@ -176,14 +176,16 @@ implemented in CUDA/C++ and exposed to Python via Cython.
 \paragraph{Performance}
 Figure~\ref{fig:runtimes} reports wall-clock solve times of the distributed
 sampler on dense random Ising instances measured on a local in-house cluster
-of \(8\times\) NVIDIA H100 GPUs (two nodes, 4 GPUs per node, interconnected by
-standard Ethernet). The \(O(2^N)\) doubling per added spin is clearly visible
-from \(N\!\approx\!46\) onwards. The largest measured size, \(N=58\), takes
-\(\approx\!67{,}900\) s (\(\approx 18.9\) h); under the empirical rule
-\(t_{N+1}=2\,t_N\), this projects to \(\approx\!3\) days for \(N=60\) on the
-same hardware. Constant-factor deviations from exact doubling (kernel-launch
-overhead, host/device transfer, Ray scheduling) can shift the absolute
-numbers but not the asymptotic scaling.
+of \(8\times\) NVIDIA H100 (96\,GB) GPUs (two nodes, 4 GPUs per node,
+interconnected by standard Ethernet). The \(O(2^N)\) doubling per added spin
+is clearly visible from \(N\!\approx\!46\) onwards; for smaller \(N\), the
+timings are dominated by kernel-launch and Ray-scheduling overhead and
+therefore deviate from the asymptotic curve. The largest measured size,
+\(N=58\), takes \(\approx\!67{,}900\) s (\(\approx 18.9\) h); under the
+empirical rule \(t_{N+1}=2\,t_N\), this projects to \(\approx\!3\) days for
+\(N=60\) on the same hardware. Constant-factor deviations from exact doubling
+(kernel-launch overhead, host/device transfer, Ray scheduling) can shift the
+absolute numbers but not the asymptotic scaling.
 
 \paragraph{Scaling outlook on larger allocations}
 The fixed-variable decomposition is embarrassingly parallel: each of the
@@ -207,7 +209,7 @@ available workers.
 \includegraphics[width=0.9\textwidth]{distributed.pdf}
 \caption{Wall-clock runtime of \texttt{omnisolver-bruteforce} in distributed
     mode on a dense random Ising instance, measured on a local in-house cluster
-    of \(8\times\) NVIDIA H100 GPUs (two nodes \(\times\) 4 GPUs). The
+    of \(8\times\) NVIDIA H100 (96\,GB) GPUs (two nodes \(\times\) 4 GPUs). The
     asymptotic \(O(2^N)\) scaling is visible for \(N \geq 46\).}
 \label{fig:runtimes}
 \end{figure}
@@ -229,10 +231,11 @@ ground state certified by exhaustive search, and the residual energy-value
 differences are explained entirely by single-precision roundoff.
 
 \paragraph{Usage}
-The plugin is distributed as \texttt{omnisolver-bruteforce} on PyPI and is
-usable either stand-alone or through the Omnisolver CLI as the
-\texttt{bruteforce-gpu} solver. A minimal Python example and example Ray
-startup commands for a multi-GPU benchmark are provided in~\ref{app:examples}; complete
+The plugin is distributed as \texttt{omnisolver-bruteforce} on PyPI
+(\texttt{pip install omnisolver-bruteforce}) and is usable either
+stand-alone or through the Omnisolver CLI as the \texttt{bruteforce-gpu}
+solver. A minimal Python example and example Ray startup commands for a
+multi-GPU benchmark are provided in Appendix~\ref{app:examples}; complete
 documentation and the benchmark script used to produce
 Fig.~\ref{fig:runtimes} are available in the GitHub repository (C2).
 
