@@ -74,7 +74,7 @@ Machine.
 \end{abstract}
 
 \begin{keyword}
-QUBO \sep Ising \sep exhaustive search \sep GPU \sep Omnisolver plugin \sep
+QUBO \sep Ising \sep spin glass \sep exhaustive search \sep GPU \sep Omnisolver plugin \sep
 software update
 \end{keyword}
 
@@ -128,32 +128,35 @@ C8 & Support email for questions & \verb|lpawela@iitis.pl| \\
 Omnisolver~\cite{jalowiecki2021omnisolver} is a plugin-based framework that
 exposes a uniform Python and command-line interface to QUBO/Ising solvers,
 integrated with \texttt{dimod}. The original publication established the
-framework and its first plugins. This update introduces
+framework and its first plugins, for example the Parallel Tempering solver. This update introduces
 \texttt{omnisolver-bruteforce}, a dedicated plugin that promotes a previously
 stand-alone single-GPU exhaustive solver~\cite{jalowiecki2021brute} to a
 first-class Omnisolver component, adds distributed multi-GPU execution
 through Ray~\cite{DBLP:journals/corr/abs-1712-05889}, and stabilizes the
 numerical behavior of its fast ground-state path.
 
-\paragraph{Why an exhaustive solver in Omnisolver}
-An exhaustive backend provides \emph{certified} reference solutions for
+\paragraph{Purpose of an exhaustive solver in Omnisolver}
+An exhaustive backend provides \emph{certified} reference, i.e. lowest-energy, solutions for
 QUBO/Ising instances. Such ground-truth answers are essential for
 benchmarking approximate or heuristic methods, for verifying NISQ-oriented
 workflows~\cite{preskill2018quantum}, and for assessing claims of quantum
-runtime advantage. The Simulated Bifurcation Machine
+runtime advantage. In recent years, especially the latter point has become 
+a critical issue in the community, with many studies relying on metrics
+that explicitly depend on the ground state energy, such as the \emph{optimality gap}.
+For example, in recent comparative studies regarding runtime advantage~\cite{tuziemski2026limits}
+and quantum-classical scaling gap~\cite{pawlowski2025closing},
+quantum resources were benchmarked against the Simulated Bifurcation Machine
 (SBM)~\cite{goto2016bifurcation,goto2019combinatorial,goto2021high,pawlowski2026sbqa},
-the state-of-the-art classical baseline for dense QUBO/Ising problems, is used
-in recent comparative studies~\cite{tuziemski2026limits,pawlowski2025closing,pawlowski2026sbqa}
-to probe the quantum--classical scaling gap. Such conclusions rely on the
-ability to certify the true optimum on representative instances --- precisely
+current state-of-the-art classical heuristic for dense QUBO/Ising problems.
+Such results rely on the ability to certify the true optimum on representative instances --- precisely
 what an exhaustive GPU solver provides.
 
 \paragraph{Architecture}
-The plugin exposes two sampler classes:
+The plugin introduced by this software update exposes two sampler classes:
 \texttt{BruteforceGPUSampler} (single-node, single-GPU) and
 \texttt{DistributedBruteforceGPUSampler} (multi-GPU/multi-node via Ray). The
 distributed sampler fixes \texttt{num\_fixed\_vars}\,\(=k\) variables and
-enumerates all \(2^{k}\) fixed assignments; each becomes a subproblem with
+enumerates all \(2^{k}\) fixed assignments; each of which becomes a subproblem with
 \(N-k\) unfixed variables, solved by the GPU kernel on a worker. Partial
 solutions are merged on the controller node. Performance-critical kernels are
 implemented in CUDA/C++ and exposed to Python via Cython.
@@ -164,12 +167,13 @@ implemented in CUDA/C++ and exposed to Python via Cython.
     available through Omnisolver's plugin mechanism with a uniform Python and
     CLI interface, returning \texttt{dimod.SampleSet} with runtime metadata.
     \item \textbf{Distributed multi-GPU execution} via a Ray-based fixed-variable
-    decomposition, enabling exhaustive search at sizes beyond a single device.
+    decomposition, enabling exhaustive search at sizes which cannot be
+    performed on a single device within a practical time-frame.
     \item \textbf{Stabilized fast ground-state path}: compensated incremental
     updates, periodic exact energy re-anchoring, and best-buffer refresh
     eliminate the \texttt{float32} drift previously observed for \(N \geq 40\)
     in the \texttt{num\_states=1} mode. Stabilization is activated
-    automatically in the affected regime; the API is unchanged.
+    automatically in the affected regime, with the API remaining unchanged.
     \item \textbf{Hardening for large-\(N\) enumeration}: 64-bit-safe bit
     operations and kernel-step bookkeeping support spin configurations of
     sizes well beyond the original single-GPU regime.
@@ -180,7 +184,8 @@ implemented in CUDA/C++ and exposed to Python via Cython.
 
 \paragraph{Performance}
 Figure~\ref{fig:runtimes} reports wall-clock solve times of the distributed
-sampler on dense random Ising instances measured on a local in-house cluster
+sampler on all-to-all random Ising with uniformly distributed couplings and biases,
+measured on a local in-house cluster
 of \(8\times\) NVIDIA H100 (96\,GB) GPUs (two nodes, 4 GPUs per node,
 interconnected by standard Ethernet). The \(O(2^N)\) doubling per added spin
 is clearly visible from \(N\!\approx\!46\) onwards; for smaller \(N\), the
@@ -202,18 +207,18 @@ leadership-class systems, with the natural choice \(k=16\) placing one
 subproblem per worker --- would reduce \(N=58\) from \(\approx\!18.9\) h to
 \(\approx\!8\) s, and the projected \(N=64\) time from \(\approx\!50\) days
 to \(\approx\!9\) min. Under a one-month wall-clock budget on the same
-\(2^{16}\)-GPU allocation, the doubling rule places certifiable exhaustive
+\(2^{16}\)-GPU allocation, the doubling rule places the limit for certifiable exhaustive
 search at \(N \lesssim 76\). This linear-in-GPU-count outlook is consistent
-with the algorithmic structure; in practice, controller-side merge
-bandwidth, Ray scheduling overhead, and per-kernel launch latency would set
-the true scaling ceiling, especially as \(2^k\) approaches the number of
+with the algorithmic structure, however in practice, controller-side merge
+bandwidth, Ray scheduling overhead, and per-kernel launch latency would be responsible 
+for the actual scaling ceiling, especially as \(2^k\) approaches the number of
 available workers.
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.95\textwidth]{distributed.pdf}
 \caption{Wall-clock runtime of \texttt{omnisolver-bruteforce} in distributed
-    mode on a dense random Ising instance, measured on a local in-house cluster
+    mode on an all-to-all random Ising instance, measured on a local in-house cluster
     of \(8\times\) NVIDIA H100 (96\,GB) GPUs (two nodes \(\times\) 4 GPUs). The
     asymptotic \(O(2^N)\) scaling is visible for \(N \geq 46\).}
 \label{fig:runtimes}
@@ -240,9 +245,9 @@ The plugin is distributed as \texttt{omnisolver-bruteforce} on PyPI
 (\texttt{pip install omnisolver-bruteforce}) and is usable either
 stand-alone or through the Omnisolver CLI as the \texttt{bruteforce-gpu}
 solver. A minimal Python example and example Ray startup commands for a
-multi-GPU benchmark are provided in Appendix~\ref{app:examples}; complete
+multi-GPU benchmark are provided in~\ref{app:examples}. Complete
 documentation and the benchmark script used to produce
-Fig.~\ref{fig:runtimes} are available in the GitHub repository (C2).
+Fig.~\ref{fig:runtimes} are available in the \href{https://github.com/euro-hpc-pl/omnisolver-bruteforce}{Github repository}.
 
 \section*{Acknowledgements}
 This work was supported by the National Science Center (NCN), Poland, via project 
