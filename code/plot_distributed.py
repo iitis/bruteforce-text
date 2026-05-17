@@ -58,9 +58,9 @@ def main():
         ax.axhline(y, linestyle="--", color="black", linewidth=0.6, alpha=0.7)
         ax.text(bf_n[-1] - 0.3, y * 1.25, lbl, fontsize=10, ha="right")
 
-    ax.set_ylim(0.5, 3e5)
-    ax.set_xlim(39, 59)
-    ax.legend(loc="upper left", frameon=False)
+    ax.set_ylim(0.5, 6e5)
+    ax.set_xlim(bf_n[0] - 1, bf_n[-1] + 1)
+    ax.legend(loc="lower left", bbox_to_anchor=(0.02, 0.02), frameon=False)
 
     fig.tight_layout()
     fig.savefig(OUT)
