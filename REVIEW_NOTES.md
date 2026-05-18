@@ -1,7 +1,8 @@
 # Review notes — Omnisolver bruteforce (Version 2)
 
 Aktualna checklista po weryfikacji `bruteforce.tex`, `bruteforce.bib`,
-`code/bf.py`, `code/README.md` i `code/plot_distributed.py`.
+`code/bf.py`, `code/README.md`, `code/plot_distributed.py` oraz zewnętrznych
+metadanych PyPI/GitHub.
 
 ## Status ogólny
 
@@ -10,11 +11,15 @@ dobrym stanie: wszystkie cytowane klucze istnieją, Ray jest cytowany jako
 formalna publikacja OSDI 2018, a wpisy z ponad sześcioma autorami renderują się
 jako `et al.`.
 
-Manuskrypt został istotnie rozwinięty od poprzedniej wersji notatek: ma już
-klikane cytowania inline w abstrakcie, sekcję ograniczeń oraz sekcję
-`Conclusions and outlook`. Główne otwarte ryzyka recenzenckie to teraz:
-reprodukowalność benchmarku, parametry SBM, precyzyjny opis generowania
-instancji oraz formalności release/PyPI/licencja.
+Większość wcześniejszych uwag merytorycznych została wykonana: artykuł ma
+opis progu single-GPU/distributed, relację do poprzedniego solvera, dokładny
+rozkład instancji, seed benchmarku, komendę reprodukcyjną, parametry SBM,
+twarde limity metody, sekcję `Conclusions and outlook` oraz jawniejszą
+deklarację competing interests.
+
+Główne pozostałe ryzyka przed submission: urwane `Acknowledgements`,
+niespójność PyPI z deklarowaną wersją `0.0.5`, brak rozpoznawalnego pliku
+`LICENSE` w repo kodu oraz trwałość/release danych benchmarkowych.
 
 ## Wykonane
 
@@ -29,120 +34,126 @@ instancji oraz formalności release/PyPI/licencja.
    - Krótkie cytowania Omnisolver i oryginalnego solvera CUDA są podane inline
      i są klikalne przez DOI.
 
-3. **Acknowledgements**
-   - Sekcja jest uzupełniona grantami NCN/PARP.
-
-4. **Conclusions**
+3. **Conclusions**
    - Dodano sekcję `Conclusions and outlook`.
    - Sekcja podsumowuje wkład update'u, wynik do `N=60` i naturalne kierunki
      dalszych prac.
 
-5. **Limitations / intended scope**
+4. **Limitations / intended scope**
    - Dodano paragraf `Limitations and intended scope`.
-   - Paragraf jasno mówi, że exhaustive enumeration pozostaje `O(2^N)`, że
-     solver jest backendem certyfikacyjnym, oraz że czasy są zależne od
-     konkretnego hardware/software stack.
+   - Paragraf wskazuje, że exhaustive enumeration pozostaje `O(2^N)`, że solver
+     jest backendem certyfikacyjnym, oraz że czasy są zależne od hardware i
+     software stack.
+   - Dodano też twarde limity: `N <= 64`, ograniczenie `suffix_size` przez
+     working set/L2, oraz zastrzeżenie, że projekcje dla `N > 60` są
+     back-of-the-envelope.
+
+5. **Topologia i rozkład instancji**
+   - Tekst precyzuje `all-to-all random Ising` z `J_{ij}, h_i \sim
+     U[-1,1]` i.i.d.
+   - W opisie figury podano, że każdy punkt to pojedynczy solver run na jednej
+     ustalonej instancji dla danego `N`.
+
+6. **Seedy i odtwarzalność instancji**
+   - `code/bf.py` ma teraz argument `--seed` z domyślną wartością `42`.
+   - Instancje są generowane przez `np.random.default_rng(seed)`.
+   - Seed jest zapisywany w JSON jako `instance_seed`.
+   - Artykuł podaje komendę benchmarkową z `--seed 42`.
+
+7. **Komenda benchmarkowa**
+   - Artykuł zawiera komendy startu Ray oraz komendę benchmark sweep używaną do
+     Fig. 1.
+   - Komenda wskazuje `python code/bf.py --start 40 --stop 60 --step 2
+     --sampler-mode distributed --seed 42 --skip-existing`.
+
+8. **Crossover single-GPU vs distributed**
+   - Dodano praktyczną wskazówkę: single GPU jest właściwe, dopóki jedna karta
+     mieści problem i czas jest rozsądny; distributed sampler amortyzuje pracę
+     przez liczbę workerów.
+   - Tekst wskazuje break-even region około `N ≈ 46` na opisywanym sprzęcie.
+
+9. **Wyjaśnienie `float32`**
+   - Dodano zdanie, że fast path `num_states=1` działa w `float32`, aby
+     maksymalizować GPU throughput, a stabilizacja kompensuje wynikający
+     roundoff.
+
+10. **Relacja do poprzedniego single-GPU solvera**
+    - Dodano osobny paragraf `Relation to the predecessor single-GPU solver`.
+    - Tekst jasno mówi, że update nie re-benchmarkuje single-device axis, ale
+      kernel jest API-compatible i dziedziczy performance envelope poprzednika.
+
+11. **Parametry SBM**
+    - Sekcja precyzji podaje obecnie: chaotic-variant simulated bifurcation
+      solver, single H100 GPU, `2^12 = 4096` równoległych replik,
+      `3000` integration steps, raportowanie najniższej energii repliki.
+    - Tekst wskazuje companion repo `euro-hpc-pl/omni-bench` z Julia driver,
+      parametrami SBM oraz tabelami `bf_velox_verification_*.csv`.
+
+12. **Competing interests**
+    - Deklaracja została rozszerzona: wskazuje afiliację autorów z Quantumz.io
+      oraz fakt, że firma rozwija komercyjne QUBO solvery, w tym SBM użyty do
+      cross-checkingu.
+
+13. **Permanent link / release tag**
+    - C2 wskazuje teraz konkretny release:
+      `https://github.com/euro-hpc-pl/omnisolver-bruteforce/releases/tag/0.0.5`.
 
 ## Częściowo wykonane
 
-6. **Impact**
-   - Treściowo funkcję impact pełni paragraf `Purpose of an exhaustive solver in
-     Omnisolver`.
-   - Nadal nie ma osobnej sekcji `Impact`. Jeśli SoftwareX tego oczekuje wprost
-     w formularzu lub checklistach redakcyjnych, warto dodać krótki paragraf
-     pod tym tytułem.
+14. **Impact**
+    - Treściowo funkcję impact pełni paragraf `Purpose of an exhaustive solver
+      in Omnisolver`.
+    - Nadal nie ma osobnej sekcji `Impact`. Jeśli SoftwareX tego oczekuje
+      wprost w formularzu lub checklistach redakcyjnych, warto dodać krótki
+      paragraf pod tym tytułem.
 
-7. **Topologia i rozkład instancji**
-   - Tekst mówi o `all-to-all random Ising` oraz `uniformly distributed
-     couplings and biases`.
-   - Nadal brakuje precyzyjnego zapisu rozkładu, np. `J_{ij}, h_i \sim
-     U[-1,1]`, oraz wyjaśnienia, że diagonalne wpisy z plików COO odpowiadają
-     biasom/polom, jeśli tak właśnie są interpretowane.
-   - Opis warto zsynchronizować z `code/bf.py`, gdzie instancje są generowane
-     przez `2*(np.random.rand(d, d) - 0.5)` i zapisywane dla `i <= j`.
+15. **Dane benchmarkowe**
+    - Artykuł wskazuje companion repo `euro-hpc-pl/omni-bench`, które ma
+      zawierać `instances/*.txt`, `results/*.json` i tabele weryfikacyjne.
+    - Nadal warto upewnić się, że te dane są dostępne w publicznym, trwałym
+      release/tagu lub archiwum DOI, a nie tylko w ruchomym branchu repo.
+    - `code/plot_distributed.py` w repo artykułu nadal czyta z
+      `../omni-bench/results`, więc samo repo artykułu nie jest w pełni
+      samowystarczalne.
 
-8. **Crossover single-GPU vs distributed**
-   - Tekst wspomina, że dla mniejszych `N` dominuje overhead Ray/kerneli.
-   - Nadal brakuje praktycznej wskazówki, kiedy wybrać `BruteforceGPUSampler`,
-     a kiedy `DistributedBruteforceGPUSampler`.
-
-9. **Wyjaśnienie `float32`**
-   - Jest opis błędu roundoff, stabilizacji i rekalkulacji energii w `float64`.
-   - Nadal warto dodać jedno zdanie o trade-offie: `float32` jest używany na
-     fast path ze względu na przepustowość/szybkość GPU, a stabilizacja i
-     rekalkulacja ograniczają ryzyko numeryczne.
-
-10. **Komenda benchmarkowa**
-    - `code/README.md` zawiera komendy do uruchamiania `code/bf.py`.
-    - W samym artykule nadal nie ma konkretnej komendy ani pełnej konfiguracji
-      generującej `distributed.pdf`.
-    - `code/plot_distributed.py` nadal czyta wyniki z `../omni-bench/results`,
-      więc repo artykułu nie jest samowystarczalne.
-
-11. **Limitations — doprecyzowanie techniczne**
-    - Istnieje już ogólny paragraf ograniczeń.
-    - Nadal brakuje twardych limitów: maksymalne wspierane `N`, ograniczenia
-      pamięci/buforów, ograniczenia `num_fixed_vars`, oraz dokładniejszy zakres,
-      w którym projekcje skalowania są tylko back-of-the-envelope.
+16. **Formalności software/release**
+    - Release tag `0.0.5` jest wskazany w C2 i istnieje na GitHub.
+    - PyPI nadal pokazuje `omnisolver-bruteforce` w wersji `0.0.3` oraz
+      `requires_python <3.10, >=3.7`, co jest niespójne z manuskryptem
+      deklarującym `0.0.5`, `pip install omnisolver-bruteforce` i
+      `Python >= 3.10`.
+    - GitHub API dla tagu `0.0.5` nie znajduje rozpoznawalnego pliku `LICENSE`
+      (`license` endpoint zwraca `404`), mimo że tabela deklaruje Apache
+      License 2.0.
 
 ## Niewykonane / otwarte
 
-12. **Porównanie z oryginalnym single-GPU brute-force**
-    - Brak konkretnej liczby lub zdania pokazującego relację do
-      `jalowiecki2021brute`.
-    - Minimum: jedno zdanie, czy nowa wersja zachowuje porównywalną wydajność
-      single-GPU przy tych samych parametrach, albo jasne stwierdzenie, że
-      artykuł nie benchmarkuje tej osi.
+17. **Acknowledgements**
+    - Sekcja `Acknowledgements` jest obecnie urwana: po tekście `This work was
+      supported by` zaczyna się bibliografia.
+    - Trzeba przywrócić pełne granty NCN/PARP albo usunąć sekcję, jeśli funding
+      ma być zadeklarowany tylko w systemie submission.
 
-13. **Parametry SBM**
-    - Sekcja `Precision of the reported energies` nadal podaje wynik porównania
-      z SBM bez informacji o implementacji i hyperparametrach.
-    - Do uzupełnienia: użyty solver/implementacja, liczba prób, liczba kroków,
-      najważniejsze parametry dynamiki oraz czy raportowany wynik to single-run
-      czy best-of-N.
-
-14. **Seedy i odtwarzalność instancji**
-    - `code/bf.py` generuje instancje przez globalne `np.random.rand(...)` bez
-      jawnego seeda.
-    - Do uzupełnienia: argument `--seed`, zapis seeda w wynikach JSON oraz
-      informacja w artykule, jakie seedy wygenerowały dane z Fig. 1.
-
-15. **Dane benchmarkowe**
-    - W repo artykułu nie ma widocznych `results/*.json` ani `instances/*.txt`
-      użytych do wykresu.
-    - Dla SoftwareX warto dołączyć dane albo wskazać trwałe archiwum/commit,
-      z którego można je odtworzyć.
-
-16. **Formalności software/release**
-    - Manuskrypt deklaruje `v0.0.5` i instalację z PyPI. Przed submission trzeba
-      upewnić się, że PyPI faktycznie zawiera tę wersję i zgodne wymagania
-      Pythona.
-    - C2 powinno najlepiej wskazywać trwały release/tag/Zenodo DOI, a nie tylko
-      główny URL repozytorium.
-    - Trzeba potwierdzić, że repo ma plik `LICENSE` zgodny z deklarowanym
-      Apache License 2.0.
-
-17. **Competing interests**
-    - Obecna deklaracja mówi o braku competing interests.
-    - Ze względu na afiliację Quantumz.io warto sprawdzić, czy zatrudnienie,
-      własność udziałów lub finansowanie firmowe nie powinny być jawnie
-      zadeklarowane według reguł Elseviera.
+18. **Formalny reproducibility capsule / archival DOI**
+    - Conclusions zapowiadają publikację wersjonowanej reproducibility capsule
+      jako przyszły krok.
+    - Przed submission warto zdecydować, czy obecne companion repo wystarcza,
+      czy potrzebny jest Zenodo/Software Heritage DOI dla danych i benchmarków.
 
 ## Priorytet przed submission
 
 **Wysoki**
-- Parametry SBM.
-- Seedy i dane benchmarkowe.
-- Precyzyjny rozkład/topologia instancji.
-- Zgodność wersji PyPI/release/licencji z tabelą metadanych.
+- Naprawić urwane `Acknowledgements`.
+- Doprowadzić PyPI do wersji `0.0.5` albo złagodzić claim o instalacji z PyPI.
+- Dodać/zweryfikować plik `LICENSE` w repo kodu.
+- Zapewnić trwały release/archiwum danych benchmarkowych i companion repo.
 
 **Średni**
-- Twarde limity metody w sekcji ograniczeń.
-- Praktyczny próg single-GPU vs distributed.
-- Jednozdaniowe porównanie z oryginalnym solverem CUDA.
-- Doprecyzowanie trade-offu `float32`.
-
-**Niski**
 - Osobna sekcja `Impact`, jeśli redakcja jej wymaga wprost.
 - Uporządkowanie ścieżek w `plot_distributed.py`, żeby repo artykułu było
-  samowystarczalne.
+  samowystarczalne albo jawnie zależne od companion repo.
+
+**Niski**
+- Rozważyć dodanie krótkiego zdania w metadanych lub Usage, że `0.0.5` jest
+  instalowane z GitHub release, jeśli PyPI nie zostanie zaktualizowane przed
+  submission.
