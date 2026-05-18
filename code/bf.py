@@ -51,18 +51,19 @@ class NpEncoder(json.JSONEncoder):
         return super(NpEncoder, self).default(obj)
 
 # Generation of random instances
-def generate(start, stop, step, regenerate_existing_instances=False):
+def generate(start, stop, step, seed=42, regenerate_existing_instances=False):
     INSTANCES.mkdir(parents=True, exist_ok=True)
+    rng = np.random.default_rng(seed)
     for d in range(start, stop + step, step):
         o_path = INSTANCES / f"{d}.txt"
         if o_path.is_file():
             if not regenerate_existing_instances:
                 print(f"[generate] Existing instance found for N={d}; not regenerating ({o_path})")
                 continue
-            print(f"[generate] Regenerating existing instance N={d} ({o_path})")
+            print(f"[generate] Regenerating existing instance N={d} (seed={seed}, {o_path})")
         else:
-            print(f"[generate] Building instance N={d} ({o_path})")
-        J = 2*(np.random.rand(d, d) - 0.5)
+            print(f"[generate] Building instance N={d} (seed={seed}, {o_path})")
+        J = 2*(rng.random((d, d)) - 0.5)
         with open(o_path, "w") as fd:
             for i in range(d):
                 for j in range(i, d):
@@ -70,7 +71,7 @@ def generate(start, stop, step, regenerate_existing_instances=False):
 
 
 # Main code launching the brute-force solver
-def bench(start, stop, step, sampler_mode="distributed", skip_existing=True):
+def bench(start, stop, step, sampler_mode="distributed", seed=42, skip_existing=True):
     load_samplers()
     RESULTS.mkdir(parents=True, exist_ok=True)
     for d in range(start, stop + step, step):
@@ -120,6 +121,7 @@ def bench(start, stop, step, sampler_mode="distributed", skip_existing=True):
                 "state": state,
                 "energy": result.first.energy,
                 "sampler_mode": sampler_mode,
+                "instance_seed": seed,
             }
         )
         with open(o_path, "w") as fd:
@@ -130,6 +132,7 @@ def generate_and_bench(
     stop,
     step,
     sampler_mode="distributed",
+    seed=42,
     skip_existing_results=False,
     regenerate_existing_instances=False,
 ):
@@ -138,8 +141,8 @@ def generate_and_bench(
             "[run] --regenerate-existing-instances set: forcing overwrite of existing results"
         )
         skip_existing_results = False
-    generate(start, stop, step, regenerate_existing_instances)
-    bench(start, stop, step, sampler_mode, skip_existing_results)
+    generate(start, stop, step, seed, regenerate_existing_instances)
+    bench(start, stop, step, sampler_mode, seed, skip_existing_results)
 
 def main():
     parser = argparse.ArgumentParser(
@@ -155,6 +158,12 @@ def main():
         choices=["distributed", "single-gpu"],
         default="distributed",
         help="Sampler backend: distributed Ray-based or single GPU (default: distributed)",
+    )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=42,
+        help="RNG seed for instance generation (default: 42)",
     )
     parser.add_argument(
         "--skip-existing",
@@ -173,6 +182,7 @@ def main():
         args.stop,
         args.step,
         args.sampler_mode,
+        args.seed,
         args.skip_existing,
         args.regenerate_existing_instances,
     )
