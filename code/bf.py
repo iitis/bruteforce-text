@@ -7,7 +7,7 @@ import json
 BruteforceGPUSampler = None
 DistributedBruteforceGPUSampler = None
 
-# Paths to input instances and results
+# Default paths to input instances and results (overridable via CLI flags)
 RESULTS = Path("results")
 INSTANCES = Path("instances")
 
@@ -175,8 +175,25 @@ def main():
         action="store_true",
         help="Regenerate instance files even if they already exist",
     )
+    parser.add_argument(
+        "--results-dir",
+        type=Path,
+        default=None,
+        help="Directory for result JSON files (default: ./results)",
+    )
+    parser.add_argument(
+        "--instances-dir",
+        type=Path,
+        default=None,
+        help="Directory for instance text files (default: ./instances)",
+    )
     # Parse the arguments
     args = parser.parse_args()
+    global RESULTS, INSTANCES
+    if args.results_dir is not None:
+        RESULTS = args.results_dir
+    if args.instances_dir is not None:
+        INSTANCES = args.instances_dir
     generate_and_bench(
         args.start,
         args.stop,
