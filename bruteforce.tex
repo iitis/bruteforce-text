@@ -128,7 +128,7 @@ C8 & Support email for questions & \verb|lpawela@iitis.pl| \\
 Omnisolver~\cite{jalowiecki2021omnisolver} is a plugin-based framework that
 exposes a uniform Python and command-line interface to QUBO/Ising solvers,
 integrated with \texttt{dimod}. The original publication established the
-framework and its first plugins, for example the Parallel Tempering solver. This update introduces
+framework and its first plugins, for example, the Parallel Tempering solver. This update introduces
 \texttt{omnisolver-bruteforce}, a dedicated plugin that promotes a previously
 stand-alone single-GPU exhaustive solver~\cite{jalowiecki2021brute} to a
 first-class Omnisolver component, adds distributed multi-GPU execution
@@ -140,34 +140,34 @@ An exhaustive backend provides \emph{certified} reference, i.e. lowest-energy,
 solutions for QUBO/Ising instances. Such ground-truth answers are essential for
 benchmarking approximate or heuristic methods, for verifying NISQ-oriented
 workflows~\cite{preskill2018quantum}, and for assessing claims of quantum
-runtime advantage. In recent years, especially the latter point has become a
-critical issue in the community, with many studies relying on metrics that
-explicitly depend on the ground state energy, such as the \emph{optimality gap}.
-For example, in recent comparative studies regarding runtime
-advantage~\cite{tuziemski2026limits} and quantum-classical scaling
+runtime advantage. In recent years, the latter point has become especially
+critical in the community, with many studies relying on metrics that
+explicitly depend on the ground-state energy, such as the \emph{optimality gap}.
+For example, in recent comparative studies of runtime
+advantage~\cite{tuziemski2026limits} and of the quantum-classical scaling
 gap~\cite{pawlowski2025closing}, quantum resources were benchmarked against the
 Simulated Bifurcation Machine
 (SBM)~\cite{goto2016bifurcation,goto2019combinatorial,goto2021high,pawlowski2026sbqa},
-current state-of-the-art classical heuristic for dense QUBO/Ising problems. Such
-results rely on the ability to certify the true optimum on representative
-instances, precisely what an exhaustive GPU solver provides.
+the current state-of-the-art classical heuristic for dense QUBO/Ising problems.
+Such results rely on the ability to certify the true optimum on representative
+instances, which is precisely what an exhaustive GPU solver provides.
 
 \paragraph{Architecture}
 The plugin introduced by this software update exposes two sampler classes:
 \texttt{BruteforceGPUSampler} (single-node, single-GPU) and
 \texttt{DistributedBruteforceGPUSampler} (multi-GPU/multi-node via Ray). The
 distributed sampler fixes \texttt{num\_fixed\_vars}\,$=k$ variables and
-enumerates all $2^{k}$ fixed assignments; each of which becomes a subproblem with
-$N-k$ unfixed variables, solved by the GPU kernel on a worker. Partial
+enumerates all $2^{k}$ fixed assignments, each of which becomes a subproblem
+with $N-k$ unfixed variables, solved by the GPU kernel on a worker. Partial
 solutions are merged on the controller node. As a practical guideline, the
 single-GPU sampler is the right choice while one device has both the memory
 budget and a wall-clock time within reason for the chosen problem size;
-beyond that point the distributed sampler amortizes the work by powers of two
-in the number of workers (and on our hardware crosses the break-even region
-between $N=40$ and $N=42$, see Fig.~\ref{fig:runtimes}; from $N\!\gtrsim\!44$
-the distributed sampler reaches the full $\approx\!8\times$ speedup expected
-from the 8-GPU pool, with the Ray-scheduling and kernel-launch overhead
-amortized over the per-subproblem compute). Performance-critical
+beyond that point, the distributed sampler amortizes the work by powers of
+two in the number of workers. On our hardware, it crosses the break-even
+region between $N=40$ and $N=42$ (see Fig.~\ref{fig:runtimes}), and from
+$N\!\gtrsim\!44$ it reaches the full $\approx\!8\times$ speedup expected
+from the 8-GPU pool, with Ray-scheduling and kernel-launch overheads
+amortized over the per-subproblem compute. Performance-critical
 kernels are implemented in CUDA/C++ and exposed to Python via Cython; the
 \texttt{num\_states=1} fast path operates in \texttt{float32} to maximize GPU
 throughput, with the stabilization mechanisms described below compensating
@@ -187,13 +187,13 @@ controller.
     available through Omnisolver's plugin mechanism with a uniform Python and
     CLI interface, returning \texttt{dimod.SampleSet} with runtime metadata.
     \item \textbf{Distributed multi-GPU execution} via a Ray-based fixed-variable
-    decomposition, enabling exhaustive search at sizes which cannot be
-    performed on a single device within a practical time-frame.
+    decomposition, enabling exhaustive search at sizes infeasible on a single
+    device within a practical time-frame.
     \item \textbf{Stabilized fast ground-state path}: compensated incremental
     updates, periodic exact energy re-anchoring, and best-buffer refresh
     eliminate the \texttt{float32} drift previously observed for $N \geq 40$
-    in the \texttt{num\_states=1} mode. Stabilization is activated
-    automatically in the affected regime, with the API remaining unchanged.
+    in the \texttt{num\_states=1} mode. Stabilization activates automatically;
+    the API is unchanged.
     \item \textbf{Hardening for large-$N$ enumeration}: 64-bit-safe bit
     operations and kernel-step bookkeeping support spin configurations of
     sizes well beyond the original single-GPU regime.
@@ -243,9 +243,9 @@ to $\approx\!33$ s, and the projected $N=64$ time from $\approx\!50$
 days to $\approx\!9$ min. Under a one-month wall-clock budget on the same
 $2^{16}$-GPU allocation, the doubling rule places the limit for certifiable exhaustive
 search at $N \lesssim 76$. This linear-in-GPU-count outlook is consistent
-with the algorithmic structure, however in practice, controller-side merge
-bandwidth, Ray scheduling overhead, and per-kernel launch latency would be responsible 
-for the actual scaling ceiling, especially as $2^k$ approaches the number of
+with the algorithmic structure; however, in practice, controller-side merge
+bandwidth, Ray scheduling overhead, and per-kernel launch latency would set
+the true scaling ceiling, especially as $2^k$ approaches the number of
 available workers.
 
 \begin{figure}[t]
@@ -308,8 +308,8 @@ kernel launch) is bounded by the GPU's L2/working-set budget and is set to
 $23$ on H100\,/\,96\,GB in our runs, so larger $N$ must be reached by
 raising \texttt{num\_fixed\_vars}, not \texttt{suffix\_size}; (iii) the
 projected runtimes for $N > 60$ are back-of-the-envelope extrapolations
-under the empirical $t_{N+1}=2\,t_N$ rule and should be expected to drift
-by a small constant factor on different stacks. Reported runtimes
+under the empirical $t_{N+1}=2\,t_N$ rule and may drift by a small constant
+factor on different stacks. Reported runtimes
 additionally depend on the hardware and software stack (GPU model, CUDA
 toolkit, Ray version, interconnect), so the absolute timings in
 Fig.~\ref{fig:runtimes} should be read as a hardware-specific operating
@@ -386,15 +386,18 @@ descriptors, command presets) so that runtime and numerical claims can be
 re-checked on heterogeneous clusters.
 
 \section*{Declaration of competing interest}
-The Authors declare that they have no known competing financial interests.
+The authors declare that they have no known competing financial interests or
+personal relationships that could have appeared to influence the work reported
+in this paper.
 
 \section*{Acknowledgements}
-This work was supported by the National Science Center (NCN), Poland, via project
-Sonata Bis 10, No. 2020/38/E/ST3/00269 (B.G.) and Sonata Bis 15, No. 2025/58/E/ST6/00422
-({\L}. P.). Quantumz.io Sp. z o.o. acknowledges support received from Polish Agency for Enterprise
-Development (PARP), Poland under Project No. FENG.01.01-IP.02-0625/23, titled \textit{
-Dynamic allocation of resources in industrial ecosystems susceptible to disturbances using
-physics-inspired algorithms and machine learning}.
+This work was supported by the National Science Center (NCN), Poland, via
+project Sonata Bis 10, No.~2020/38/E/ST3/00269 (B.G.) and Sonata Bis 15,
+No.~2025/58/E/ST6/00422 ({\L}.P.). Quantumz.io Sp.~z~o.o.\ acknowledges
+support received from the Polish Agency for Enterprise Development (PARP),
+Poland, under Project No.~FENG.01.01-IP.02-0625/23, titled
+\textit{Dynamic allocation of resources in industrial ecosystems susceptible
+to disturbances using physics-inspired algorithms and machine learning}.
 
 \bibliographystyle{elsarticle-num}
 \bibliography{bruteforce.bib}
