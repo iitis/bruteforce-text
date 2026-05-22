@@ -72,7 +72,8 @@ reproducibility capsule nadal powinny dostać trwały release/archiwum.
    - Dodano praktyczną wskazówkę: single GPU jest właściwe, dopóki jedna karta
      mieści problem i czas jest rozsądny; distributed sampler amortyzuje pracę
      przez liczbę workerów.
-   - Tekst wskazuje break-even region około `N ≈ 46` na opisywanym sprzęcie.
+   - Tekst wskazuje break-even region między `N = 40` a `N = 42` na opisywanym
+     sprzęcie, a od `N ≳ 44` distributed sampler osiąga pełen `≈ 8×` speedup.
 
 9. **Wyjaśnienie `float32`**
    - Dodano zdanie, że fast path `num_states=1` działa w `float32`, aby
@@ -138,17 +139,15 @@ reproducibility capsule nadal powinny dostać trwały release/archiwum.
     - To może być akceptowalne, ale jeśli plugin ma własną dokumentację w
       release `0.0.5`, bezpieczniej podać link bezpośrednio do niej.
 
-## Niewykonane / otwarte
+19. **Competing interests** (przeniesione do Wykonane)
+    - Tekst rozszerzony do pełnej formułki Elsevier: `The authors declare
+      that they have no known competing financial interests or personal
+      relationships that could have appeared to influence the work reported
+      in this paper.` Kapitalizacja zgodna ze stylem SoftwareX.
+    - Do potwierdzenia autorów, że stan faktyczny odpowiada deklaracji
+      (afiliacja `Quantumz.io Sp. z o.o.`, SBM jako metoda porównawcza).
 
-19. **Competing interests**
-    - Aktualny tekst brzmi: `The Authors declare that they have no known
-      competing financial interests.`
-    - To jest słabsze niż wcześniejsza jawna deklaracja i może być ryzykowne,
-      bo część autorów ma afiliację `Quantumz.io Sp. z o.o.`, a w pracy
-      pojawia się SBM jako metoda porównawcza/cross-checking.
-    - Do decyzji autorów: albo przywrócić rozszerzoną deklarację, albo
-      potwierdzić, że obecna krótka deklaracja jest zgodna z polityką
-      czasopisma i stanem faktycznym.
+## Niewykonane / otwarte
 
 20. **Formalny reproducibility capsule / archival DOI**
     - Conclusions zapowiadają publikację wersjonowanej reproducibility capsule
@@ -159,10 +158,11 @@ reproducibility capsule nadal powinny dostać trwały release/archiwum.
 ## Priorytet przed submission
 
 **Wysoki**
-- Rozstrzygnąć i ewentualnie rozszerzyć `Declaration of competing interest`.
 - Doprowadzić PyPI do wersji `0.0.5` albo złagodzić claim o instalacji z PyPI.
 - Dodać/zweryfikować plik `LICENSE` w repo kodu.
 - Zapewnić trwały release/archiwum danych benchmarkowych i companion repo.
+- Potwierdzić zgodność stanu faktycznego z deklaracją competing interests
+  (afiliacja Quantumz.io + użycie SBM jako metody porównawczej).
 
 **Średni**
 - Osobna sekcja `Impact`, jeśli redakcja jej wymaga wprost.
