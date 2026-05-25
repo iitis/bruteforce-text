@@ -275,10 +275,10 @@ absolute deviation between reported and recomputed energies stays below
 $4\times 10^{-6}$ for energies of magnitude $\mathcal{O}(10^{2})$,
 roughly eight significant digits, consistent with the expected accuracy of
 the stabilized \texttt{float32} accumulator. Using the same recomputation,
-we cross-check an SBM run on the same instances: a chaotic-variant
+we cross-check an SBM run on the same instances: a 
 simulated bifurcation solver running on a single H100 GPU with
-$2^{12}=4096$ parallel replicas and $3{,}000$ integration steps, reporting
-the lowest-energy replica. The recomputed energies of the brute-force and
+$2^{12}=4096$ parallel samples and $3{,}000$ integration steps, reporting
+the lowest-energy sample. The recomputed energies of the brute-force and
 SBM solutions agree to within $6\times 10^{-6}$, and the returned spin
 configurations are bit-identical (Hamming distance $0$) at $N=56$, $58$,
 and $60$. On these instances, SBM reaches the exact ground state certified
