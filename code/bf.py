@@ -7,9 +7,11 @@ import json
 BruteforceGPUSampler = None
 DistributedBruteforceGPUSampler = None
 
-# Default paths to input instances and results (overridable via CLI flags)
-RESULTS = Path("results")
-INSTANCES = Path("instances")
+# Default paths to input instances and results (overridable via CLI flags),
+# resolved relative to the repository root so the script works from any cwd.
+REPO = Path(__file__).resolve().parent.parent
+RESULTS = REPO / "benchmarks" / "results"
+INSTANCES = REPO / "benchmarks" / "instances"
 
 
 def load_samplers():
@@ -179,13 +181,13 @@ def main():
         "--results-dir",
         type=Path,
         default=None,
-        help="Directory for result JSON files (default: ./results)",
+        help="Directory for result JSON files (default: <repo>/benchmarks/results)",
     )
     parser.add_argument(
         "--instances-dir",
         type=Path,
         default=None,
-        help="Directory for instance text files (default: ./instances)",
+        help="Directory for instance text files (default: <repo>/benchmarks/instances)",
     )
     # Parse the arguments
     args = parser.parse_args()

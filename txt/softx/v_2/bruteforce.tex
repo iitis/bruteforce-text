@@ -31,18 +31,15 @@
 
 % ---------------------------------------------------------------------------
 % TODO(authors) -- resolve before resubmission: \datarepo must resolve publicly.
-% The URL below returned HTTP 404 on 2026-08-01 (the local clone's remote is
-% git@github.com:lpawela/omni-bench), which is exactly what reviewers 2 and 3
-% flagged.  Publish the repository at this address (ideally pointing at an
-% immutable tag) or update the macro to wherever it ends up living.
+% The instances, raw results and verification tables now live in this repository
+% under benchmarks/, so the link below is the article repository itself; it has
+% to be public (or archived with a DOI) before resubmission, since reviewers 2
+% and 3 both flagged the previous, unreachable data link.
 % ---------------------------------------------------------------------------
-\newcommand{\datarepo}{https://github.com/euro-hpc-pl/omni-bench}
-\newcommand{\datareponame}{\texttt{euro-hpc-pl/omni-bench}}
+\newcommand{\datarepo}{https://github.com/lpawela/bruteforce-text}
+\newcommand{\datareponame}{\texttt{lpawela/bruteforce-text}}
 
-% TODO(authors): confirm which CUDA Toolkit version was used on the H100 cluster
-% for the reported measurements (CI builds and tests with 12.5), then replace the
-% macro body below with the plain version string and drop the red marker.
-\newcommand{\cudameas}{\textcolor{red}{12.5 (to be confirmed)}}
+\newcommand{\cudameas}{12.4}
 
 \begin{document}
 
@@ -509,11 +506,11 @@ state certified by exhaustive search, and the residual differences between the
 two reported energies are explained entirely by single-precision roundoff on both
 sides. This is precisely the kind of statement that cannot be made without a
 certifying solver at hand, and it illustrates the intended role of the plugin.
-The full verification harness (Julia driver, solver configuration, and the
-resulting \texttt{bf\_velox\_verification\_*.csv} tables) is available in the
-companion repository \href{\datarepo}{\datareponame}, together with all
-\texttt{instances/*.txt} and \texttt{results/*.json} files that produced
-Fig.~\ref{fig:runtimes} and Table~\ref{tab:efficiency}.
+The resulting verification tables
+(\texttt{benchmarks/bf\_sbm\_verification\_*.csv}) are distributed with the
+article repository \href{\datarepo}{\datareponame}, together with all
+\texttt{benchmarks/instances/*.txt} and \texttt{benchmarks/results/*.json} files
+that produced Fig.~\ref{fig:runtimes} and Table~\ref{tab:efficiency}.
 
 \paragraph{Instance families, QUBO instances and other solvers}
 Two properties of exhaustive search delimit what a meaningful benchmark of this
@@ -589,9 +586,10 @@ plugin are in the
 \href{https://github.com/euro-hpc-pl/omnisolver-bruteforce}{plugin
 repository}~(C2). The benchmark and plotting scripts used to produce
 Fig.~\ref{fig:runtimes} and Table~\ref{tab:efficiency} are in the article
-repository, under \texttt{code/}, and read the instances, raw results and
-verification tables from the companion data repository
-\href{\datarepo}{\datareponame}.
+repository \href{\datarepo}{\datareponame} under \texttt{code/}, and the
+instances, raw results and verification tables they consume are shipped
+alongside them under \texttt{benchmarks/}, so that the figure and the table can
+be regenerated from a single checkout.
 
 A minimal distributed-sampler invocation looks as follows:
 

@@ -3,8 +3,9 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 
-RESULTS = Path(__file__).resolve().parent.parent.parent / "omni-bench" / "results"
-OUT = Path(__file__).resolve().parent.parent / "distributed.pdf"
+REPO = Path(__file__).resolve().parent.parent
+RESULTS = REPO / "benchmarks" / "results"
+OUT = REPO / "txt" / "softx" / "v_2" / "distributed.pdf"
 
 N_MIN = 40
 N_MAX_PLOT = 60

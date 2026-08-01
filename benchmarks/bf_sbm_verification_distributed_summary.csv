@@ -1,0 +1,2 @@
+size,bf_energy,bf_time_seconds,bf_state_energy,bf_energy_recalc_delta,sbm_energy,sbm_vs_bf_recalc_delta,sbm_time_seconds,sbm_state_energy,gap_percent,hamming_distance,bf_energy_consistent,sbm_reached_bf
+60,-187.72461144575374,272308.871295350,-187.72461542929514,-3.9835414042954653e-06,-187.724609375,6.0542951416664437e-06,0.154709462,-187.72461542929514,0.000001103,0,false,false

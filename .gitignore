@@ -307,4 +307,7 @@ TSWLatexianTemp*
 #*Notes.bib
 
 __pycache__
-instances
+# Scratch instance/result dirs written at the repo root; the curated benchmark
+# data under benchmarks/ is tracked.
+/instances
+/results
