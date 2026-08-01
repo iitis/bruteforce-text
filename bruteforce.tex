@@ -52,15 +52,13 @@ of Technology, Wroc{\l}aw University of Science and Technology,
 50-370 Wroc{\l}aw, Poland}
 
 \begin{abstract}
-This software update extends Omnisolver
-(\href{https://doi.org/10.1016/j.softx.2023.101559}{K.~Ja\l{}owiecki and
-{\L}.~Pawela, \emph{SoftwareX} 24, 101559, 2023}) with
+This software update extends
+Omnisolver~\cite{jalowiecki2021omnisolver} with
 \texttt{omnisolver-bruteforce}, a first-class plugin for exact exhaustive
 search of QUBO and Ising instances on CUDA-enabled GPUs. The update
 contributes three components: packaging of the single-GPU brute-force
-kernel of \href{https://doi.org/10.1016/j.cpc.2020.107728}{K.~Ja\l{}owiecki,
-M.~M.~Rams, and B.~Gardas, \emph{Computer Physics Communications} 260,
-107728, 2021} as a first-class Omnisolver plugin with a uniform Python and
+kernel of~\cite{jalowiecki2021brute} as a first-class Omnisolver plugin
+with a uniform Python and
 CLI interface, a Ray-based distributed framework that splits the search
 into $2^{k}$ fixed-variable subproblems and dispatches them across multiple
 GPUs and hosts, with a controller that gathers and merges partial results,
