@@ -4,14 +4,15 @@ import numpy as np
 import argparse
 import json
 
+import bench_common as common
+
 BruteforceGPUSampler = None
 DistributedBruteforceGPUSampler = None
 
-# Default paths to input instances and results (overridable via CLI flags),
-# resolved relative to the repository root so the script works from any cwd.
-REPO = Path(__file__).resolve().parent.parent
-RESULTS = REPO / "benchmarks" / "results"
-INSTANCES = REPO / "benchmarks" / "instances"
+# Default paths to input instances and results (overridable via CLI flags), resolved
+# relative to this file so the script works from any working directory.
+RESULTS = common.RESULTS_DIR
+INSTANCES = common.INSTANCES_DIR
 
 
 def load_samplers():
@@ -124,6 +125,9 @@ def bench(start, stop, step, sampler_mode="distributed", seed=42, skip_existing=
                 "energy": result.first.energy,
                 "sampler_mode": sampler_mode,
                 "instance_seed": seed,
+                # Without these, the CUDA toolkit and GPU model behind a timing have to be
+                # reconstructed by hand afterwards.
+                "environment": common.environment_descriptors(),
             }
         )
         with open(o_path, "w") as fd:

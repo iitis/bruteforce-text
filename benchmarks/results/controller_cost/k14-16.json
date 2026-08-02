@@ -1,0 +1,105 @@
+{
+    "num_variables": 60,
+    "num_states": 1,
+    "merge_batch_size": 8,
+    "repeats": 3,
+    "measurements": [
+        {
+            "num_fixed_vars": 14,
+            "num_subproblems": 16384,
+            "merge_arithmetic_seconds": 0.37725098499504384,
+            "merge_arithmetic_seconds_all": [
+                0.3972957829973893,
+                0.37725098499504384,
+                0.36756915600562934
+            ],
+            "sequential_merge_seconds": 1.6047211889963364,
+            "sequential_merge_seconds_all": [
+                1.4620276579953497,
+                1.6047211889963364,
+                1.6581685380078852
+            ],
+            "tree_merge_seconds": 0.8592801689956104,
+            "tree_merge_seconds_all": [
+                0.8592801689956104,
+                0.8504028199968161,
+                0.8755318190087564
+            ],
+            "num_merge_rounds": 5,
+            "ray_fanout_seconds": 1.0994580690021394
+        },
+        {
+            "num_fixed_vars": 15,
+            "num_subproblems": 32768,
+            "merge_arithmetic_seconds": 0.7756146980100311,
+            "merge_arithmetic_seconds_all": [
+                0.7756146980100311,
+                0.769443183002295,
+                0.8030281239916803
+            ],
+            "sequential_merge_seconds": 3.0903331500012428,
+            "sequential_merge_seconds_all": [
+                3.0579468429932604,
+                3.0903331500012428,
+                3.227762342998176
+            ],
+            "tree_merge_seconds": 1.9130500949977431,
+            "tree_merge_seconds_all": [
+                1.881314754995401,
+                1.9130500949977431,
+                1.9457740820071194
+            ],
+            "num_merge_rounds": 5,
+            "ray_fanout_seconds": 2.295048518994008
+        },
+        {
+            "num_fixed_vars": 16,
+            "num_subproblems": 65536,
+            "merge_arithmetic_seconds": 1.585915343996021,
+            "merge_arithmetic_seconds_all": [
+                1.5983542659960221,
+                1.585915343996021,
+                1.5397486110014142
+            ],
+            "sequential_merge_seconds": 5.921134650008753,
+            "sequential_merge_seconds_all": [
+                5.921134650008753,
+                5.875795661006123,
+                5.927454902004683
+            ],
+            "tree_merge_seconds": 4.261709498998243,
+            "tree_merge_seconds_all": [
+                4.261709498998243,
+                4.179797575998236,
+                4.377546280011302
+            ],
+            "num_merge_rounds": 6,
+            "ray_fanout_seconds": 4.840715807004017
+        }
+    ],
+    "experiment": "controller_cost",
+    "environment": {
+        "python": "3.10.20",
+        "platform": "Linux-6.8.0-136-generic-x86_64-with-glibc2.39",
+        "hostname": "fury",
+        "cpu_count": 20,
+        "cuda": {
+            "runtime": "12.8",
+            "driver": "570.144",
+            "devices": [
+                {
+                    "name": "NVIDIA GeForce RTX 5080",
+                    "compute_capability": "12.0"
+                }
+            ]
+        },
+        "packages": {
+            "omnisolver": "0.0.4",
+            "omnisolver-bruteforce": "0.0.5.dev5+gcc6df52cf.d20260420",
+            "dimod": "0.12.21",
+            "numpy": "2.2.6",
+            "numba": "0.65.0",
+            "ray": "2.52.1"
+        }
+    }
+}

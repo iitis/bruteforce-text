@@ -22,7 +22,7 @@ solvers — a numerically stabilized, distributed GPU exhaustive-search plugin*
 ---
 
 We thank all three reviewers for a careful and constructive reading. The revision
-changes the framing of the contribution substantially, adds two tables, four new
+changes the framing of the contribution substantially, adds three tables, five new
 paragraphs and a corrected precision analysis, and fixes several statements that did
 not survive our own re-check of the underlying data. We are particularly grateful to
 Reviewer 3 for pointing out that the plugin was already announced in the original
@@ -40,8 +40,9 @@ they change numbers that appeared in the submitted version:
 2. **The precision paragraph quoted a range not covered by our data.** The submitted
    text reported deviations and Hamming distances "at *N* = 56, 58, and 60"; the
    verification tables in fact cover *N* = 40…54 (single-GPU) and *N* = 60
-   (distributed). The paragraph has been rewritten around the nine instances that are
-   actually verified, which broadens rather than narrows the claim.
+   (distributed). The paragraph has been rewritten around the instances that are actually
+   verified — and, with the CPU heuristic described under R2.1, the verification now covers
+   all twenty stored runs, *N* = 38…60, so the claim ends up broader than the one withdrawn.
 
 All changes are confined to the revised manuscript; a `latexdiff` against the submitted
 version is provided.
@@ -71,14 +72,19 @@ Three changes:
   R2.2), and it closes by pointing back to that caveat.
 
 We have also added an explicit limitation (item (v) of *Limitations and intended scope*)
-stating that eight GPUs across two nodes is the extent of the hardware available to us,
-so the behaviour of the controller at larger allocations is a projection derived from
-the structure of the implementation and not a measurement.
+stating that eight GPUs across two nodes is the extent of the hardware available to us, so
+that while the controller has been measured directly up to 2^16 subproblems, the behavior of
+the *search* phase at such allocations remains an extrapolation from eight devices.
 
-> `[TODO]` If experiment **E3** (controller cost as a function of the number of
-> subproblems, CPU-only, no GPUs required) is run before resubmission, replace the
-> structural argument in *Controller cost* with the measured curve and say so here. That
-> is the one measurement that converts this answer from qualitative to quantitative.
+The projection is now also bounded from below by a measurement rather than only by an
+argument. Table 4 of the revision reports the controller cost for up to 2^16 subproblems,
+measured on a CPU: at that scale the dispatch and merge together cost about 6 s, so for the
+projections above they inflate the wall-clock time by a few percent rather than dominating it.
+
+> `[TODO]` **E3 is done** (`benchmarks/exp_controller_cost.py`, results in
+> `benchmarks/results/controller_cost/`). What is still an extrapolation is the *search* phase
+> beyond eight GPUs; experiment **E1** would add the measured efficiency-versus-GPU-count curve
+> that makes the linear-scaling assumption behind the projection explicit.
 
 ### R1.2 — "The paper positions the plugin as a ground-truth oracle and briefly checks results against SBM, but it does not provide a broad benchmark against multiple exact or heuristic solvers across different instance families."
 
@@ -169,14 +175,29 @@ The benchmark and plotting scripts in `code/` read from these paths, so Fig. 1 a
 Table 3 can be regenerated from a single checkout with no external repository involved.
 The manuscript now points at this one location consistently.
 
-Regarding the SBM parameters specifically: rather than relying on a link, the revision
-states the full configuration inline in the paragraph *Verification against an
-independent solver* — a chaotic-variant, discrete simulated-bifurcation solver, with
-discrete and ternary update rules, automatic time-step tuning, single-precision
-arithmetic and Kerr and heating terms disabled, executed on a single H100 GPU with
-2^12 = 4096 parallel replicas and 3000 integration steps, reporting the lowest-energy
-replica. We believe a parameter list in the paper is more durable than a pointer to a
-script.
+Regarding the SBM parameters specifically, we have done two things. First, the revision
+states the full configuration inline in the paragraph *Verification against an independent
+solver* — a chaotic-variant, discrete simulated-bifurcation solver, with discrete and ternary
+update rules, automatic time-step tuning, single-precision arithmetic and Kerr and heating
+terms disabled, executed on a single H100 GPU with 2^12 = 4096 parallel replicas and 3000
+integration steps, reporting the lowest-energy replica; a parameter list in the paper is more
+durable than a pointer to a script.
+
+Second, and more usefully, we **reimplemented the same discrete dynamics from scratch in
+NumPy** and ship it as `benchmarks/sbm.py`, driven by `benchmarks/verify_sbm.py`. This removes
+the dependency the reviewer's comment exposed: the verification can now be reproduced by
+anyone, on a CPU, with nothing but the article repository. Because all replicas are integrated
+simultaneously, one step is a single dense (N×N)(N×4096) product, so the whole run costs
+O(N² · replicas · steps) — independent of the exponential cost of *certifying* the optimum, and
+a matter of seconds even at N = 60.
+
+The reimplementation reproduces the published record and extends it. With the same replica and
+step counts it returns configurations **identical** to the certified ground states on all nine
+instances the original tables cover, with energies agreeing to 3e-14, and it reaches the
+certified optimum on **all twenty** stored brute-force runs, N = 38…60. The verification
+paragraph and the precision paragraph have been widened accordingly, and both sets of tables
+are shipped: `bf_sbm_verification_*` from the GPU solver and `bf_sbm_cpu_verification_*` from
+the CPU one.
 
 > `[TODO]` This answer requires the article repository to be **publicly reachable** at
 > the URL given by `\datarepo` in the preamble (or archived with a DOI) at the moment of
@@ -199,7 +220,7 @@ Three points, all now in the manuscript:
    sequential concatenation of the 2^k partial sample sets on the controller, and
    retrieves them one object reference at a time, so both the merge and the transfer are
    linear in the number of subproblems. We prefer to state this plainly rather than let
-   it be discovered: the hierarchical reduction that would restore logarithmic behaviour
+   it be discovered: the hierarchical reduction that would restore logarithmic behavior
    is future work, and it is now item (i) of the conclusions rather than a passing remark.
 2. **We have defined what the reported times measure.** This was not stated in the
    submitted version. For the single-GPU sampler the timer brackets the CUDA search
@@ -225,26 +246,32 @@ that it requires *k* to grow together with the device count so that the per-GPU 
 2^{N−k} stays fixed — which is exactly what the suggested *N* = 50–53 sweep at 1, 2, 4
 and 8 GPUs achieves. It is item (ii) of the conclusions.
 
-> `[TODO — MEASUREMENTS MISSING, BUT THE DEFECT IS NOW FIXED IN CODE.]`
+**We have now measured the controller directly, and the answer is more interesting than
+either of us expected.** Because the number of subproblems is set by `num_fixed_vars` and is
+independent of the device count, the controller can be exercised on a CPU with the partial
+results workers would have returned — no large allocation needed. Table 4 of the revision
+reports that sweep up to 2^16 subproblems. The reviewer's expectation of linear growth is
+confirmed for the merge itself (we fit O(P^0.9)), but its constant is small: at 2^16
+subproblems the whole controller cost is about 6 s, of which the concatenation is 1.6 s.
+The dominant term turns out to be Ray's per-task scheduling — dispatching and collecting 2^16
+*empty* tasks already costs 4.8 s — and that floor applies to dispatching the subproblems
+themselves, so it is a property of distributing the work at all rather than of how results are
+merged. We have therefore rewritten the future-work item: the target is the scheduling
+overhead, for instance by grouping several fixed assignments per task, not the merge.
+
+We also implemented the hierarchical merge, and report honestly that it is *not* uniformly
+better: below roughly 10^4 subproblems it is slower than the direct merge, because it replaces
+a cheap local concatenation with several rounds of task scheduling; above that its logarithmic
+depth wins. Both strategies ship, the direct one is the default, and the measured crossover is
+documented.
+
+> `[TODO — E1 AND E2 STILL MISSING.]`
 >
-> As of 2026-08-02 the implementation no longer has the flaw described above, which changes
-> what this answer should say. The merge is now performed by a hierarchy of Ray tasks
-> (`merge_batch_size`, default 8) instead of a sequential concatenation on the controller;
-> `ray.get` is called once on the whole list rather than per reference; and the serialized
-> BQM is put into the object store once instead of 2^k times — a second controller-side
-> O(2^k) cost we had not noticed. The sampler now also reports
-> `dispatch_/solve_/merge_/total_time_in_seconds`, `num_subproblems` and `num_merge_rounds`
-> in `SampleSet.info`, so **experiment E3 reduces to reading `info`**. Passing
-> `merge_batch_size >= 2**k` reproduces the 0.0.5 behaviour for comparison with Fig. 1.
->
-> Consequences for this section: the honest framing is now "the concern was justified, the
-> implementation has been changed accordingly, and here are the numbers" — but the numbers
-> still do not exist. Experiments **E1** (GPU-count sweep), **E2** (weak scaling exactly as
-> the reviewer designed it) and **E3** (controller cost for *k* = 3…16) are specified in
-> `REVIEW_ANALYSIS.md` §3 and cost roughly one day of cluster time in total. Two manuscript
-> corrections also follow: the timing definition must no longer say the merge happens "on the
-> controller", and conclusions item (i) must stop presenting the hierarchical reduction as
-> future work.
+> E3 is done. The GPU-side experiments are not: **E1** (GPU-count sweep with the node-layout
+> comparison) and **E2** (weak scaling exactly as the reviewer designed it, N = 50…53 at 1, 2,
+> 4 and 8 GPUs) are implemented in `benchmarks/exp_strong_scaling.py` and
+> `benchmarks/exp_weak_scaling.py` and need roughly one day of cluster time. Until they are
+> run, this section should not claim a weak-scaling result.
 
 ### R2.3 — "While I could locate the code metadata table, I couldn't find the corresponding software metadata table."
 
@@ -357,7 +384,7 @@ we can only be transparent.**
 
 Two nodes with four H100s each, connected by standard Ethernet, is the entire cluster
 available to us. Rather than leave that implicit, limitation (v) now states it, and adds
-that the behaviour of the controller at larger allocations is consequently a projection
+that the behavior of the controller at larger allocations is consequently a projection
 based on the structure of the implementation rather than a measurement.
 
 On the substance of the concern, the revision separates the two components: the search
@@ -374,11 +401,17 @@ R1.1: 2^14 instead of 2^16 GPUs, the observation that 2^16 exceeds any existing 
 and an explicit statement that at 2^14 workers the sequential merge is expected to become
 the dominant term.
 
-> `[TODO]` Experiment **E3** measures the controller for *k* up to 16 without needing
-> 2^16 GPUs and is the only way to answer "does the controller become a bottleneck" with
-> data on our hardware. Strongly recommended before resubmission; if the result is
-> negative for the current implementation, reporting it together with the planned fix is
-> a better outcome than another round of projections.
+On the specific question of whether the controller becomes a bottleneck, we can now answer
+with data rather than with a projection: it does not, at least not first. Table 4 of the
+revision measures the controller up to 2^16 subproblems and finds a total cost of about 6 s
+there, against Ray's 4.8 s task-scheduling floor for the same number of tasks. The
+centralization is real but small; what grows and would eventually bind is per-task scheduling,
+which the search dispatch pays as well.
+
+> `[TODO]` The node-layout half of this answer still needs running. The harness distinguishes
+> 1x2 from 2x1 and 1x4 from 2x2 — the same GPU count with and without a node boundary — which
+> is the closest measurement of multi-node behavior available on a two-node cluster. Until E1
+> is run, keep limitation (v) as it stands.
 
 ### R3.4 — "QUBO instances are not evaluated in the paper, even though they are an important target use case for the framework."
 
