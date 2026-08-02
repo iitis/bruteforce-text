@@ -311,3 +311,5 @@ __pycache__
 # data under benchmarks/ is tracked.
 /instances
 /results
+# Benchmark launcher logs
+benchmarks/logs/

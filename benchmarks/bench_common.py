@@ -283,3 +283,68 @@ def load_results(experiment: str) -> list:
         with open(path) as fd:
             out.append(json.load(fd))
     return out
+
+
+# --------------------------------------------------------------------------------------
+# Small command line interface, used by the launcher scripts
+# --------------------------------------------------------------------------------------
+def _cli_topology() -> int:
+    print(json.dumps(detect_topology(), indent=2))
+    return 0
+
+
+def _cli_wait(expected_label: str, timeout_seconds: float) -> int:
+    """Block until the Ray cluster reports the expected topology.
+
+    ``ray start`` returns as soon as the local daemon is up, so a worker node may not have
+    registered its GPUs yet when the next command runs. Polling for the expected label
+    removes that race.
+    """
+    from time import perf_counter, sleep
+
+    deadline = perf_counter() + timeout_seconds
+    last = None
+    while perf_counter() < deadline:
+        try:
+            topology = detect_topology()
+            last = topology["label"]
+            if last == expected_label:
+                print(f"cluster ready: {last} ({topology['total_gpus']} GPU(s))")
+                return 0
+        except Exception as error:  # cluster not up yet
+            last = f"unavailable ({error})"
+        sleep(2)
+    print(
+        f"timed out after {timeout_seconds:g}s waiting for topology {expected_label}; "
+        f"last seen: {last}",
+        file=sys.stderr,
+    )
+    return 1
+
+
+def _cli_environment() -> int:
+    print(json.dumps(environment_descriptors(), indent=2))
+    return 0
+
+
+def main(argv=None) -> int:
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Cluster and environment introspection.")
+    sub = parser.add_subparsers(dest="command", required=True)
+    sub.add_parser("topology", help="print the detected Ray GPU topology as JSON")
+    sub.add_parser("environment", help="print the environment descriptors as JSON")
+    wait = sub.add_parser("wait", help="block until the cluster reports a given topology")
+    wait.add_argument("label", help="expected topology label, e.g. 2x4")
+    wait.add_argument("--timeout", type=float, default=120.0)
+
+    args = parser.parse_args(argv)
+    if args.command == "topology":
+        return _cli_topology()
+    if args.command == "environment":
+        return _cli_environment()
+    return _cli_wait(args.label, args.timeout)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

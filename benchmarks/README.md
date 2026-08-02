@@ -17,8 +17,83 @@ benchmarks/
 ├── exp_precision.py            E4  float32 against float64
 ├── exp_qubo.py                 E5  QUBO instances alongside Ising ones
 ├── exp_instance_families.py    E6  certified verification across instance families
+├── scripts/                    launchers: one per experiment, plus cluster control
 ├── instances/                  instance files in COO format
 └── results/                    raw results, one directory per experiment
+```
+
+## Launchers
+
+`scripts/` wraps everything below so that a full revision run is a handful of commands. They
+assume a two-node cluster and are **always started from the head node**; the worker is driven
+over SSH. Defaults live in `scripts/config.sh` and every one of them can be overridden from
+the environment:
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `HEAD_IP` | `10.40.40.105` | head node, where the scripts are launched |
+| `WORKER_IP` | `10.40.40.106` | worker node, started over SSH |
+| `GPUS_PER_NODE` | `4` | GPUs per node; topologies are masked down from this |
+| `CONDA_ENV` | `omnisolver-bruteforce-bench` | environment activated on both nodes |
+| `TOPOLOGIES` | `1x1 1x2 2x1 1x4 2x2 2x4` | series used by the scaling experiments |
+| `SKIP_EXISTING` | `1` | skip a point whose result file already exists |
+
+Prerequisites: passwordless SSH from the head to the worker, and the same environment with the
+plugin installed on **both** nodes — Ray ships no code, so a worker without the package cannot
+solve a subproblem. `scripts/preflight.sh` checks all of that, and compares the two nodes'
+CUDA, driver and package versions, before any GPU time is spent.
+
+```shell
+cd /path/to/bruteforce-text
+
+./benchmarks/scripts/preflight.sh              # verify both nodes, ~10 s
+./benchmarks/scripts/run_all.sh                # every experiment, ~9-10 h; the Fig. 1 sweep is left out
+./benchmarks/scripts/run_all.sh --cpu-only     # only what needs no GPU
+```
+
+Individually, cheapest first:
+
+```shell
+./benchmarks/scripts/run_verification.sh          # brute force vs CPU heuristic    ~10 min, no GPU
+./benchmarks/scripts/run_e6_instance_families.sh  # E6 families vs certified optima ~18 min, 1 GPU
+./benchmarks/scripts/run_e3_controller_cost.sh    # E3 controller cost to 2^16      ~30 min, no GPU
+./benchmarks/scripts/run_e4_precision.sh          # E4 float32 vs float64           ~30 min, 1 GPU
+./benchmarks/scripts/run_e5_qubo.sh               # E5 QUBO alongside Ising          ~1.6 h, 1 GPU
+./benchmarks/scripts/run_e1_strong_scaling.sh     # E1 all six topologies            ~2 h
+./benchmarks/scripts/run_e2_weak_scaling.sh       # E2 all six topologies            ~4 h
+./benchmarks/scripts/run_manuscript_figure.sh     # Fig. 1 sweep                     see below
+```
+
+Times are derived from the measured single-GPU point at *N* = 50 (2112 s); `run_all.sh`
+without `--with-figure` therefore takes **roughly 9 to 10 hours**, dominated by E2 and E1.
+
+Each writes a timestamped log to `benchmarks/logs/`, restarts or stops the Ray cluster as the
+experiment requires, and skips points that already have a result file, so an interrupted run
+can simply be restarted. `run_e1_*` and `run_e2_*` print a speedup/efficiency summary at the
+end.
+
+The Fig. 1 sweep is the only multi-day item, and only for points that are missing: with the
+published results in place it skips every size and just redraws the figure in seconds. It costs
+days only if `results/` has been emptied, since *N* = 58 alone is ≈19 h and *N* = 60 ≈3.15 days.
+To redraw without touching the solver at all:
+
+```shell
+./benchmarks/scripts/run_manuscript_figure.sh --plot-only
+```
+
+To regenerate data from scratch, run it under `tmux` and cap the size:
+
+```shell
+tmux new -s figure
+./benchmarks/scripts/run_manuscript_figure.sh --max-size 54
+```
+
+The cluster can also be driven by hand, which is what the experiment scripts do internally:
+
+```shell
+./benchmarks/scripts/ray_cluster.sh start 2x1   # 1 GPU on each of the two nodes
+./benchmarks/scripts/ray_cluster.sh status      # detected topology, as JSON
+./benchmarks/scripts/ray_cluster.sh stop
 ```
 
 ## Setup
@@ -76,7 +151,7 @@ ray stop --force; CUDA_VISIBLE_DEVICES=0,1,2,3 ray start --head --port=6379 --nu
 ```
 
 `1x2` against `2x1`, and `1x4` against `2x2`, hold the GPU count fixed while crossing a node
-boundary. That difference is the closest available measurement of the multi-node behaviour the
+boundary. That difference is the closest available measurement of the multi-node behavior the
 reviewers asked about on a two-node cluster.
 
 ## Experiments
@@ -100,8 +175,10 @@ python benchmarks/exp_strong_scaling.py --size 50 --topology 2x2
 python benchmarks/exp_strong_scaling.py --size 50 --topology 2x4
 ```
 
-Expect roughly 35 minutes in total at N = 50 on H100-class GPUs. The `1x1` distributed point is
-worth having next to `--single-gpu`: the difference between them is pure Ray overhead.
+Expect roughly 2 hours in total at N = 50 on H100-class GPUs: the series is dominated by its
+own reference points, since the single-GPU run and the `1x1` run each take about 35 minutes
+while `2x4` takes under 5. The `1x1` distributed point is worth having next to `--single-gpu`:
+the difference between them is pure Ray overhead.
 
 ### E2 - weak scaling (reviewer 2)
 
