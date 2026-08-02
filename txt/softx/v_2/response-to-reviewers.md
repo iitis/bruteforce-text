@@ -10,11 +10,14 @@ solvers — a numerically stabilized, distributed GPU exhaustive-search plugin*
 
 > **INTERNAL — REMOVE BEFORE SUBMISSION.**
 > Blocks marked `[TODO]` depend on work that is not finished yet. Each one states
-> exactly what has to exist before the surrounding paragraph is truthful. Items still
-> open at the time of writing: **R2.5** (float32/float64 comparison), **R3.6**
-> (`LICENSE` in the plugin repository), **R3.7** (plugin documentation), the public
-> location of the data, and the optional experiments E1–E3, E5, E6 from
-> `REVIEW_ANALYSIS.md`. Statuses are tracked in `REVIEW_ANALYSIS.md` §0.
+> exactly what has to exist before the surrounding paragraph is truthful.
+>
+> Updated 2026-08-02, after the plugin-repository work: the code side of **R3.6**, **R3.7**
+> and **R2.5** is done, so what remains for those three is *publishing* (tag `0.0.6`,
+> deploy the documentation) and *one measurement* (E4). Still open: the public location of
+> the data, experiments E1–E6, and the five wording corrections in the manuscript that the
+> code changes force (see `REVIEW_ANALYSIS.md` §6, Etap 6). Statuses are tracked in
+> `REVIEW_ANALYSIS.md` §0.
 
 ---
 
@@ -222,14 +225,26 @@ that it requires *k* to grow together with the device count so that the per-GPU 
 2^{N−k} stays fixed — which is exactly what the suggested *N* = 50–53 sweep at 1, 2, 4
 and 8 GPUs achieves. It is item (ii) of the conclusions.
 
-> `[TODO]` This is the weakest of our answers: the manuscript argues from the structure
-> of the code, not from measurements. Experiments **E1** (GPU-count sweep), **E2** (weak
-> scaling as designed by the reviewer) and **E3** (controller cost for *k* = 3…16,
-> CPU-only) are all specified in `REVIEW_ANALYSIS.md` §3 and cost roughly one day of
-> cluster time in total. If any of them is run, report the numbers here and in the
-> *Controller cost* paragraph; E3 in particular would let us state the threshold at which
-> the merge starts to dominate instead of merely asserting that one exists. If none is
-> run, this answer should be presented for what it is.
+> `[TODO — MEASUREMENTS MISSING, BUT THE DEFECT IS NOW FIXED IN CODE.]`
+>
+> As of 2026-08-02 the implementation no longer has the flaw described above, which changes
+> what this answer should say. The merge is now performed by a hierarchy of Ray tasks
+> (`merge_batch_size`, default 8) instead of a sequential concatenation on the controller;
+> `ray.get` is called once on the whole list rather than per reference; and the serialized
+> BQM is put into the object store once instead of 2^k times — a second controller-side
+> O(2^k) cost we had not noticed. The sampler now also reports
+> `dispatch_/solve_/merge_/total_time_in_seconds`, `num_subproblems` and `num_merge_rounds`
+> in `SampleSet.info`, so **experiment E3 reduces to reading `info`**. Passing
+> `merge_batch_size >= 2**k` reproduces the 0.0.5 behaviour for comparison with Fig. 1.
+>
+> Consequences for this section: the honest framing is now "the concern was justified, the
+> implementation has been changed accordingly, and here are the numbers" — but the numbers
+> still do not exist. Experiments **E1** (GPU-count sweep), **E2** (weak scaling exactly as
+> the reviewer designed it) and **E3** (controller cost for *k* = 3…16) are specified in
+> `REVIEW_ANALYSIS.md` §3 and cost roughly one day of cluster time in total. Two manuscript
+> corrections also follow: the timing definition must no longer say the merge happens "on the
+> controller", and conclusions item (i) must stop presenting the hierarchical reduction as
+> future work.
 
 ### R2.3 — "While I could locate the code metadata table, I couldn't find the corresponding software metadata table."
 
@@ -259,23 +274,30 @@ script refers to an external repository any more.
 
 ### R2.5 — "The manuscript could also benefit from providing speedup with float32 numbers for `num_states = 1` by conducting the simulation at the default float64 precision. This will help users … quantify the expected slowdown."
 
-> `[TODO — NOT YET ADDRESSED. Do not send this section as it stands.]`
+> `[TODO — ONE MEASUREMENT MISSING. Do not send this section as it stands.]`
 >
-> The measurement has not been made. Two things are needed:
-> 1. a one-line fix in `DistributedBruteforceGPUSampler.sample`, where the SPIN→BINARY
->    recursion passes eight positional arguments and silently drops `dtype`, so SPIN
->    inputs always run in `float32` regardless of what the caller requests
->    (`REVIEW_ANALYSIS.md` §4.3);
-> 2. experiment **E4**: single-GPU, `num_states=1`, *N* = 40…46, both `dtype` values
->    (~15 min of GPU time).
+> The code that blocked this is fixed (2026-08-02); what is missing is experiment **E4**:
+> single-GPU, `num_states=1`, *N* = 40…46, both `dtype` values, roughly 15 minutes of GPU
+> time.
 >
-> What the revision *does* contain is the qualitative half of the answer, in limitation
-> (iii): the stabilization applies only to the `float32` path and engages when the size
-> seen by the kernel is at least 40 variables, so `float64` is a different numerical path
-> and not merely a slower one — a distinction worth stating alongside whatever slowdown
-> factor E4 produces. Draft answer once the numbers exist: report the measured
-> `float32`/`float64` ratio in *Precision of the reported energies*, note that the
-> `num_states > 1` path is separate, and point users at the `dtype` argument.
+> Two defects had to be repaired first, and both are worth mentioning in the final answer
+> because they change what a user gets:
+> 1. the SPIN→BINARY recursion in `DistributedBruteforceGPUSampler.sample` passed eight
+>    positional arguments and silently dropped `dtype`, so SPIN inputs always ran in
+>    `float32`. All arguments are now forwarded by keyword, with a regression test that
+>    discriminates the two precisions (float32 → 2.2e-7 from the exact optimum,
+>    float64 → 3.6e-15);
+> 2. more seriously, the CLI's `--dtype` never worked: `gpu.yml` declares it as a string
+>    and NumPy resolves both `"float"` and `"double"` to `float64`, so from the command line
+>    *both* choices ran in double precision and the stabilized single-precision path was
+>    unreachable. `"float"` now means single precision, as documented.
+>
+> The revision already contains the qualitative half of the answer, in limitation (iii):
+> the stabilization applies only to the `float32` path and engages when the size seen by the
+> kernel is at least 40 variables, so `float64` is a different numerical path and not merely
+> a slower one. Draft answer once the numbers exist: report the measured `float32`/`float64`
+> ratio in *Precision of the reported energies*, note that the `num_states > 1` path is
+> separate, and point users at the `dtype` argument.
 
 ---
 
@@ -383,38 +405,46 @@ the measurements (NVIDIA H100 96 GB, compute capability `sm_90`).
 
 ### R3.6 — "The license listed in C3 does not exist in C2."
 
-> `[TODO — NOT YET ADDRESSED. Blocker.]`
+**The reviewer is right, and the repository has been corrected.** The Apache-2.0 licence
+text is now present, declared in the package metadata (`license` field plus the OSI
+classifier), included in the distribution, and carried as per-file SPDX headers in every
+distributed source file. The manuscript's C1–C3 and S1–S3 refer to the release that
+contains it.
+
+> `[TODO — PUBLISHING STEP MISSING.]`
 >
-> Confirmed: the repository at tag `0.0.5` contains no `LICENSE` file, `pyproject.toml`
-> declares no `license` field or classifier, and PyPI shows no license metadata, while C3
-> claims Apache-2.0. Required before resubmission:
-> 1. add `LICENSE` (Apache-2.0) to the plugin repository;
-> 2. add `license = {file = "LICENSE"}` and the
->    `License :: OSI Approved :: Apache Software License` classifier to `pyproject.toml`;
-> 3. add `include LICENSE` to `MANIFEST.in`;
-> 4. add per-file license headers to the sources (the editorial office checks this);
-> 5. cut release `0.0.6` and update C1, C2, S1 and S2 in the manuscript.
->
-> Draft answer once done: "We thank the reviewer for catching this. The repository now
-> contains the Apache-2.0 licence text, declared in the package metadata and included in
-> the distribution; C1–C3 and S1–S3 have been updated to release 0.0.6."
+> The repository work is done (`LICENSE`, `pyproject.toml` metadata, `MANIFEST.in`, SPDX
+> headers in 13 files; `validate-pyproject` passes), but it is **not released yet**. Before
+> sending: (1) confirm the copyright holder — the headers currently say "The Omnisolver
+> developers", the alternative being the institutions; (2) tag `0.0.6` (the version is
+> derived by `setuptools_scm`, so the tag is the release); (3) update C1, C2, S1, S2 and the
+> phrase "tagged `0.0.5` and published on PyPI" in the contribution list. Until the tag
+> exists, the paragraph above is a promise rather than a fact.
 
 ### R3.7 — "The documentation linked in C7 is currently almost empty, contains several 404 errors, and is of little practical use in its current state."
 
-> `[TODO — NOT YET ADDRESSED. Blocker.]`
+**We agree, and the documentation has been rewritten.** The reviewer's assessment was, if
+anything, generous: the single page that existed was a copy of the *framework's* landing
+page, describing Omnisolver in general and installing a different plugin in its quickstart.
+The plugin now has its own front page and a user guide covering installation, single- and
+multi-GPU usage, the meaning and selection of every sampler parameter, the size limits, the
+precision and stabilization semantics, and the reported timings; the reference manual is
+generated from the docstrings; and the build is exercised in continuous integration.
+
+> `[TODO — PUBLISHING STEP MISSING.]`
 >
-> Confirmed, with a diagnosis: C7 points at the *framework* documentation, whose redirect
-> terminates at version 0.0.3 and whose `plugins.md` returns 404. The plugin has its own
-> `mkdocs.yml`, but its `nav:` lists `docs/userguide.md` and `docs/plugins.md`, neither of
-> which exists, so the build is broken; `.readthedocs.yml` references a missing
-> `docs/requirements.txt`, which is why the Read the Docs build is stuck on a 2023
-> version still titled "Welcome to omnisolver-pt documentation!". There is no workflow
-> that publishes documentation.
+> Done in the repository: `docs/index.md` rewritten; `docs/userguide.md` written;
+> `mkdocs.yml` repaired (dead `plugins.md` nav entry, missing `stylesheets/extra.css`, wrong
+> `repo_url`, defunct polyfill.io, fragile `with-pdf`); two configuration errors that broke
+> the build on their own fixed (renderer options nested under `docstring_options`, and a
+> Sphinx dependency stack declared for an mkdocs project); `.readthedocs.yml` removed —
+> it never built, and RTD *cannot* build these docs because mkdocstrings imports the compiled
+> CUDA extension — replaced by a GitHub Pages workflow using `mike` on the CUDA-capable
+> runner. `mkdocs build --strict` succeeds.
 >
-> Minimum fix: write `docs/userguide.md` (extended README plus sections on the
-> distributed sampler and on choosing `num_fixed_vars`/`suffix_size`) and
-> `docs/plugins.md`, repair `.readthedocs.yml` or add a GitHub Pages workflow using
-> `mike`, publish, and point C7 and S6 at the result.
+> Before sending: run the workflow, put the published URL into C7 and S6
+> (`https://euro-hpc-pl.github.io/omnisolver-bruteforce`), and archive or redirect the stale
+> Read the Docs project — deleting the config does not remove the site.
 
 ### R3.8 — "There are still a few minor typographical and grammatical errors throughout the manuscript. A careful proofreading would help eliminate them."
 
@@ -452,3 +482,19 @@ throughout.
 | *Limitations* item (i) corrected: *N* − *k* ≤ 64, hence *N* ≤ 64 + *k* | own re-check (removes an internal contradiction with the *N* ≲ 76 projection) |
 | *Limitations* items (iii) and (v) added: stabilization threshold; hardware extent | R2.5, R3.3 |
 | Full proofread | R3.8 |
+
+## Summary of changes to the software
+
+| Change | Driven by |
+|---|---|
+| Apache-2.0 `LICENSE`, package licence metadata and per-file SPDX headers | R3.6 |
+| Plugin documentation rewritten (front page, user guide, reference manual) and published from CI | R3.7 |
+| Continuous integration now actually runs the test suite, on a CUDA 12.4 + 12.5 matrix | R3.5, and the manuscript's validation claim |
+| Tests added for the stabilized `float32` path (*N* = 40) and for the distributed sampler | R2.5, R2.2 |
+| `dtype` forwarded through the SPIN recursion; `"float"` from the CLI now means single precision | R2.5 |
+| `ray` declared as an optional dependency of the distributed sampler | R2.1 |
+| Hierarchical merge replacing the sequential controller-side concatenation | R2.2, R3.3 |
+| Per-phase timings (`dispatch`/`solve`/`merge`/`total`) reported in `SampleSet.info` | R2.2 |
+| `N - k <= 64` and `suffix_size` validated instead of silently truncating | own re-check |
+| CLI exposes `num_steps_per_kernel` and `partial_diff_buffer_depth`, so the reported runs are reproducible from the command line | R2.4 |
+| README, CLI help text and example instance corrected | R3.8 |
