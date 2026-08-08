@@ -10,6 +10,12 @@
 set -uo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/config.sh"
 
+# Import checks run from a neutral directory on purpose: with a package's own source tree as
+# the working directory, "./omnisolver" shadows the installed package and every import check
+# fails with a missing compiled extension even when the install is perfectly fine. $HOME is
+# left unexpanded here so that it is resolved on whichever machine ends up running the check.
+NEUTRAL='cd "$HOME" && '
+
 failures=0
 check() {
     local label="$1"; shift
@@ -26,13 +32,13 @@ check() {
 log "head node: ${HEAD_IP}"
 check "conda environment activates" bash -lc "${ACTIVATE_CMD}"
 check "omnisolver-bruteforce imports" bash -lc \
-    "${ACTIVATE_CMD} && ${PYTHON} -c 'import omnisolver.bruteforce.gpu.sampler'"
+    "${NEUTRAL}${ACTIVATE_CMD} && ${PYTHON} -c 'import omnisolver.bruteforce.gpu.sampler'"
 check "distributed sampler imports (needs ray)" bash -lc \
-    "${ACTIVATE_CMD} && ${PYTHON} -c 'import omnisolver.bruteforce.gpu.distributed'"
+    "${NEUTRAL}${ACTIVATE_CMD} && ${PYTHON} -c 'import omnisolver.bruteforce.gpu.distributed'"
 check "dimod, numpy, numba import" bash -lc \
-    "${ACTIVATE_CMD} && ${PYTHON} -c 'import dimod, numpy, numba'"
+    "${NEUTRAL}${ACTIVATE_CMD} && ${PYTHON} -c 'import dimod, numpy, numba'"
 check "CUDA device visible" bash -lc \
-    "${ACTIVATE_CMD} && ${PYTHON} -c 'from numba import cuda; assert cuda.is_available()'"
+    "${NEUTRAL}${ACTIVATE_CMD} && ${PYTHON} -c 'from numba import cuda; assert cuda.is_available()'"
 check "nvidia-smi reports ${GPUS_PER_NODE} GPU(s)" bash -lc \
     "test \$(nvidia-smi -L | wc -l) -eq ${GPUS_PER_NODE}"
 
@@ -41,11 +47,11 @@ check "ssh reachable (no password)" ${SSH} "${WORKER_IP}" true
 if ${SSH} "${WORKER_IP}" true >/dev/null 2>&1; then
     check "conda environment activates" worker_run "${ACTIVATE_CMD}"
     check "omnisolver-bruteforce imports" worker_run \
-        "${ACTIVATE_CMD} && ${PYTHON} -c 'import omnisolver.bruteforce.gpu.sampler'"
+        "${NEUTRAL}${ACTIVATE_CMD} && ${PYTHON} -c 'import omnisolver.bruteforce.gpu.sampler'"
     check "distributed sampler imports (needs ray)" worker_run \
-        "${ACTIVATE_CMD} && ${PYTHON} -c 'import omnisolver.bruteforce.gpu.distributed'"
+        "${NEUTRAL}${ACTIVATE_CMD} && ${PYTHON} -c 'import omnisolver.bruteforce.gpu.distributed'"
     check "CUDA device visible" worker_run \
-        "${ACTIVATE_CMD} && ${PYTHON} -c 'from numba import cuda; assert cuda.is_available()'"
+        "${NEUTRAL}${ACTIVATE_CMD} && ${PYTHON} -c 'from numba import cuda; assert cuda.is_available()'"
     check "nvidia-smi reports ${GPUS_PER_NODE} GPU(s)" worker_run \
         "test \$(nvidia-smi -L | wc -l) -eq ${GPUS_PER_NODE}"
 else
