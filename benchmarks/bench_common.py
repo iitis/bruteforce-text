@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 import os
 import platform
+import re
 import subprocess
 import sys
 import typing
@@ -51,8 +52,28 @@ def _package_version(name: str) -> typing.Optional[str]:
         return None
 
 
+def _nvcc_version() -> typing.Optional[str]:
+    """Version of the CUDA compiler on PATH.
+
+    This is the version that actually built the extension, and therefore the one to report as
+    the toolkit used for a measurement. It is not necessarily the runtime version that
+    :func:`_cuda_versions` reports: the runtime is whichever ``libcudart`` the process loads,
+    which can come from a pip or conda package newer than both the compiler and the driver.
+    """
+    try:
+        out = subprocess.run(
+            ["nvcc", "--version"], capture_output=True, text=True, timeout=30
+        )
+        if out.returncode != 0:
+            return None
+        match = re.search(r"release\s+(\d+\.\d+)", out.stdout)
+        return match.group(1) if match else None
+    except Exception:
+        return None
+
+
 def _cuda_versions() -> dict:
-    versions: dict = {"runtime": None, "driver": None, "devices": []}
+    versions: dict = {"nvcc": _nvcc_version(), "runtime": None, "driver": None, "devices": []}
     try:
         from numba import cuda
 

@@ -24,8 +24,15 @@
 # on PATH, which ray_cluster.sh relies on. The single quotes keep $(conda info --base)
 # unevaluated so that it resolves on whichever machine runs the command.
 # Override for a plain virtualenv, e.g. ACTIVATE_CMD='source /path/venv/bin/activate'.
+# Base prefix of the conda installation. Leave empty to auto-detect; set it if a node keeps
+# conda somewhere unusual, e.g. CONDA_BASE=/opt/miniconda3.
+: "${CONDA_BASE:=}"
 if [ -z "${ACTIVATE_CMD:-}" ]; then
-    ACTIVATE_CMD='source "$(conda info --base)/etc/profile.d/conda.sh" && conda activate '"${CONDA_ENV}"
+    # Tries, in order: an explicit CONDA_BASE, conda on PATH, then the usual prefixes. Needed
+    # because a non-interactive ssh shell often has neither the conda function nor conda on
+    # PATH, even on a node where the interactive shell has both.
+    # shellcheck disable=SC2016
+    ACTIVATE_CMD='__b="'"${CONDA_BASE}"'"; [ -z "$__b" ] && command -v conda >/dev/null 2>&1 && __b="$(conda info --base)"; for __c in "$__b" "$HOME/miniconda3" "$HOME/miniforge3" "$HOME/mambaforge" "$HOME/anaconda3" /opt/miniconda3 /opt/conda /usr/local/miniconda3; do [ -n "$__c" ] && [ -f "$__c/etc/profile.d/conda.sh" ] && { . "$__c/etc/profile.d/conda.sh"; break; }; done; command -v conda >/dev/null 2>&1 || { echo "conda not found; set CONDA_BASE or ACTIVATE_CMD" >&2; exit 1; }; conda activate '"${CONDA_ENV}"
 fi
 : "${PYTHON:=python}"
 

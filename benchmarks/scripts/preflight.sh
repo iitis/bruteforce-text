@@ -71,8 +71,8 @@ except Exception:
     print("      (no data)"); raise SystemExit(0)
 cuda = env.get("cuda", {})
 devices = ", ".join(sorted({d["name"] for d in cuda.get("devices", [])})) or "none"
-print(f"      python {env.get('python')}  cuda runtime {cuda.get('runtime')}  "
-      f"driver {cuda.get('driver')}")
+print(f"      python {env.get('python')}  nvcc {cuda.get('nvcc')}  "
+      f"cuda runtime {cuda.get('runtime')}  driver {cuda.get('driver')}")
 print(f"      gpus: {devices}")
 pkgs = env.get("packages", {})
 print("      " + "  ".join(f"{k}={v}" for k, v in pkgs.items() if v))
