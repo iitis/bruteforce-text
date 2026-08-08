@@ -17,9 +17,16 @@
 
 # --- software --------------------------------------------------------------------------
 : "${CONDA_ENV:=omnisolver-bruteforce-bench}"
-# Command that makes ${CONDA_ENV} active in a fresh shell. Adjust if conda lives elsewhere
-# or if you use a plain virtualenv (then set it to e.g. 'source /path/venv/bin/activate').
-: "${ACTIVATE_CMD:=conda activate ${CONDA_ENV}}"
+# Command that makes ${CONDA_ENV} active in a fresh, *non-interactive* shell. Plain
+# "conda activate" is not enough there: unless "conda init" has been run for that shell, conda
+# refuses with "Run 'conda init' before 'conda activate'". Sourcing conda's profile script
+# first works whether or not init has been run, and it also puts the environment's own "ray"
+# on PATH, which ray_cluster.sh relies on. The single quotes keep $(conda info --base)
+# unevaluated so that it resolves on whichever machine runs the command.
+# Override for a plain virtualenv, e.g. ACTIVATE_CMD='source /path/venv/bin/activate'.
+if [ -z "${ACTIVATE_CMD:-}" ]; then
+    ACTIVATE_CMD='source "$(conda info --base)/etc/profile.d/conda.sh" && conda activate '"${CONDA_ENV}"
+fi
 : "${PYTHON:=python}"
 
 # --- paths -----------------------------------------------------------------------------
