@@ -46,7 +46,7 @@ device_mask() {
 
 cmd_stop() {
     log "stopping Ray on head (${HEAD_IP})"
-    ray stop --force >/dev/null 2>&1 || true
+    "${RAY}" stop --force >/dev/null 2>&1 || true
     if ${SSH} "${WORKER_IP}" true 2>/dev/null; then
         log "stopping Ray on worker (${WORKER_IP})"
         worker_run "${ACTIVATE_CMD} && ray stop --force" >/dev/null 2>&1 || true
@@ -68,7 +68,7 @@ cmd_start() {
     [ "${RAY_DASHBOARD}" = "1" ] && dashboard_flag="--include-dashboard=true"
 
     log "starting Ray head on ${HEAD_IP} with ${GPUS} GPU(s) (CUDA_VISIBLE_DEVICES=${mask})"
-    CUDA_VISIBLE_DEVICES="${mask}" ray start --head \
+    CUDA_VISIBLE_DEVICES="${mask}" "${RAY}" start --head \
         --node-ip-address="${HEAD_IP}" \
         --port="${RAY_PORT}" \
         --num-gpus="${GPUS}" \

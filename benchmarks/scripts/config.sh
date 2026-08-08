@@ -34,7 +34,19 @@ if [ -z "${ACTIVATE_CMD:-}" ]; then
     # shellcheck disable=SC2016
     ACTIVATE_CMD='__b="'"${CONDA_BASE}"'"; [ -z "$__b" ] && command -v conda >/dev/null 2>&1 && __b="$(conda info --base)"; for __c in "$__b" "$HOME/miniconda3" "$HOME/miniforge3" "$HOME/mambaforge" "$HOME/anaconda3" /opt/miniconda3 /opt/conda /usr/local/miniconda3; do [ -n "$__c" ] && [ -f "$__c/etc/profile.d/conda.sh" ] && { . "$__c/etc/profile.d/conda.sh"; break; }; done; command -v conda >/dev/null 2>&1 || { echo "conda not found; set CONDA_BASE or ACTIVATE_CMD" >&2; exit 1; }; conda activate '"${CONDA_ENV}"
 fi
-: "${PYTHON:=python}"
+# Interpreter and Ray CLI to use on this (head) node. Resolved once, through ACTIVATE_CMD, to
+# absolute paths inside ${CONDA_ENV}. This makes the launchers independent of which environment
+# the calling shell happens to have active: running them from (base) would otherwise pick up
+# base's python, which has neither the plugin nor ray, and fail deep inside an experiment.
+# Set PYTHON/RAY explicitly to override.
+if [ -z "${PYTHON:-}" ]; then
+    PYTHON="$(bash -lc "${ACTIVATE_CMD} >/dev/null 2>&1 && command -v python" 2>/dev/null)"
+    [ -n "${PYTHON}" ] || PYTHON=python
+fi
+if [ -z "${RAY:-}" ]; then
+    RAY="$(bash -lc "${ACTIVATE_CMD} >/dev/null 2>&1 && command -v ray" 2>/dev/null)"
+    [ -n "${RAY}" ] || RAY=ray
+fi
 
 # --- paths -----------------------------------------------------------------------------
 # Resolved from the location of this file, so the scripts work from any directory.
