@@ -87,7 +87,9 @@ agreement with the empirical $t_{N+1}=2\,t_N$ doubling rule to within $0.3\%$.
 Measured against the single-GPU sampler on identical instances, the distributed
 sampler crosses over between $N=40$ and $N=42$, attains $93\%$ parallel
 efficiency at $N=48$ and saturates at the ideal $8\times$ speedup from
-$N\!\gtrsim\!52$. The certified optima serve as ground truth for a Simulated
+$N\!\gtrsim\!52$; a dedicated sweep over every GPU count and node layout gives
+$97.7\%$ efficiency on eight GPUs, weak scaling flat to within $1\%$, and a cost of
+$\approx\!1.3\%$ for each node boundary crossed at constant compute. The certified optima serve as ground truth for a Simulated
 Bifurcation Machine run on the same instances, which is found to recover the
 exact ground-state configuration in every case tested.
 \end{abstract}
@@ -261,9 +263,12 @@ $N\!\gtrsim\!52$ it attains the full $\approx\!8\times$ speedup expected from
 the 8-GPU pool, once Ray-scheduling and kernel-launch overheads are amortized
 over the per-subproblem computation. Performance-critical kernels are
 implemented in CUDA/C++ and exposed to Python via Cython; the
-\texttt{num\_states=1} fast path operates in \texttt{float32} to maximize GPU
-throughput, with the stabilization mechanisms described below compensating for
-the resulting roundoff.
+\texttt{num\_states=1} fast path operates in \texttt{float32}, halving the size of
+the resident energy buffers, with the stabilization mechanisms described below
+compensating for the resulting roundoff. Note that on the hardware measured here
+single precision buys working-set size rather than speed: the enumeration is bound
+by memory traffic and integer bookkeeping rather than by floating-point throughput,
+and double precision costs only a few percent (see below).
 
 \paragraph{Relation to the original publication and to the predecessor solver}
 The exhaustive-search plugin is not new, and we state its provenance
@@ -333,10 +338,16 @@ discussed separately below. Both exclusions are polynomial in $N$ and negligible
 at the sizes reported here, but they matter for the extrapolations discussed
 further on.
 
-The $O(2^N)$ doubling per added spin is the dominant feature of both curves and
-is already evident at $N=40$ on the single-GPU axis: the measured single-GPU
-times grow by a factor of $2.001$--$2.002$ per added variable over the whole
-range $N=42,\dots,54$. The distributed curve flattens out for $N \lesssim 44$,
+The $O(2^N)$ doubling per added spin is the dominant feature of both curves: the
+measured single-GPU times grow by a factor of $2.001$--$2.002$ per added variable
+over the whole range $N=42,\dots,54$. The one departure is the first step,
+$N=40\to42$, which grows by $2.993$ rather than by $4$; this is an artefact of the
+first measurement in a process paying the one-off creation of the CUDA context.
+Re-measuring $N=40$ after a warm-up gives $2.11$\,s instead of $2.74$\,s, and
+$4\times 2.11=8.4$\,s then agrees with the measured $8.20$\,s at $N=42$. The
+$\approx\!0.6$\,s involved is invisible at every larger size and affects no
+conclusion, but it does inflate the $N=40$ entries of Fig.~\ref{fig:runtimes} and
+Table~\ref{tab:efficiency}. The distributed curve flattens out for $N \lesssim 44$,
 because timings are dominated there by kernel-launch and Ray-scheduling overhead,
 and settles onto the same asymptotic slope ($2.001$--$2.003$ per variable) from
 $N=52$ onwards. The largest measured size, $N=60$ in the distributed mode, takes
@@ -393,8 +404,70 @@ measured points of Fig.~\ref{fig:runtimes}. Efficiency stays below unity for
 $N \lesssim 46$ because kernel-launch and Ray-scheduling overheads are not yet
 amortized, exceeds $90\%$ from $N=48$ and saturates at the ideal value from
 $N=52$ on. The value at $N=54$ marginally exceeds unity, which is within the
-variability of these single-run timings.}
+variability of these single-run timings. The $N=40$ row understates the efficiency:
+being the first measurement of its sweep, $t_1$ there includes the one-off CUDA
+context creation discussed in the text, and drops to $2.11$\,s when re-measured
+after a warm-up.}
 \label{tab:efficiency}
+\end{table}
+
+\paragraph{Scaling with the GPU count and with the node layout}
+Table~\ref{tab:efficiency} varies the problem size at a fixed eight GPUs. The complementary
+measurement---fixing the problem and varying the machine---is reported in
+Table~\ref{tab:scaling}, and it also separates \emph{how many} GPUs are used from \emph{how
+they are distributed over nodes}, which is the question the two-node geometry of our cluster
+allows us to probe. Since Ray cannot rearrange a running cluster, each row was taken on a
+cluster started afresh in the corresponding layout, written $\langle$nodes$\rangle\times
+\langle$GPUs per node$\rangle$; the sampler detects the layout it is given and records it with
+the measurement.
+
+Strong scaling at $N=50$ is close to ideal: $2.00\times$ on two GPUs, $3.99\times$ on four and
+$7.82\times$ on eight, i.e.\ a parallel efficiency of $97.7\%$ at the full pool. Two features
+are worth singling out. First, the distributed sampler configured with $k=0$ on a single GPU
+takes $2113.0$\,s against $2112.9$\,s for the single-GPU sampler on the same instance: at this
+size the entire cost of going through Ray---$0.026$\,s of dispatch and $0.007$\,s of merge---is
+four orders of magnitude below the search, so the decomposition is free once the subproblems
+are large. Second, comparing $2\times1$ against $1\times2$ and $2\times2$ against
+$1\times4$ isolates the cost of crossing a node boundary at constant compute: it is
+$+1.47\%$ and $+1.12\%$ respectively. That is consistent with the absence of inter-worker
+communication, and small enough to be at the level of the per-GPU performance spread between
+two hosts, so we do not attribute it specifically to the interconnect.
+
+Weak scaling, in the right-hand half of Table~\ref{tab:scaling}, grows $k$ together with the
+device count so that every GPU always enumerates $2^{50}$ configurations. The wall-clock time
+stays between $2112.8$\,s and $2142.6$\,s across the whole series, i.e.\ flat to within $1\%$
+from one to eight GPUs and from $N=50$ to $N=53$, with the merge contributing $0.007$\,s
+throughout. The worst point is again a two-node one, at the same $\approx\!1.4\%$ as above.
+
+\begin{table}[H]
+\setlength{\tabcolsep}{4pt}
+\centering
+\small
+\begin{tabular}{|l|r|rrr|rrr|}
+\hline
+ &  & \multicolumn{3}{c|}{strong scaling, $N=50$} &
+\multicolumn{3}{c|}{weak scaling, $2^{50}$ per GPU} \\
+layout & $P$ & $t$ [s] & $S$ & $E$ & $N$ & $t$ [s] & $t/t_1$ \\
+\hline
+single-GPU sampler & 1 & 2112.9 & --- & --- & 50 & 2113.0 & 1.00 \\
+$1\times1$ & 1 & 2113.0 & 1.00 & 100.0\% & 50 & 2113.1 & 1.00 \\
+$1\times2$ & 2 & 1056.8 & 2.00 & 100.0\% & 51 & 2112.8 & 1.00 \\
+$2\times1$ & 2 & 1072.4 & 1.97 & 98.5\%  & 51 & 2142.6 & 1.01 \\
+$1\times4$ & 4 & 530.0  & 3.99 & 99.7\%  & 52 & 2114.9 & 1.00 \\
+$2\times2$ & 4 & 536.0  & 3.94 & 98.6\%  & 52 & 2122.4 & 1.00 \\
+$2\times4$ & 8 & 270.3  & 7.82 & 97.7\%  & 53 & 2118.9 & 1.00 \\
+\hline
+\end{tabular}
+\caption{Strong and weak scaling of the distributed sampler over GPU count and node layout,
+on $8\times$ NVIDIA H100 (96\,GB) across two nodes. A layout $n\times m$ means $n$ nodes with
+$m$ GPUs each, obtained by masking the visible devices before starting Ray; $P=nm$ is the
+total GPU count and $k=\log_2 P$ places one subproblem on each device. Strong scaling solves
+the same $N=50$ instance on every layout, with $S=t_1/t_P$ against the single-GPU sampler and
+$E=S/P$. Weak scaling grows the size with the device count, $N=50+k$, so that the work per GPU
+is constant at $2^{50}$ configurations; $t_1$ is the single-GPU sampler. The pairs
+$1\times2$/$2\times1$ and $1\times4$/$2\times2$ hold $P$ fixed and differ only in the number of
+node boundaries crossed.}
+\label{tab:scaling}
 \end{table}
 
 \paragraph{Controller cost and the limits of the decomposition}
@@ -415,27 +488,27 @@ set by Ray's task scheduling alone.
 
 Three things follow. First, the direct merge does grow essentially linearly in the
 number of subproblems, as one would expect of a sequential concatenation: fitting
-the measured points gives $O(P^{0.9})$ over three decades. Second, its constant is
-small. At $2^{16}=65{,}536$ subproblems the entire controller cost is
-$\approx\!6$\,s, of which the concatenation itself is only $1.6$\,s; against the
-$\approx\!33$\,s that one worker would spend on its share of an $N=60$ search at
-that scale, the controller contributes on the order of $15\%$, not a wall. Third,
-and least expected, the dominant term is not the merge at all but Ray's
-per-task scheduling: dispatching and collecting $2^{16}$ \emph{empty} tasks costs
-$4.8$\,s, i.e.\ as much as the whole hierarchical merge, and that floor applies
-equally to dispatching the subproblems themselves. The scaling ceiling of this
-decomposition is therefore set by task scheduling, a property of distributing
-$2^{k}$ pieces of work at all, rather than by the way partial results are combined.
+the measured points gives $O(P^{0.97})$ over four decades. Second, its constant is
+small. At $2^{16}=65{,}536$ subproblems the whole controller cost is $7.4$\,s with
+the direct strategy and $3.9$\,s with the hierarchical one, of which the
+concatenation arithmetic is only $2.1$\,s; against the $\approx\!33$\,s that one
+worker would spend on its share of an $N=60$ search at that scale, the controller
+contributes between a tenth and a fifth of the total, not a wall. Third, and least
+expected, the dominant term is not the merge at all but Ray's per-task scheduling:
+dispatching and collecting $2^{16}$ \emph{empty} tasks costs $5.5$\,s, more than the
+entire hierarchical merge, and that floor applies equally to dispatching the
+subproblems themselves. The scaling ceiling of this decomposition is therefore set by
+task scheduling, a property of distributing $2^{k}$ pieces of work at all, rather
+than by the way partial results are combined.
 
-The hierarchical merge nevertheless overtakes the direct one above roughly $10^{4}$
-subproblems, where its logarithmic depth starts to beat the linear cost of fetching
-every partial result, and it bounds the memory the controller needs regardless of
-scale. Both strategies are available in the released sampler; the direct one is the
-default because it is the faster of the two in the regime reported here, and the
-timings above were produced with the same code path. What remains true is that at
-fixed $N$ incrementing $k$ halves the work per subproblem while doubling the
-number of results to combine, so a break-even point in $k$ exists --- the
-measurement locates it, rather than leaving it as a conjecture.
+The hierarchical merge overtakes the direct one already at $P=64$, where its
+logarithmic depth starts to beat the linear cost of fetching every partial result,
+and beyond that it also bounds the memory the controller needs. Both strategies are
+available in the released sampler, which selects between them on this measured
+threshold; below it the two differ by under a millisecond in any case. What remains
+true is that at fixed $N$ incrementing $k$ halves the work per subproblem while
+doubling the number of results to combine, so a break-even point in $k$ exists ---
+the measurement locates it, rather than leaving it as a conjecture.
 
 \begin{table}[H]
 \centering
@@ -444,24 +517,23 @@ measurement locates it, rather than leaving it as a conjecture.
 \hline
 $P=2^{k}$ & concatenation & direct merge & hierarchical merge & Ray floor \\
 \hline
-$2^{10}$ & 0.06 & 0.31 & 0.14 & 0.41 \\
-$2^{13}$ & 0.59 & 2.86 & 5.10 & 5.22 \\
-$2^{14}$ & 0.38 & 1.60 & 0.86 & 1.10 \\
-$2^{15}$ & 0.78 & 3.09 & 1.91 & 2.30 \\
-$2^{16}$ & 1.59 & 5.92 & 4.26 & 4.84 \\
+$2^{8}$  & 0.008 & 0.028 & 0.014 & 0.025 \\
+$2^{10}$ & 0.030 & 0.107 & 0.045 & 0.074 \\
+$2^{12}$ & 0.123 & 0.461 & 0.191 & 0.308 \\
+$2^{14}$ & 0.507 & 1.827 & 0.928 & 1.491 \\
+$2^{15}$ & 1.028 & 3.694 & 1.797 & 3.090 \\
+$2^{16}$ & 2.057 & 7.379 & 3.899 & 5.489 \\
 \hline
 \end{tabular}
-\caption{Controller-side cost, in seconds, of combining the partial results of
-$P$ subproblems, measured on a CPU with \texttt{num\_states}$\,=1$ and $N=60$ and
-therefore without requiring $P$ GPUs. \emph{Concatenation}: the merge arithmetic alone, with the
-partial results already in the controller's memory. \emph{Direct merge}: fetching
-all $P$ partial results and concatenating them once, the default strategy.
-\emph{Hierarchical merge}: the same reduction performed by a tree of Ray tasks
-combining eight results at a time. \emph{Ray floor}: dispatching and collecting $P$
-empty tasks, which no distributed strategy can beat. Medians of three to five
-repetitions after a warm-up; the $2^{13}$ row comes from a separate sweep and
-carries the scheduling noise of a cold object store, which is why it sits above the
-$2^{14}$ row.}
+\caption{Controller-side cost, in seconds, of combining the partial results of $P$
+subproblems, measured on a CPU with \texttt{num\_states}$\,=1$ and $N=60$ and therefore
+without requiring $P$ GPUs. \emph{Concatenation}: the merge arithmetic alone, with the partial
+results already in the controller's memory. \emph{Direct merge}: fetching all $P$ partial
+results and concatenating them once. \emph{Hierarchical merge}: the same reduction performed by
+a tree of Ray tasks combining eight results at a time. \emph{Ray floor}: dispatching and
+collecting $P$ empty tasks, which no distributed strategy can beat. Medians of five
+repetitions after a warm-up, from one sweep over $k=3,\dots,16$; the rows for $k<8$ are omitted
+as all four columns are then below $30$\,ms.}
 \label{tab:controller}
 \end{table}
 
@@ -537,6 +609,27 @@ energies differ by at most $8.2\times 10^{-6}$, i.e.\ at the level of the
 \texttt{float32} roundoff quantified above. The fixed-variable split therefore
 changes the wall-clock cost of the search, not its outcome.
 
+\paragraph{Cost and effect of double precision}
+Because the fast path is the single-precision one, it is fair to ask what the alternative
+costs. Repeating the ground-state search at $N=40,\dots,46$ in both precisions on one H100
+gives an unexpected answer: \texttt{float64} is only $2$--$3\%$ slower than \texttt{float32}
+(ratios $1.03$, $1.02$ and $1.02$ at $N=42,44,46$), and both precisions return the same
+configuration at every size. The enumeration is evidently not limited by floating-point
+throughput but by the memory traffic and integer bookkeeping of the Gray-code sweep, so on
+this hardware single precision buys working-set size rather than speed.
+
+Double precision is, however, not a substitute for the stabilization, because the compensated
+updates and the re-anchoring are enabled for \texttt{float32} only. Up to $N=44$ the
+\texttt{float64} accumulator stays within $10^{-13}$ of the from-scratch recomputation, against
+$1$--$2\times 10^{-6}$ for stabilized \texttt{float32}; at $N=46$, however, the unstabilized
+\texttt{float64} path drifts to $2.7\times 10^{-5}$, marginally \emph{worse} than the
+$2.3\times 10^{-5}$ of the stabilized single-precision run at the same size. Both still return
+the true optimum, which we confirmed independently with the heuristic of the next paragraph.
+The practical guidance is therefore the opposite of what a precision argument alone would
+suggest: use the default \texttt{float32} path with its stabilization and, when a certified
+numerical value is wanted, recompute the energy of the returned configuration in
+\texttt{float64} on the host, as done throughout this paper.
+
 \paragraph{Verification against an independent solver}
 Using the same recomputation we cross-check a simulated-bifurcation run on the
 identical instances. Two independent implementations of the heuristic were used.
@@ -583,16 +676,25 @@ coefficients, and up to the negligible bookkeeping of best-state updates the tim
 to solution is a function of $N$ and of the launch geometry alone. Sweeping over
 coupling distributions would therefore reproduce Fig.~\ref{fig:runtimes} rather
 than add information. What does depend on the family is the difficulty seen by
-the heuristics that the plugin is meant to certify, so the informative extension
-is to repeat the verification described above across several families --- for
-instance bimodal $J_{ij}\in\{-1,+1\}$, Gaussian and sparse instances --- and to
-ask whether the heuristic still recovers the certified optimum; we regard this as
-the natural next application of the plugin rather than as a benchmark of the
-plugin itself. Second, the QUBO and Ising paths are the same code path: both
-samplers convert a SPIN model to its BINARY equivalent, solve it as a QUBO and
-convert the result back, so the timings reported here are QUBO timings, the only
-Ising-specific cost being an $O(N^{2})$ host-side transformation performed
-outside the measured region. Correctness is cross-checked against
+the heuristics that the plugin is meant to certify, so the informative experiment is to repeat
+the verification across several families and ask whether the heuristic still recovers the
+certified optimum. We did that at $N=44$ for five instances each of four families: couplings
+drawn uniformly on $[-1,1]$, bimodal $J_{ij}\in\{-1,+1\}$, Gaussian, and sparse ($20\%$
+density). The heuristic reached the certified optimum on all twenty instances. On seventeen it
+returned the identical configuration; the three exceptions are all bimodal, and in each of them
+the energy gap to the certified optimum is exactly zero. That is not a discrepancy but
+degeneracy: integer couplings give integer energies --- which incidentally the
+\texttt{float32} accumulator represents exactly, so the brute-force roundoff on that family is
+identically zero --- and the ground state of such an instance is typically reached by many
+configurations. It also illustrates why agreement has to be judged on energies, with the
+Hamming distance as a secondary indicator, rather than the other way round.
+
+Second, the QUBO and Ising paths are the same code path: both samplers convert a SPIN model to
+its BINARY equivalent, solve it as a QUBO and convert the result back, so the timings reported
+here are QUBO timings, the only Ising-specific cost being an $O(N^{2})$ host-side
+transformation performed outside the measured region. Loading the same coefficient files once
+with each variable type confirms it: over $N=42,\dots,50$ the ratio of BINARY to SPIN
+wall-clock time is $0.998$--$1.000$. Correctness is cross-checked against
 \texttt{dimod.ExactSolver} on instances small enough for CPU enumeration and
 against from-scratch \texttt{float64} recomputation at benchmark scale; a
 comparison of \emph{runtimes} against other exact solvers would add little, since
@@ -627,11 +729,13 @@ obtained on the unstabilized path---they nevertheless agree bit-for-bit with the
 stabilized single-GPU runs at the same sizes; (iv) the projected runtimes
 for $N > 60$ are back-of-the-envelope extrapolations under the empirical
 $t_{N+1}=2\,t_N$ rule and may drift by a small constant factor on different
-stacks; and (v) the strong-scaling measurements span two nodes and eight GPUs,
-which is the extent of the hardware available to us, so while the controller has
-been measured directly up to $2^{16}$ subproblems
-(Table~\ref{tab:controller}), the behavior of the \emph{search} phase at such
-allocations remains an extrapolation from eight devices. Reported runtimes
+stacks; and (v) the scaling measurements span two nodes and eight GPUs, which is
+the extent of the hardware available to us. Within that envelope both strong and
+weak scaling are measured on every GPU count and node layout
+(Table~\ref{tab:scaling}), and the controller is measured directly up to $2^{16}$
+subproblems (Table~\ref{tab:controller}), but the behavior of the \emph{search}
+phase beyond eight devices, and with more than one node boundary, remains an
+extrapolation. Reported runtimes
 additionally depend on the hardware and software stack (GPU model, CUDA
 toolkit, Ray version, interconnect), so the absolute timings in
 Fig.~\ref{fig:runtimes} should be read as a hardware-specific operating
@@ -762,7 +866,7 @@ against the heuristic & 10\,min, CPU \\
 coupling families & 18\,min, 1 GPU \\
 \hline
 \texttt{e4\_precision} & \texttt{float32} against \texttt{float64} on the
-ground-state path & 30\,min, 1 GPU \\
+ground-state path & 6\,min, 1 GPU \\
 \hline
 \texttt{e5\_qubo} & QUBO and Ising runtimes on identical coefficients &
 1.6\,h, 1 GPU \\
@@ -780,8 +884,8 @@ Table~\ref{tab:efficiency} & see caption \\
 \caption{Launchers provided for reproducing the reported results, in the order in
 which \texttt{scripts/run\_all.sh} executes them; each is the script
 \texttt{scripts/run\_<name>.sh}, except \texttt{preflight}. Costs are for
-H100-class GPUs and are dominated by the exhaustive searches themselves, so the
-whole set without the figure is an overnight job. \texttt{manuscript\_figure}
+H100-class GPUs, measured on the runs reported in this paper, and are dominated by the
+exhaustive searches themselves; the whole set without the figure is an overnight job. \texttt{manuscript\_figure}
 re-draws the figure in seconds when the published results are present, since it
 skips sizes that already have a result file; regenerating them from scratch is
 the only multi-day item, because $N=58$ alone takes $\approx\!19$\,h and $N=60$
@@ -846,13 +950,13 @@ next steps are: (i) reducing the per-task scheduling overhead that
 Table~\ref{tab:controller} identifies as the ceiling of the decomposition, for
 instance by grouping several fixed assignments into one task so that the number of
 Ray tasks grows more slowly than $2^{k}$;
-(ii) complementing the strong-scaling data with a weak-scaling sweep in which
-$k$ grows with the number of devices so that the per-GPU work $2^{N-k}$ stays
-fixed; (iii) exposing the re-anchoring cadence and the compensated-update mode
-as user-tunable knobs for instance families where the default policy is
-suboptimal; (iv) extending the certified verification of heuristic solvers from
-one instance family to several, which is where certified optima are most
-valuable; and (v) archiving the reproduction directory of
+(ii) extending the scaling study past two node boundaries, which is the one
+question our two-node cluster cannot settle and where the $\approx\!1.3\%$ per
+boundary measured here would begin to compound; (iii) exposing the re-anchoring
+cadence and the compensated-update mode as user-tunable knobs for instance families
+where the default policy is suboptimal, and extending the stabilization to the
+double-precision path, which the measurements above show to be both affordable and
+currently unstabilized; and (iv) archiving the reproduction directory of
 Sec.~\ref{sec:reproduction} under a persistent identifier, so that the fixed
 seeds, the recorded hardware and toolkit descriptors and the command presets it
 already contains remain citable independently of the repository hosting them.
