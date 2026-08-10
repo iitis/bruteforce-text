@@ -1,0 +1,135 @@
+{
+    "num_variables": 51,
+    "base_size": 50,
+    "work_per_gpu_log2": 50,
+    "instance": "instances/51.txt",
+    "sampler_mode": "distributed",
+    "topology": {
+        "num_nodes": 2,
+        "gpus_per_node": 1,
+        "total_gpus": 2,
+        "homogeneous": true,
+        "label": "2x1",
+        "nodes": [
+            {
+                "node_id": "8e251f35da41e796cb9638d128e9ab9a560f1e71ccdf24b2a86dbd35",
+                "ip": "10.40.40.106",
+                "gpus": 1
+            },
+            {
+                "node_id": "873d4d8c2bdfc9deca6e927cc80e0c970ebe7e83a9ee34bf54b912ad",
+                "ip": "10.40.40.105",
+                "gpus": 1
+            }
+        ],
+        "num_fixed_vars": 1
+    },
+    "kernel_params": {
+        "suffix_size": 23,
+        "grid_size": 8192,
+        "block_size": 1024,
+        "num_steps_per_kernel": 8192,
+        "partial_diff_buffer_depth": 10,
+        "num_states": 1
+    },
+    "energy": -156.05415555784137,
+    "state": [
+        -1,
+        -1,
+        1,
+        1,
+        -1,
+        1,
+        -1,
+        1,
+        1,
+        -1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        -1,
+        -1,
+        1,
+        1,
+        -1,
+        -1,
+        1,
+        1,
+        -1,
+        1,
+        -1,
+        1,
+        -1,
+        1,
+        1,
+        -1,
+        1,
+        -1,
+        -1,
+        -1,
+        1,
+        1,
+        -1,
+        -1,
+        1,
+        -1,
+        1,
+        -1,
+        1,
+        1,
+        1,
+        -1,
+        1,
+        -1,
+        -1
+    ],
+    "timings": {
+        "dispatch_time_in_seconds": 0.02579362317919731,
+        "solve_time_in_seconds": 2142.6173445042223,
+        "merge_time_in_seconds": 0.006944086402654648,
+        "total_time_in_seconds": 2142.624288590625,
+        "num_subproblems": 2,
+        "num_merge_rounds": 0
+    },
+    "experiment": "weak_scaling",
+    "environment": {
+        "python": "3.10.20",
+        "platform": "Linux-5.15.0-135-generic-x86_64-with-glibc2.35",
+        "hostname": "alice",
+        "cpu_count": 128,
+        "cuda": {
+            "nvcc": "12.4",
+            "runtime": "12.8",
+            "driver": "550.144.03",
+            "devices": [
+                {
+                    "name": "NVIDIA H100",
+                    "compute_capability": "9.0"
+                },
+                {
+                    "name": "NVIDIA H100",
+                    "compute_capability": "9.0"
+                },
+                {
+                    "name": "NVIDIA H100",
+                    "compute_capability": "9.0"
+                },
+                {
+                    "name": "NVIDIA H100",
+                    "compute_capability": "9.0"
+                }
+            ]
+        },
+        "packages": {
+            "omnisolver": "0.0.4",
+            "omnisolver-bruteforce": "0.0.6.dev3+g6f6bf2ce9",
+            "dimod": "0.12.21",
+            "numpy": "2.2.6",
+            "numba": "0.65.0",
+            "ray": "2.52.1"
+        }
+    }
+}
