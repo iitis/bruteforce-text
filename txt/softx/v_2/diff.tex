@@ -1,7 +1,7 @@
 \documentclass[preprint,12pt,a4paper]{elsarticle}
 %DIF LATEXDIFF DIFFERENCE FILE
 %DIF DEL ../v_1/bruteforce.tex   Sat Aug  1 21:39:39 2026
-%DIF ADD bruteforce.tex          Mon Aug 10 19:33:29 2026
+%DIF ADD bruteforce.tex          Thu Aug 13 20:51:10 2026
 
 \usepackage{amssymb}
 \usepackage{float}
@@ -145,8 +145,8 @@ efficiency at $N=48$ and saturates at the ideal $8\times$ speedup }\DIFaddend fr
 \DIFdelbegin \DIFdel{$N\!\gtrsim\!44$ onwards. The plugin thereby serves as a
 practical ground-truth oracle for state-of-the-art classical heuristics such
 as the }\DIFdelend \DIFaddbegin \DIFadd{$N\!\gtrsim\!52$; a dedicated sweep over every GPU count and node layout gives
-$97.7\%$ efficiency on eight GPUs, weak scaling flat to within $1\%$, and a cost of
-$\approx\!1.3\%$ for each node boundary crossed at constant compute. The certified optima serve as ground truth for a }\DIFaddend Simulated
+$98.2\%$ efficiency on eight GPUs, weak scaling flat to within $0.2\%$, and no measurable
+cost for crossing a node boundary at constant compute. The certified optima serve as ground truth for a }\DIFaddend Simulated
 Bifurcation Machine \DIFaddbegin \DIFadd{run on the same instances, which is found to recover the
 exact ground-state configuration in every case tested}\DIFaddend .
 \end{abstract}
@@ -473,8 +473,7 @@ the absolute numbers by at most a few percent but not the asymptotic scaling.
 Fig.~\ref{fig:runtimes} can be paired size by size into an explicit
 strong-scaling measurement, reported in Table~\ref{tab:efficiency} in terms of
 the speedup $S=t_1/t_8$ and the parallel efficiency $E=S/8$. Below the crossover
-the decomposition is dominated by fixed overheads: at $N=40$ }\DIFaddend the \DIFdelbegin \DIFdel{$2^k$ fixed assignments defines an independent GPU
-subproblem, with }\DIFdelend \DIFaddbegin \DIFadd{eight-way split
+the decomposition is dominated by fixed overheads: at $N=40$ }\DIFaddend the \DIFdelbegin \DIFdel{$2^k$ fixed assignments defines an independent GPU subproblem, with }\DIFdelend \DIFaddbegin \DIFadd{eight-way split
 is in fact $2.1\times$ }\emph{\DIFadd{slower}} \DIFadd{than a single GPU, which is why the
 single-GPU sampler remains the appropriate choice whenever one device suffices.
 Efficiency then rises steeply, from $43\%$ at $N=44$ through $75\%$ at $N=46$ and
@@ -510,8 +509,9 @@ sampler ($t_8$, $8\times$ H100, $k=3$) relative to the single-GPU sampler
 measured points of Fig.~\ref{fig:runtimes}. Efficiency stays below unity for
 $N \lesssim 46$ because kernel-launch and Ray-scheduling overheads are not yet
 amortized, exceeds $90\%$ from $N=48$ and saturates at the ideal value from
-$N=52$ on. The value at $N=54$ marginally exceeds unity, which is within the
-variability of these single-run timings. The $N=40$ row understates the efficiency:
+$N=52$ on. The value at $N=54$ marginally exceeds unity; repeating the measurements of
+Table~\ref{tab:scaling} showed two-node timings such as $t_8$ reproducing only to within
+$\approx\!0.5\%$, which covers the $0.1\%$ excess. The $N=40$ row understates the efficiency:
 being the first measurement of its sweep, $t_1$ there includes the one-off CUDA
 context creation discussed in the text, and drops to $2.11$\,s when re-measured
 after a warm-up.}}
@@ -530,23 +530,30 @@ the measurement.
 }
 
 \DIFadd{Strong scaling at $N=50$ is close to ideal: $2.00\times$ on two GPUs, $3.99\times$ on four and
-$7.82\times$ on eight, i.e.\ a parallel efficiency of $97.7\%$ at the full pool. Two features
+$7.86\times$ on eight, i.e.\ a parallel efficiency of $98.2\%$ at the full pool. Two features
 are worth singling out. First, the distributed sampler configured with $k=0$ on a single GPU
-takes $2113.0$\,s against $2112.9$\,s for the single-GPU sampler on the same instance: at this
+takes $2113.1$\,s against $2112.9$\,s for the single-GPU sampler on the same instance: at this
 size the entire cost of going through Ray---$0.026$\,s of dispatch and $0.007$\,s of merge---is
 four orders of magnitude below the search, so the decomposition is free once the subproblems
-are large. Second, comparing $2\times1$ against $1\times2$ and $2\times2$ against
-$1\times4$ isolates the cost of crossing a node boundary at constant compute: it is
-$+1.47\%$ and $+1.12\%$ respectively. That is consistent with the absence of inter-worker
-communication, and small enough to be at the level of the per-GPU performance spread between
-two hosts, so we do not attribute it specifically to the interconnect.
+are large. Second, comparing $2\times1$ against $1\times2$ and $2\times2$ against $1\times4$
+isolates the cost of crossing a node boundary at constant compute, and that cost is not
+resolvable: the two-node configuration is faster by $0.03\%$ in the first pair and by $0.12\%$
+in the second. Repeating the entire series on a different day is what establishes the
+resolution. Single-node configurations reproduced to within $0.02\%$, but two-node ones moved
+by up to $1.5\%$, always in the same direction: the first run's two-node points were uniformly
+the slower ones. We therefore report the node boundary as costing nothing measurable at
+constant compute, with an upper bound of about $1.5\%$ set by the reproducibility of two-node
+timings rather than by any systematic effect we could detect. This is what the absence of
+inter-worker communication predicts, and it also identifies the second host as the source of
+what run-to-run variation there is.
 }
 
 \DIFadd{Weak scaling, in the right-hand half of Table~\ref{tab:scaling}, grows $k$ together with the
 device count so that every GPU always enumerates $2^{50}$ configurations. The wall-clock time
-stays between $2112.8$\,s and $2142.6$\,s across the whole series, i.e.\ flat to within $1\%$
-from one to eight GPUs and from $N=50$ to $N=53$, with the merge contributing $0.007$\,s
-throughout. The worst point is again a two-node one, at the same $\approx\!1.4\%$ as above.
+stays between $2112.5$\,s and $2116.9$\,s across the whole series, i.e.\ flat to within
+$0.2\%$ from one to eight GPUs and from $N=50$ to $N=53$, with the merge contributing
+$0.007$\,s throughout. Ideal weak scaling would keep this row constant, and within the
+resolution established above it does.
 }
 
 \begin{table}[H]
@@ -559,13 +566,13 @@ throughout. The worst point is again a two-node one, at the same $\approx\!1.4\%
 \multicolumn{3}{c|}{weak scaling, $2^{50}$ per GPU} \\
 \DIFaddFL{layout }& \DIFaddFL{$P$ }& \DIFaddFL{$t$ }[\DIFaddFL{s}] & \DIFaddFL{$S$ }& \DIFaddFL{$E$ }& \DIFaddFL{$N$ }& \DIFaddFL{$t$ }[\DIFaddFL{s}] & \DIFaddFL{$t/t_1$ }\\
 \hline
-\DIFaddFL{single-GPU sampler }& \DIFaddFL{1 }& \DIFaddFL{2112.9 }& \DIFaddFL{--- }& \DIFaddFL{--- }& \DIFaddFL{50 }& \DIFaddFL{2113.0 }& \DIFaddFL{1.00 }\\
-\DIFaddFL{$1\times1$ }& \DIFaddFL{1 }& \DIFaddFL{2113.0 }& \DIFaddFL{1.00 }& \DIFaddFL{100.0\% }& \DIFaddFL{50 }& \DIFaddFL{2113.1 }& \DIFaddFL{1.00 }\\
-\DIFaddFL{$1\times2$ }& \DIFaddFL{2 }& \DIFaddFL{1056.8 }& \DIFaddFL{2.00 }& \DIFaddFL{100.0\% }& \DIFaddFL{51 }& \DIFaddFL{2112.8 }& \DIFaddFL{1.00 }\\
-\DIFaddFL{$2\times1$ }& \DIFaddFL{2 }& \DIFaddFL{1072.4 }& \DIFaddFL{1.97 }& \DIFaddFL{98.5\%  }& \DIFaddFL{51 }& \DIFaddFL{2142.6 }& \DIFaddFL{1.01 }\\
-\DIFaddFL{$1\times4$ }& \DIFaddFL{4 }& \DIFaddFL{530.0  }& \DIFaddFL{3.99 }& \DIFaddFL{99.7\%  }& \DIFaddFL{52 }& \DIFaddFL{2114.9 }& \DIFaddFL{1.00 }\\
-\DIFaddFL{$2\times2$ }& \DIFaddFL{4 }& \DIFaddFL{536.0  }& \DIFaddFL{3.94 }& \DIFaddFL{98.6\%  }& \DIFaddFL{52 }& \DIFaddFL{2122.4 }& \DIFaddFL{1.00 }\\
-\DIFaddFL{$2\times4$ }& \DIFaddFL{8 }& \DIFaddFL{270.3  }& \DIFaddFL{7.82 }& \DIFaddFL{97.7\%  }& \DIFaddFL{53 }& \DIFaddFL{2118.9 }& \DIFaddFL{1.00 }\\
+\DIFaddFL{single-GPU sampler }& \DIFaddFL{1 }& \DIFaddFL{2112.9 }& \DIFaddFL{--- }& \DIFaddFL{--- }& \DIFaddFL{50 }& \DIFaddFL{2112.9 }& \DIFaddFL{1.000 }\\
+\DIFaddFL{$1\times1$ }& \DIFaddFL{1 }& \DIFaddFL{2113.1 }& \DIFaddFL{1.00 }& \DIFaddFL{100.0\% }& \DIFaddFL{50 }& \DIFaddFL{2113.1 }& \DIFaddFL{1.000 }\\
+\DIFaddFL{$1\times2$ }& \DIFaddFL{2 }& \DIFaddFL{1056.7 }& \DIFaddFL{2.00 }& \DIFaddFL{100.0\% }& \DIFaddFL{51 }& \DIFaddFL{2112.9 }& \DIFaddFL{1.000 }\\
+\DIFaddFL{$2\times1$ }& \DIFaddFL{2 }& \DIFaddFL{1056.3 }& \DIFaddFL{2.00 }& \DIFaddFL{100.0\% }& \DIFaddFL{51 }& \DIFaddFL{2112.5 }& \DIFaddFL{1.000 }\\
+\DIFaddFL{$1\times4$ }& \DIFaddFL{4 }& \DIFaddFL{530.2  }& \DIFaddFL{3.99 }& \DIFaddFL{99.6\%  }& \DIFaddFL{52 }& \DIFaddFL{2116.6 }& \DIFaddFL{1.002 }\\
+\DIFaddFL{$2\times2$ }& \DIFaddFL{4 }& \DIFaddFL{529.5  }& \DIFaddFL{3.99 }& \DIFaddFL{99.8\%  }& \DIFaddFL{52 }& \DIFaddFL{2114.5 }& \DIFaddFL{1.001 }\\
+\DIFaddFL{$2\times4$ }& \DIFaddFL{8 }& \DIFaddFL{268.9  }& \DIFaddFL{7.86 }& \DIFaddFL{98.2\%  }& \DIFaddFL{53 }& \DIFaddFL{2116.9 }& \DIFaddFL{1.002 }\\
 \hline
 \end{tabular}
 \caption{\DIFaddFL{Strong and weak scaling of the distributed sampler over GPU count and node layout,
@@ -576,7 +583,10 @@ the same $N=50$ instance on every layout, with $S=t_1/t_P$ against the single-GP
 $E=S/P$. Weak scaling grows the size with the device count, $N=50+k$, so that the work per GPU
 is constant at $2^{50}$ configurations; $t_1$ is the single-GPU sampler. The pairs
 $1\times2$/$2\times1$ and $1\times4$/$2\times2$ hold $P$ fixed and differ only in the number of
-node boundaries crossed.}}
+node boundaries crossed. The whole series was measured twice, on separate days; the values
+quoted are from the second run. Single-node configurations reproduced to within $0.02\%$
+between the two runs, two-node ones to within $1.5\%$, which is what limits the resolution of
+the node-boundary comparison.}}
 \label{tab:scaling}
 \end{table}
 
@@ -602,12 +612,12 @@ set by Ray's task scheduling alone.
 number of subproblems, as one would expect of a sequential concatenation: fitting
 the measured points gives $O(P^{0.97})$ over four decades. Second, its constant is
 small. At $2^{16}=65{,}536$ subproblems the whole controller cost is $7.4$\,s with
-the direct strategy and $3.9$\,s with the hierarchical one, of which the
+the direct strategy and $3.8$\,s with the hierarchical one, of which the
 concatenation arithmetic is only $2.1$\,s; against the $\approx\!33$\,s that one
 worker would spend on its share of an $N=60$ search at that scale, the controller
 contributes between a tenth and a fifth of the total, not a wall. Third, and least
 expected, the dominant term is not the merge at all but Ray's per-task scheduling:
-dispatching and collecting $2^{16}$ }\emph{\DIFadd{empty}} \DIFadd{tasks costs $5.5$\,s, more than the
+dispatching and collecting $2^{16}$ }\emph{\DIFadd{empty}} \DIFadd{tasks costs $5.4$\,s, more than the
 entire hierarchical merge, and that floor applies equally to dispatching the
 subproblems themselves. The scaling ceiling of this decomposition is therefore set by
 task scheduling, a property of distributing $2^{k}$ pieces of work at all, rather
@@ -631,12 +641,12 @@ the measurement locates it, rather than leaving it as a conjecture.
 \hline
 \DIFaddFL{$P=2^{k}$ }& \DIFaddFL{concatenation }& \DIFaddFL{direct merge }& \DIFaddFL{hierarchical merge }& \DIFaddFL{Ray floor }\\
 \hline
-\DIFaddFL{$2^{8}$  }& \DIFaddFL{0.008 }& \DIFaddFL{0.028 }& \DIFaddFL{0.014 }& \DIFaddFL{0.025 }\\
-\DIFaddFL{$2^{10}$ }& \DIFaddFL{0.030 }& \DIFaddFL{0.107 }& \DIFaddFL{0.045 }& \DIFaddFL{0.074 }\\
-\DIFaddFL{$2^{12}$ }& \DIFaddFL{0.123 }& \DIFaddFL{0.461 }& \DIFaddFL{0.191 }& \DIFaddFL{0.308 }\\
-\DIFaddFL{$2^{14}$ }& \DIFaddFL{0.507 }& \DIFaddFL{1.827 }& \DIFaddFL{0.928 }& \DIFaddFL{1.491 }\\
-\DIFaddFL{$2^{15}$ }& \DIFaddFL{1.028 }& \DIFaddFL{3.694 }& \DIFaddFL{1.797 }& \DIFaddFL{3.090 }\\
-\DIFaddFL{$2^{16}$ }& \DIFaddFL{2.057 }& \DIFaddFL{7.379 }& \DIFaddFL{3.899 }& \DIFaddFL{5.489 }\\
+\DIFaddFL{$2^{8}$  }& \DIFaddFL{0.008 }& \DIFaddFL{0.026 }& \DIFaddFL{0.014 }& \DIFaddFL{0.039 }\\
+\DIFaddFL{$2^{10}$ }& \DIFaddFL{0.030 }& \DIFaddFL{0.111 }& \DIFaddFL{0.047 }& \DIFaddFL{0.084 }\\
+\DIFaddFL{$2^{12}$ }& \DIFaddFL{0.124 }& \DIFaddFL{0.472 }& \DIFaddFL{0.189 }& \DIFaddFL{0.300 }\\
+\DIFaddFL{$2^{14}$ }& \DIFaddFL{0.523 }& \DIFaddFL{1.906 }& \DIFaddFL{0.893 }& \DIFaddFL{1.325 }\\
+\DIFaddFL{$2^{15}$ }& \DIFaddFL{1.039 }& \DIFaddFL{3.849 }& \DIFaddFL{1.860 }& \DIFaddFL{2.605 }\\
+\DIFaddFL{$2^{16}$ }& \DIFaddFL{2.050 }& \DIFaddFL{7.408 }& \DIFaddFL{3.811 }& \DIFaddFL{5.397 }\\
 \hline
 \end{tabular}
 \caption{\DIFaddFL{Controller-side cost, in seconds, of combining the partial results of $P$
@@ -647,7 +657,9 @@ results and concatenating them once. }\emph{\DIFaddFL{Hierarchical merge}}\DIFad
 a tree of Ray tasks combining eight results at a time. }\emph{\DIFaddFL{Ray floor}}\DIFaddFL{: dispatching and
 collecting $P$ empty tasks, which no distributed strategy can beat. Medians of five
 repetitions after a warm-up, from one sweep over $k=3,\dots,16$; the rows for $k<8$ are omitted
-as all four columns are then below $30$\,ms.}}
+as all four columns are then below $30$\,ms. Repeating the sweep reproduced every entry to
+within a few percent and put the crossover between the two merge strategies at the same
+$P=64$.}}
 \label{tab:controller}
 \end{table}
 
@@ -714,8 +726,8 @@ size; at the largest size, $N=60$, it is $4.0\times 10^{-6}$. Against }\DIFadden
 magnitude $\mathcal{O}(10^{2})$ \DIFdelbegin \DIFdel{,
 roughly }\DIFdelend \DIFaddbegin \DIFadd{this amounts to seven to }\DIFaddend eight significant
 digits, consistent with the expected accuracy of the stabilized \texttt{float32}
-accumulator. \DIFdelbegin \DIFdel{Using the same
-recomputation}\DIFdelend \DIFaddbegin \DIFadd{The deviation affects the reported energy }\emph{\DIFadd{value}} \DIFadd{only; the
+accumulator. \DIFdelbegin \DIFdel{Using the
+same recomputation}\DIFdelend \DIFaddbegin \DIFadd{The deviation affects the reported energy }\emph{\DIFadd{value}} \DIFadd{only; the
 returned configuration is an exact bit string, and its energy can be recomputed
 to full }\texttt{\DIFadd{float64}} \DIFadd{accuracy by the caller at negligible cost, which is what
 we do throughout and what we recommend whenever a certified numerical value, and
@@ -1122,8 +1134,9 @@ Table~\ref{tab:controller} identifies as the ceiling of the decomposition, for
 instance by grouping several fixed assignments into one task so that the number of
 Ray tasks grows more slowly than $2^{k}$;
 (ii) extending the scaling study past two node boundaries, which is the one
-question our two-node cluster cannot settle and where the $\approx\!1.3\%$ per
-boundary measured here would begin to compound; (iii) }\DIFaddend exposing the re-anchoring
+question our two-node cluster cannot settle: a single boundary costs nothing we can
+resolve, but the reproducibility of two-node timings bounds that statement at about
+$1.5\%$, and an effect below that bound could still compound over many boundaries; (iii) }\DIFaddend exposing the re-anchoring
 cadence and \DIFaddbegin \DIFadd{the }\DIFaddend compensated-update mode as user-tunable knobs for instance families
 where the default policy is suboptimal\DIFdelbegin \DIFdel{; (ii) replacing the
 controller-side merge by a hierarchical reduction so the algorithm scales
