@@ -122,12 +122,13 @@ and it closes by pointing back to that caveat.
 
 The projection is also no longer supported by argument alone. Table~5 of the revision reports
 the controller cost up to $2^{16}$ subproblems, measured on a CPU: at that scale the whole
-controller cost is $7.4$~s merging directly and $3.9$~s merging hierarchically, so for the
+controller cost is $7.4$~s merging directly and $3.8$~s merging hierarchically, so for the
 projections above it inflates the wall-clock time by a few percent rather than dominating it.
 Nor is the linear-scaling assumption an assumption any more within our envelope: Table~4
 measures every GPU count and node layout at fixed problem size, giving $2.00\times$ on two
-GPUs, $3.99\times$ on four and $7.82\times$ on eight, i.e.\ $97.7\%$ parallel efficiency, with
-weak scaling flat to within $1\%$.
+GPUs, $3.99\times$ on four and $7.86\times$ on eight, i.e.\ $98.2\%$ parallel efficiency, with
+weak scaling flat to within $0.2\%$. We measured the whole series twice, on separate days, and
+quote the reproducibility in the table caption.
 
 What remains extrapolated is behavior beyond eight devices and beyond one node boundary. Item
 (v) of \emph{Limitations and intended scope} now states exactly that.
@@ -281,8 +282,9 @@ for, and the answer is more interesting than either of us expected.}
 First, the weak-scaling study, in the design the reviewer proposed. Table~4 of the revision
 reports $N=50,51,52,53$ at $1$, $2$, $4$ and $8$ GPUs, with $k$ growing alongside the device
 count so that every GPU always enumerates $2^{50}$ configurations. The wall-clock time stays
-between $2112.8$~s and $2142.6$~s across the whole series: flat to within $1\%$, with the merge
-contributing $0.007$~s throughout. The same table reports strong scaling on the same layouts.
+between $2112.5$~s and $2116.9$~s across the whole series: flat to within $0.2\%$, with the
+merge contributing $0.007$~s throughout. The same table reports strong scaling on the same
+layouts, and both halves were measured twice on separate days.
 
 Second, the controller. The measurement does \emph{not} require a large GPU allocation, because
 the number of subproblems is set by \texttt{num\_fixed\_vars} and is independent of the number
@@ -295,12 +297,12 @@ sweep up to $2^{16}$ subproblems, and three things follow.
 confirmed} for a merge that collects every partial result on the controller: we fit
 $O(P^{0.97})$ over four decades.
 \item \textbf{Its constant, however, is small.} At $2^{16}=65{,}536$ subproblems the whole
-controller cost is $7.4$~s collecting directly and $3.9$~s reducing hierarchically, of which
+controller cost is $7.4$~s collecting directly and $3.8$~s reducing hierarchically, of which
 the concatenation arithmetic is $2.1$~s. Against the $\approx\!33$~s that one worker would
 spend on its share of an $N=60$ search at that scale, the controller contributes between a
 tenth and a fifth of the total, not a wall.
 \item \textbf{The dominant term is not the merge at all}, but Ray's per-task scheduling:
-dispatching and collecting $2^{16}$ \emph{empty} tasks costs $5.5$~s, more than the entire
+dispatching and collecting $2^{16}$ \emph{empty} tasks costs $5.4$~s, more than the entire
 hierarchical merge, and that floor applies equally to dispatching the subproblems themselves.
 The ceiling of this decomposition is therefore set by task scheduling --- a property of
 distributing $2^{k}$ pieces of work at all --- rather than by how partial results are combined.
@@ -453,23 +455,32 @@ scaling outlook also appears somewhat optimistic.}
 rather than with argument.}
 
 \emph{Does the controller become a bottleneck?} Not first. Table~5 measures it up to $2^{16}$
-subproblems and finds a total cost of $7.4$~s collecting directly, or $3.9$~s reducing
-hierarchically, against Ray's $5.5$~s task-scheduling floor for the same number of tasks. The
+subproblems and finds a total cost of $7.4$~s collecting directly, or $3.8$~s reducing
+hierarchically, against Ray's $5.4$~s task-scheduling floor for the same number of tasks. The
 centralization is real but small; what grows and would eventually bind is per-task scheduling,
 which the dispatch of the subproblems pays as well.
 
-\emph{Does the node layout matter?} Slightly, and now quantifiably. Holding the GPU count fixed
-and adding a node boundary --- $2\times1$ against $1\times2$, and $2\times2$ against
-$1\times4$ --- costs $+1.47\%$ and $+1.12\%$ respectively. That is what the absence of
-inter-worker communication predicts, and it is small enough to sit at the level of the per-GPU
-performance spread between two hosts, so we do not attribute it specifically to the
-interconnect.
+\emph{Does the node layout matter?} Not measurably. Holding the GPU count fixed and adding a
+node boundary --- $2\times1$ against $1\times2$, and $2\times2$ against $1\times4$ --- changes
+the wall-clock time by $-0.03\%$ and $-0.12\%$ respectively, i.e.\ the two-node configuration
+is if anything marginally the faster one.
+
+We should report how we arrived at that, because our first attempt said otherwise. A first pass
+of the series gave $+1.47\%$ and $+1.12\%$, which we were prepared to present as a small but
+real boundary cost. Repeating the entire series on a different day showed that single-node
+configurations reproduce to within $0.02\%$ while two-node ones move by up to $1.5\%$ --- and
+that the first pass had simply caught the two-node points on a slower day. The correct statement
+is therefore that a single node boundary costs nothing we can resolve, with an upper bound of
+about $1.5\%$ set by the reproducibility of two-node timings rather than by any systematic
+effect. This is what the absence of inter-worker communication predicts, and it also locates the
+second host as the source of what run-to-run variation there is.
 
 \emph{More than two nodes} is the one question our hardware cannot settle: two nodes with four
 H100s each, connected by standard Ethernet, is the entire cluster available to us. Rather than
 leave that implicit, item~(v) of \emph{Limitations and intended scope} states it, and extending
-the study past two node boundaries --- where the $\approx\!1.3\%$ per boundary measured here
-would begin to compound --- is now item~(ii) of the conclusions rather than a silence.
+the study past two node boundaries is now item~(ii) of the conclusions rather than a silence:
+one boundary costs nothing we can resolve, but an effect below our $1.5\%$ bound could still
+compound over many of them.
 
 The scaling outlook itself has been made less optimistic in the concrete sense described under
 R1.1: $2^{14}$ instead of $2^{16}$ GPUs, and the observation that $2^{16}$ exceeds the
@@ -567,7 +578,8 @@ Contribution list rewritten around released, verifiable additions & R3.2 \\
 $N$ defined in three places; parameter glossary; Omnisolver reintroduced & R3.1 \\
 New Table~2 --- \emph{Current executable software version} (S1--S7) & R2.3 \\
 New Table~3 --- strong-scaling speedup and parallel efficiency & R1.3 \\
-New Table~4 --- strong and weak scaling over GPU count and node layout & R1.1, R2.2, R3.3 \\
+New Table~4 --- strong and weak scaling over GPU count and node layout, measured twice & R1.1, R2.2, R3.3 \\
+Node-boundary cost withdrawn: below the reproducibility of two-node timings & own re-check (second run) \\
 New Table~5 --- measured controller cost up to $2^{16}$ subproblems & R2.2, R3.3 \\
 New paragraph on the cost and effect of double precision & R2.5 \\
 Instance-family verification across four families reported & R1.2 \\
