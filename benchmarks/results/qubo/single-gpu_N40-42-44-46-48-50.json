@@ -18,7 +18,7 @@
             "num_variables": 40,
             "by_vartype": {
                 "SPIN": {
-                    "solve_time_in_seconds": 2.751829668879509,
+                    "solve_time_in_seconds": 2.756752386689186,
                     "energy": -113.42442942422193,
                     "state": [
                         1,
@@ -63,11 +63,11 @@
                         1
                     ],
                     "timings": {
-                        "solve_time_in_seconds": 2.751829668879509
+                        "solve_time_in_seconds": 2.756752386689186
                     }
                 },
                 "BINARY": {
-                    "solve_time_in_seconds": 2.053058857098222,
+                    "solve_time_in_seconds": 2.0526970475912094,
                     "energy": -58.14117431640625,
                     "state": [
                         1,
@@ -112,17 +112,17 @@
                         1
                     ],
                     "timings": {
-                        "solve_time_in_seconds": 2.053058857098222
+                        "solve_time_in_seconds": 2.0526970475912094
                     }
                 }
             },
-            "binary_over_spin_time_ratio": 0.7460704709729317
+            "binary_over_spin_time_ratio": 0.744606972139585
         },
         {
             "num_variables": 42,
             "by_vartype": {
                 "SPIN": {
-                    "solve_time_in_seconds": 8.201890235766768,
+                    "solve_time_in_seconds": 8.20058699697256,
                     "energy": -117.9997714959045,
                     "state": [
                         -1,
@@ -169,11 +169,11 @@
                         1
                     ],
                     "timings": {
-                        "solve_time_in_seconds": 8.201890235766768
+                        "solve_time_in_seconds": 8.20058699697256
                     }
                 },
                 "BINARY": {
-                    "solve_time_in_seconds": 8.200279854238033,
+                    "solve_time_in_seconds": 8.199463663622737,
                     "energy": -45.24597930908203,
                     "state": [
                         0,
@@ -220,17 +220,17 @@
                         1
                     ],
                     "timings": {
-                        "solve_time_in_seconds": 8.200279854238033
+                        "solve_time_in_seconds": 8.199463663622737
                     }
                 }
             },
-            "binary_over_spin_time_ratio": 0.9998036572689412
+            "binary_over_spin_time_ratio": 0.999863017933931
         },
         {
             "num_variables": 44,
             "by_vartype": {
                 "SPIN": {
-                    "solve_time_in_seconds": 32.831663616001606,
+                    "solve_time_in_seconds": 32.8254743758589,
                     "energy": -125.32890293140784,
                     "state": [
                         -1,
@@ -279,11 +279,11 @@
                         -1
                     ],
                     "timings": {
-                        "solve_time_in_seconds": 32.831663616001606
+                        "solve_time_in_seconds": 32.8254743758589
                     }
                 },
                 "BINARY": {
-                    "solve_time_in_seconds": 32.822852589190006,
+                    "solve_time_in_seconds": 32.81763473153114,
                     "energy": -54.41545867919922,
                     "state": [
                         0,
@@ -332,17 +332,17 @@
                         0
                     ],
                     "timings": {
-                        "solve_time_in_seconds": 32.822852589190006
+                        "solve_time_in_seconds": 32.81763473153114
                     }
                 }
             },
-            "binary_over_spin_time_ratio": 0.9997316302056865
+            "binary_over_spin_time_ratio": 0.9997611719410969
         },
         {
             "num_variables": 46,
             "by_vartype": {
                 "SPIN": {
-                    "solve_time_in_seconds": 131.53349743969738,
+                    "solve_time_in_seconds": 131.515356130898,
                     "energy": -125.5862249950051,
                     "state": [
                         -1,
@@ -393,11 +393,11 @@
                         1
                     ],
                     "timings": {
-                        "solve_time_in_seconds": 131.53349743969738
+                        "solve_time_in_seconds": 131.515356130898
                     }
                 },
                 "BINARY": {
-                    "solve_time_in_seconds": 131.4430981837213,
+                    "solve_time_in_seconds": 131.41779812425375,
                     "energy": -44.96469497680664,
                     "state": [
                         0,
@@ -448,17 +448,17 @@
                         1
                     ],
                     "timings": {
-                        "solve_time_in_seconds": 131.4430981837213
+                        "solve_time_in_seconds": 131.41779812425375
                     }
                 }
             },
-            "binary_over_spin_time_ratio": 0.9993127282575488
+            "binary_over_spin_time_ratio": 0.9992582006427664
         },
         {
             "num_variables": 48,
             "by_vartype": {
                 "SPIN": {
-                    "solve_time_in_seconds": 527.0499366149306,
+                    "solve_time_in_seconds": 526.9367755353451,
                     "energy": -141.666023889647,
                     "state": [
                         1,
@@ -511,11 +511,11 @@
                         1
                     ],
                     "timings": {
-                        "solve_time_in_seconds": 527.0499366149306
+                        "solve_time_in_seconds": 526.9367755353451
                     }
                 },
                 "BINARY": {
-                    "solve_time_in_seconds": 526.7942749280483,
+                    "solve_time_in_seconds": 526.6935984045267,
                     "energy": -74.04258728027344,
                     "state": [
                         0,
@@ -568,17 +568,17 @@
                         1
                     ],
                     "timings": {
-                        "solve_time_in_seconds": 526.7942749280483
+                        "solve_time_in_seconds": 526.6935984045267
                     }
                 }
             },
-            "binary_over_spin_time_ratio": 0.9995149194239081
+            "binary_over_spin_time_ratio": 0.9995385079536889
         },
         {
             "num_variables": 50,
             "by_vartype": {
                 "SPIN": {
-                    "solve_time_in_seconds": 2112.227674478665,
+                    "solve_time_in_seconds": 2111.6860660649836,
                     "energy": -147.6401646715853,
                     "state": [
                         -1,
@@ -633,11 +633,11 @@
                         1
                     ],
                     "timings": {
-                        "solve_time_in_seconds": 2112.227674478665
+                        "solve_time_in_seconds": 2111.6860660649836
                     }
                 },
                 "BINARY": {
-                    "solve_time_in_seconds": 2107.4053188748658,
+                    "solve_time_in_seconds": 2106.8871020413935,
                     "energy": -57.3969841003418,
                     "state": [
                         0,
@@ -692,11 +692,11 @@
                         1
                     ],
                     "timings": {
-                        "solve_time_in_seconds": 2107.4053188748658
+                        "solve_time_in_seconds": 2106.8871020413935
                     }
                 }
             },
-            "binary_over_spin_time_ratio": 0.9977169338030809
+            "binary_over_spin_time_ratio": 0.9977274254441937
         }
     ],
     "experiment": "qubo",
@@ -718,7 +718,7 @@
         },
         "packages": {
             "omnisolver": "0.0.4",
-            "omnisolver-bruteforce": "0.0.6.dev3+g6f6bf2ce9",
+            "omnisolver-bruteforce": "0.0.6.dev4+g7285f2d4c",
             "dimod": "0.12.21",
             "numpy": "2.2.6",
             "numba": "0.65.0",

@@ -28,7 +28,7 @@
             "bf_energy": -125.32890293140784,
             "bf_state_energy": -125.328904165191,
             "bf_energy_recalc_delta": 1.233783166298963e-06,
-            "bf_time_seconds": 33.536436557769775,
+            "bf_time_seconds": 33.52714913338423,
             "bf_state": [
                 -1,
                 -1,
@@ -76,7 +76,7 @@
                 -1
             ],
             "sbm_energy": -125.32890416519103,
-            "sbm_time_seconds": 8.886741872876883,
+            "sbm_time_seconds": 8.924539288505912,
             "sbm_num_optimal_replicas": 1398,
             "sbm_state": [
                 -1,
@@ -137,7 +137,7 @@
             "bf_energy": -127.46893718552016,
             "bf_state_energy": -127.46893817677258,
             "bf_energy_recalc_delta": 9.912524205901718e-07,
-            "bf_time_seconds": 32.83409650065005,
+            "bf_time_seconds": 32.83343428559601,
             "bf_state": [
                 -1,
                 -1,
@@ -185,7 +185,7 @@
                 -1
             ],
             "sbm_energy": -127.46893817677257,
-            "sbm_time_seconds": 9.411676928400993,
+            "sbm_time_seconds": 9.402703227475286,
             "sbm_num_optimal_replicas": 1112,
             "sbm_state": [
                 -1,
@@ -246,7 +246,7 @@
             "bf_energy": -124.41782154043875,
             "bf_state_energy": -124.41781854318916,
             "bf_energy_recalc_delta": -2.9972495951824385e-06,
-            "bf_time_seconds": 32.83699266426265,
+            "bf_time_seconds": 32.83909083530307,
             "bf_state": [
                 1,
                 1,
@@ -294,7 +294,7 @@
                 -1
             ],
             "sbm_energy": -124.41781854318918,
-            "sbm_time_seconds": 9.064937643706799,
+            "sbm_time_seconds": 9.06007812730968,
             "sbm_num_optimal_replicas": 2189,
             "sbm_state": [
                 1,
@@ -355,7 +355,7 @@
             "bf_energy": -122.85334913893635,
             "bf_state_energy": -122.8533524573641,
             "bf_energy_recalc_delta": 3.3184277441478116e-06,
-            "bf_time_seconds": 32.849669670686126,
+            "bf_time_seconds": 32.84910295717418,
             "bf_state": [
                 -1,
                 -1,
@@ -403,7 +403,7 @@
                 1
             ],
             "sbm_energy": -122.85335245736412,
-            "sbm_time_seconds": 9.150180531665683,
+            "sbm_time_seconds": 9.242683950811625,
             "sbm_num_optimal_replicas": 1318,
             "sbm_state": [
                 -1,
@@ -464,7 +464,7 @@
             "bf_energy": -130.40874843979887,
             "bf_state_energy": -130.40875208554743,
             "bf_energy_recalc_delta": 3.6457485634855402e-06,
-            "bf_time_seconds": 32.846522226929665,
+            "bf_time_seconds": 32.84433998912573,
             "bf_state": [
                 -1,
                 -1,
@@ -512,7 +512,7 @@
                 1
             ],
             "sbm_energy": -130.40875208554746,
-            "sbm_time_seconds": 8.212556332349777,
+            "sbm_time_seconds": 8.179723994806409,
             "sbm_num_optimal_replicas": 3359,
             "sbm_state": [
                 -1,
@@ -573,7 +573,7 @@
             "bf_energy": -210.0,
             "bf_state_energy": -210.0,
             "bf_energy_recalc_delta": 0.0,
-            "bf_time_seconds": 32.84464883059263,
+            "bf_time_seconds": 32.84482701309025,
             "bf_state": [
                 1,
                 1,
@@ -621,7 +621,7 @@
                 1
             ],
             "sbm_energy": -210.0,
-            "sbm_time_seconds": 8.643822373822331,
+            "sbm_time_seconds": 8.645759226754308,
             "sbm_num_optimal_replicas": 3780,
             "sbm_state": [
                 1,
@@ -682,7 +682,7 @@
             "bf_energy": -210.0,
             "bf_state_energy": -210.0,
             "bf_energy_recalc_delta": 0.0,
-            "bf_time_seconds": 32.84159057959914,
+            "bf_time_seconds": 32.84310593828559,
             "bf_state": [
                 1,
                 1,
@@ -730,7 +730,7 @@
                 -1
             ],
             "sbm_energy": -210.0,
-            "sbm_time_seconds": 9.798590186983347,
+            "sbm_time_seconds": 9.752489108592272,
             "sbm_num_optimal_replicas": 3710,
             "sbm_state": [
                 1,
@@ -791,7 +791,7 @@
             "bf_energy": -222.0,
             "bf_state_energy": -222.0,
             "bf_energy_recalc_delta": 0.0,
-            "bf_time_seconds": 32.85779394581914,
+            "bf_time_seconds": 32.859073117375374,
             "bf_state": [
                 -1,
                 1,
@@ -839,7 +839,7 @@
                 -1
             ],
             "sbm_energy": -222.0,
-            "sbm_time_seconds": 8.463861092925072,
+            "sbm_time_seconds": 8.367513032630086,
             "sbm_num_optimal_replicas": 3952,
             "sbm_state": [
                 -1,
@@ -900,7 +900,7 @@
             "bf_energy": -210.0,
             "bf_state_energy": -210.0,
             "bf_energy_recalc_delta": 0.0,
-            "bf_time_seconds": 32.85057860426605,
+            "bf_time_seconds": 32.8511767629534,
             "bf_state": [
                 -1,
                 1,
@@ -948,7 +948,7 @@
                 -1
             ],
             "sbm_energy": -210.0,
-            "sbm_time_seconds": 9.12531716004014,
+            "sbm_time_seconds": 9.110744366422296,
             "sbm_num_optimal_replicas": 1191,
             "sbm_state": [
                 -1,
@@ -1009,7 +1009,7 @@
             "bf_energy": -210.0,
             "bf_state_energy": -210.0,
             "bf_energy_recalc_delta": 0.0,
-            "bf_time_seconds": 32.84854067862034,
+            "bf_time_seconds": 32.84769044443965,
             "bf_state": [
                 -1,
                 1,
@@ -1057,7 +1057,7 @@
                 1
             ],
             "sbm_energy": -210.0,
-            "sbm_time_seconds": 9.524362260475755,
+            "sbm_time_seconds": 9.391769105568528,
             "sbm_num_optimal_replicas": 3735,
             "sbm_state": [
                 1,
@@ -1118,7 +1118,7 @@
             "bf_energy": -195.21707486779985,
             "bf_state_energy": -195.21707252956585,
             "bf_energy_recalc_delta": -2.3382339975341893e-06,
-            "bf_time_seconds": 32.848227579146624,
+            "bf_time_seconds": 32.84821178019047,
             "bf_state": [
                 -1,
                 1,
@@ -1166,7 +1166,7 @@
                 -1
             ],
             "sbm_energy": -195.21707252956585,
-            "sbm_time_seconds": 9.526285972446203,
+            "sbm_time_seconds": 9.53501296043396,
             "sbm_num_optimal_replicas": 623,
             "sbm_state": [
                 -1,
@@ -1227,7 +1227,7 @@
             "bf_energy": -213.51381391336648,
             "bf_state_energy": -213.51381500561723,
             "bf_energy_recalc_delta": 1.0922507556188066e-06,
-            "bf_time_seconds": 32.8437325861305,
+            "bf_time_seconds": 32.84415054693818,
             "bf_state": [
                 1,
                 -1,
@@ -1275,7 +1275,7 @@
                 1
             ],
             "sbm_energy": -213.5138150056173,
-            "sbm_time_seconds": 9.424501430243254,
+            "sbm_time_seconds": 9.313324723392725,
             "sbm_num_optimal_replicas": 1440,
             "sbm_state": [
                 1,
@@ -1336,7 +1336,7 @@
             "bf_energy": -215.07411486304989,
             "bf_state_energy": -215.07411218858468,
             "bf_energy_recalc_delta": -2.674465207519461e-06,
-            "bf_time_seconds": 32.84404980391264,
+            "bf_time_seconds": 32.84180977009237,
             "bf_state": [
                 -1,
                 -1,
@@ -1384,7 +1384,7 @@
                 -1
             ],
             "sbm_energy": -215.07411218858465,
-            "sbm_time_seconds": 8.763388201594353,
+            "sbm_time_seconds": 8.776330012828112,
             "sbm_num_optimal_replicas": 2373,
             "sbm_state": [
                 -1,
@@ -1445,7 +1445,7 @@
             "bf_energy": -200.04595641581372,
             "bf_state_energy": -200.0459592363759,
             "bf_energy_recalc_delta": 2.8205621731558495e-06,
-            "bf_time_seconds": 32.839691465720534,
+            "bf_time_seconds": 32.83926924690604,
             "bf_state": [
                 -1,
                 1,
@@ -1493,7 +1493,7 @@
                 -1
             ],
             "sbm_energy": -200.04595923637592,
-            "sbm_time_seconds": 9.244875062257051,
+            "sbm_time_seconds": 9.157287299633026,
             "sbm_num_optimal_replicas": 1475,
             "sbm_state": [
                 -1,
@@ -1554,7 +1554,7 @@
             "bf_energy": -215.57372816796408,
             "bf_state_energy": -215.5737332559783,
             "bf_energy_recalc_delta": 5.088014233933791e-06,
-            "bf_time_seconds": 32.83652219362557,
+            "bf_time_seconds": 32.83939788863063,
             "bf_state": [
                 1,
                 1,
@@ -1602,7 +1602,7 @@
                 -1
             ],
             "sbm_energy": -215.5737332559783,
-            "sbm_time_seconds": 8.994494682177901,
+            "sbm_time_seconds": 9.002850197255611,
             "sbm_num_optimal_replicas": 2172,
             "sbm_state": [
                 1,
@@ -1663,7 +1663,7 @@
             "bf_energy": -48.215744909302366,
             "bf_state_energy": -48.21574455858722,
             "bf_energy_recalc_delta": -3.5071514759010824e-07,
-            "bf_time_seconds": 32.81935189291835,
+            "bf_time_seconds": 32.8205337356776,
             "bf_state": [
                 -1,
                 -1,
@@ -1711,7 +1711,7 @@
                 1
             ],
             "sbm_energy": -48.21574455858721,
-            "sbm_time_seconds": 9.050884677097201,
+            "sbm_time_seconds": 9.025837888941169,
             "sbm_num_optimal_replicas": 254,
             "sbm_state": [
                 -1,
@@ -1772,7 +1772,7 @@
             "bf_energy": -55.210760272209264,
             "bf_state_energy": -55.21075960483884,
             "bf_energy_recalc_delta": -6.673704220361287e-07,
-            "bf_time_seconds": 32.799055790528655,
+            "bf_time_seconds": 32.79765655659139,
             "bf_state": [
                 1,
                 1,
@@ -1820,7 +1820,7 @@
                 1
             ],
             "sbm_energy": -55.21075960483885,
-            "sbm_time_seconds": 8.056236799806356,
+            "sbm_time_seconds": 8.007644694298506,
             "sbm_num_optimal_replicas": 1342,
             "sbm_state": [
                 1,
@@ -1881,7 +1881,7 @@
             "bf_energy": -53.369140402084525,
             "bf_state_energy": -53.36914180986887,
             "bf_energy_recalc_delta": 1.407784345985874e-06,
-            "bf_time_seconds": 32.817685978487134,
+            "bf_time_seconds": 32.81963540613651,
             "bf_state": [
                 -1,
                 -1,
@@ -1929,7 +1929,7 @@
                 1
             ],
             "sbm_energy": -53.36914180986887,
-            "sbm_time_seconds": 8.903138173744082,
+            "sbm_time_seconds": 8.881798500195146,
             "sbm_num_optimal_replicas": 2135,
             "sbm_state": [
                 -1,
@@ -1990,7 +1990,7 @@
             "bf_energy": -57.37364679268723,
             "bf_state_energy": -57.373646208519155,
             "bf_energy_recalc_delta": -5.841680774665292e-07,
-            "bf_time_seconds": 32.824193404987454,
+            "bf_time_seconds": 32.82568341679871,
             "bf_state": [
                 -1,
                 1,
@@ -2038,7 +2038,7 @@
                 -1
             ],
             "sbm_energy": -57.37364620851915,
-            "sbm_time_seconds": 8.47516136802733,
+            "sbm_time_seconds": 8.49035811983049,
             "sbm_num_optimal_replicas": 1128,
             "sbm_state": [
                 -1,
@@ -2099,7 +2099,7 @@
             "bf_energy": -50.37860277633433,
             "bf_state_energy": -50.37860249540871,
             "bf_energy_recalc_delta": -2.809256258728965e-07,
-            "bf_time_seconds": 32.82845691591501,
+            "bf_time_seconds": 32.82773335650563,
             "bf_state": [
                 -1,
                 1,
@@ -2147,7 +2147,7 @@
                 -1
             ],
             "sbm_energy": -50.37860249540871,
-            "sbm_time_seconds": 8.745338402688503,
+            "sbm_time_seconds": 8.76562975347042,
             "sbm_num_optimal_replicas": 412,
             "sbm_state": [
                 -1,
@@ -2220,7 +2220,7 @@
         },
         "packages": {
             "omnisolver": "0.0.4",
-            "omnisolver-bruteforce": "0.0.6.dev3+g6f6bf2ce9",
+            "omnisolver-bruteforce": "0.0.6.dev4+g7285f2d4c",
             "dimod": "0.12.21",
             "numpy": "2.2.6",
             "numba": "0.65.0",

@@ -10,7 +10,7 @@
         "label": "1x4",
         "nodes": [
             {
-                "node_id": "e0fef3d77a2a525b53de1e49260c69552219eb32dbe08979d4b4086d",
+                "node_id": "05b1333cd310d85cf094f39a329a89ecb2b82221dab787550ac33f41",
                 "ip": "10.40.40.105",
                 "gpus": 4
             }
@@ -79,12 +79,13 @@
         1
     ],
     "timings": {
-        "dispatch_time_in_seconds": 0.026213066652417183,
-        "solve_time_in_seconds": 530.0489217136055,
-        "merge_time_in_seconds": 0.007608972489833832,
-        "total_time_in_seconds": 530.0565306860954,
+        "dispatch_time_in_seconds": 0.026214752346277237,
+        "solve_time_in_seconds": 530.1536630410701,
+        "merge_time_in_seconds": 0.009540215134620667,
+        "total_time_in_seconds": 530.1632032562047,
         "num_subproblems": 4,
-        "num_merge_rounds": 0
+        "num_merge_rounds": 0,
+        "merge_strategy": "direct"
     },
     "experiment": "strong_scaling",
     "environment": {
@@ -117,7 +118,7 @@
         },
         "packages": {
             "omnisolver": "0.0.4",
-            "omnisolver-bruteforce": "0.0.6.dev3+g6f6bf2ce9",
+            "omnisolver-bruteforce": "0.0.6.dev4+g7285f2d4c",
             "dimod": "0.12.21",
             "numpy": "2.2.6",
             "numba": "0.65.0",

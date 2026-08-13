@@ -12,12 +12,12 @@
         "label": "2x2",
         "nodes": [
             {
-                "node_id": "7961fca63de29822e273fbc2b45e086cfc0e33a23273da33cafd7517",
+                "node_id": "e4e66c75389d5dc78ea1b921e5d7db835a6f6917a697fc4d43c66c02",
                 "ip": "10.40.40.106",
                 "gpus": 2
             },
             {
-                "node_id": "0ae2bc6a87bb41986abd83719f8e90fee821487d2125a906e434d499",
+                "node_id": "7bbbe7c254e8627320e07c6cad0af837cb3f82bc749f95cd02885ea0",
                 "ip": "10.40.40.105",
                 "gpus": 2
             }
@@ -88,12 +88,13 @@
         1
     ],
     "timings": {
-        "dispatch_time_in_seconds": 0.025854695588350296,
-        "solve_time_in_seconds": 2122.3553130235523,
-        "merge_time_in_seconds": 0.007246777415275574,
-        "total_time_in_seconds": 2122.3625598009676,
+        "dispatch_time_in_seconds": 0.02578790858387947,
+        "solve_time_in_seconds": 2114.528035763651,
+        "merge_time_in_seconds": 0.006917065009474754,
+        "total_time_in_seconds": 2114.5349528286606,
         "num_subproblems": 4,
-        "num_merge_rounds": 0
+        "num_merge_rounds": 0,
+        "merge_strategy": "direct"
     },
     "experiment": "weak_scaling",
     "environment": {
@@ -126,7 +127,7 @@
         },
         "packages": {
             "omnisolver": "0.0.4",
-            "omnisolver-bruteforce": "0.0.6.dev3+g6f6bf2ce9",
+            "omnisolver-bruteforce": "0.0.6.dev4+g7285f2d4c",
             "dimod": "0.12.21",
             "numpy": "2.2.6",
             "numba": "0.65.0",

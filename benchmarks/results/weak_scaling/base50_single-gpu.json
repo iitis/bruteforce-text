@@ -71,7 +71,7 @@
         1
     ],
     "timings": {
-        "solve_time_in_seconds": 2112.9643930289894
+        "solve_time_in_seconds": 2112.9394748546183
     },
     "experiment": "weak_scaling",
     "environment": {
@@ -92,7 +92,7 @@
         },
         "packages": {
             "omnisolver": "0.0.4",
-            "omnisolver-bruteforce": "0.0.6.dev3+g6f6bf2ce9",
+            "omnisolver-bruteforce": "0.0.6.dev4+g7285f2d4c",
             "dimod": "0.12.21",
             "numpy": "2.2.6",
             "numba": "0.65.0",
