@@ -15,8 +15,13 @@ boundary a two-node cluster provides:
 
 ``object_fetch``
     Create partial results *on* a node and fetch them to the controller, once with the objects
-    resident locally and once with them resident on the remote node. The difference is what one
-    node boundary adds per partial result collected by a direct merge.
+    resident locally and once with them resident on the remote node. Each repetition uses a
+    fresh batch, because ``ray.get`` pulls a remote object into the local object store and every
+    later fetch of it is a local read -- timing repeated fetches of one batch measures shared
+    memory, not the network. Each batch is also fetched a second time as a control: for the
+    remote node the cold/warm difference is the transfer itself, and for the local node the two
+    coincide. The costs are amortized over a bulk fetch, with the pulls pipelined as they would
+    be in a real merge, so they are the right quantity to multiply by ``P``.
 
 Multiplying these per-unit costs by ``P`` bounds the network term of a merge over ``P``
 subproblems, under the explicit assumption that the costs stay per-unit - i.e. that neither the
@@ -115,28 +120,44 @@ def main():
             f"({1e6 * seconds / args.num_tasks:7.1f} us/task)"
         )
 
-    for where, node_id in (("local", local_node_id), ("remote", remote_node_id)):
+    # Fetching the SAME objects repeatedly would measure almost nothing: ray.get pulls a
+    # remote object into the local object store, so every fetch after the first is a local
+    # shared-memory read. Each repetition therefore creates a fresh batch on the node under
+    # test and fetches it exactly once. The second fetch of that same batch is timed too, as a
+    # control: for the remote node the cold/warm difference *is* the transfer, and for the
+    # local node the two should coincide.
+    def measure_fetch(node_id, repeats):
         strategy = pin(node_id)
-        # Objects are created once, on the node under test, and fetched repeatedly.
-        refs = [
-            _make.options(scheduling_strategy=strategy).remote(
-                args.num_variables, args.num_states, i
-            )
-            for i in range(args.num_objects)
-        ]
-        ray.wait(refs, num_returns=len(refs))
-
-        def fetch():
+        cold, warm = [], []
+        for _ in range(repeats + 1):  # first pass discarded as warm-up
+            refs = [
+                _make.options(scheduling_strategy=strategy).remote(
+                    args.num_variables, args.num_states, i
+                )
+                for i in range(args.num_objects)
+            ]
+            ray.wait(refs, num_returns=len(refs))  # ready, but not yet pulled to the controller
+            start = perf_counter()
             ray.get(refs)
+            cold.append(perf_counter() - start)
+            start = perf_counter()
+            ray.get(refs)  # now resident locally
+            warm.append(perf_counter() - start)
+            del refs
+        return float(np.median(cold[1:])), float(np.median(warm[1:]))
 
-        seconds = timed(fetch, args.repeats)
-        measurements[f"object_fetch_{where}_seconds"] = seconds
-        measurements[f"object_fetch_{where}_per_object_seconds"] = seconds / args.num_objects
+    for where, node_id in (("local", local_node_id), ("remote", remote_node_id)):
+        cold_seconds, warm_seconds = measure_fetch(node_id, args.repeats)
+        measurements[f"object_fetch_{where}_seconds"] = cold_seconds
+        measurements[f"object_fetch_{where}_per_object_seconds"] = cold_seconds / args.num_objects
+        measurements[f"object_refetch_{where}_per_object_seconds"] = (
+            warm_seconds / args.num_objects
+        )
         print(
             f"  fetching {args.num_objects} partial results from the {where} node: "
-            f"{seconds:7.3f} s ({1e6 * seconds / args.num_objects:7.1f} us/object)"
+            f"{cold_seconds:7.3f} s ({1e6 * cold_seconds / args.num_objects:7.1f} us/object); "
+            f"re-fetching the same batch: {1e6 * warm_seconds / args.num_objects:7.1f} us/object"
         )
-        del refs
 
     per_object_local = measurements["object_fetch_local_per_object_seconds"]
     per_object_remote = measurements["object_fetch_remote_per_object_seconds"]
@@ -147,6 +168,11 @@ def main():
     )
     measurements["task_roundtrip_boundary_overhead_per_task_seconds"] = (
         per_task_remote - per_task_local
+    )
+
+    measurements["object_transfer_remote_per_object_seconds"] = (
+        measurements["object_fetch_remote_per_object_seconds"]
+        - measurements["object_refetch_remote_per_object_seconds"]
     )
 
     print("\nper-unit cost of one node boundary:")
