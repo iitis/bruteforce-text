@@ -514,17 +514,32 @@ and that floor applies equally to dispatching the subproblems themselves. Schedu
 property of distributing $2^{k}$ pieces of work at all, is thus a firmer candidate for the
 ceiling of this decomposition than the way partial results are combined.
 
-The network term that the single-machine measurement omits is the one a two-node cluster can
-still bound, because it is a per-unit cost: the experiment
-\texttt{benchmarks/exp\_boundary\_cost.py} measures what one node boundary adds to dispatching
-a task and to collecting one partial result, and multiplying those unit costs by $P$ bounds the
-transfer a direct merge would pay. What no two-node cluster can test is whether those costs
-stay per-unit --- whether the head node or the fabric saturates when thousands of raylets talk
-to one controller --- and that, rather than any arithmetic, is where we expect the decomposition
-to break. It is also the argument for the hierarchical merge at scale that is independent of
-timing: reducing through a tree leaves the controller receiving a single object instead of $P$
-of them, so the centralization the reviewer asked about is removed rather than merely made
-faster.
+The network term that the single-machine measurement omits turns out, in the regime this paper
+reports, largely not to exist. Measuring one node boundary directly
+(\texttt{benchmarks/exp\_boundary\_cost.py}, run on the two-node cluster) shows that dispatching
+a subproblem to another node costs the same as dispatching it locally, to within the
+$\approx\!70\,\mu$s per task that submission costs either way: the extra hop is absorbed by the
+pipelining of a bulk submission. Collecting the results is cheaper still, and for a reason
+worth stating, because it decides how far the single-machine numbers can be trusted. With
+\texttt{num\_states}$\,=1$ a partial result is about a kilobyte, which is below the threshold
+under which Ray returns a value inline with the task-completion reply rather than through the
+distributed object store; such a result is never fetched as an object at all, and the
+controller pays nothing for it beyond the task completion already counted in
+Table~\ref{tab:controller}. We verified this on the cluster: partial results of $1$ and
+$50$\,kB are reported as inlined, and only from about half a megabyte upwards do they enter the
+object store. For the ground-state searches reported here the single-machine measurement is
+therefore not merely a lower bound but a fair account of the controller's cost.
+
+Two caveats bound that statement, and both point the same way. The inlining threshold is
+crossed as soon as a run asks for a substantial low-energy spectrum rather than a single ground
+state: at $N=60$ the partial results exceed it somewhere above $\texttt{num\_states}\approx200$,
+and from there a direct merge does pull $P$ objects across the fabric. And no two-node cluster
+can test whether any of these per-unit costs survive at scale --- whether one head node still
+schedules and one controller still receives when thousands of raylets address them. That, rather
+than any arithmetic, is where we expect the decomposition to break. It is also the argument for
+the hierarchical merge that needs no timings at all: reducing through a tree leaves the
+controller receiving a single object instead of $P$, which removes the centralization rather
+than merely making it faster.
 
 The hierarchical merge overtakes the direct one already at $P=64$, where its
 logarithmic depth starts to beat the linear cost of fetching every partial result,

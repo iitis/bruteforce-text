@@ -314,16 +314,29 @@ item accordingly: the target is the scheduling overhead, for instance by groupin
 assignments into one task, not the merge.
 \end{enumerate}
 
-That leaves the network term, which is the part of the reviewer's concern a single machine
-cannot address. It is, however, a \emph{per-unit} cost, and a two-node cluster can measure it:
-we added an experiment (\texttt{benchmarks/exp\_boundary\_cost.py}) that measures what one node
-boundary adds to dispatching a task and to collecting one partial result, so that the transfer a
-direct merge would pay can be bounded as unit cost $\times\,P$. What no two-node cluster can
-test is whether those costs stay per-unit --- whether the head node or the fabric saturates once
-thousands of raylets address one controller --- and we now say plainly that this, rather than any
-arithmetic, is where we expect the decomposition to break. It is also an argument for the
-hierarchical merge that does not depend on timings at all: reducing through a tree leaves the
-controller receiving one object instead of $P$, which removes the centralization the reviewer
+That leaves the network term, and we measured it rather than leaving it as a caveat. A new
+experiment (\texttt{benchmarks/exp\_boundary\_cost.py}) times, across the one node boundary our
+cluster provides, what it costs to dispatch a subproblem to another node and to collect a partial
+result from it. Dispatch is unaffected: submitting to the remote node costs the same
+$\approx\!70\,\mu$s as submitting locally, the extra hop being absorbed by the pipelining of a
+bulk submission.
+
+Collection turned out to be more interesting. With \texttt{num\_states}$\,=1$ a partial result
+is about a kilobyte, which is below the size at which Ray returns a value inline with the
+task-completion reply instead of through the distributed object store. Such a result is never
+fetched as an object at all, so there is no transfer for the controller to pay, and the
+single-machine measurement of Table~5 is a fair account of the cost rather than merely a lower
+bound. We checked this directly on the cluster: partial results of 1 and 50 kB are reported as
+inlined and only from about half a megabyte upwards do they enter the object store, which at
+$N=60$ corresponds to roughly \texttt{num\_states}$\,>200$.
+
+We are careful about the two limits of that. Above the inlining threshold --- that is, whenever a
+run asks for a substantial low-energy spectrum rather than a single ground state --- a direct
+merge does pull $P$ objects across the fabric. And no two-node cluster can test whether these
+per-unit costs survive when thousands of raylets address one head node and one controller. That,
+rather than any arithmetic, is where we expect the decomposition to break, and it is also the
+argument for the hierarchical merge that needs no timings at all: reducing through a tree leaves
+the controller receiving one object instead of $P$, which removes the centralization the reviewer
 asked about rather than merely making it faster.
 
 We implemented the hierarchical reduction as well, and report honestly that it is not
@@ -476,8 +489,9 @@ hierarchically, against Ray's $5.4$~s task-scheduling floor for the same number 
 scheduling already exceeds merging before any network is involved. We are careful not to claim
 more than that: the measurement runs on one machine and excludes both the transfer of $P$
 partial results into one node and any contention at the head. Those are the terms we expect to
-bind, and the new boundary experiment described under R2.2 bounds the first of them from
-two-node measurements.
+bind. The boundary experiment described under R2.2 addresses the first: measured across one node
+boundary, dispatch is unaffected, and at the payload size these searches produce the partial
+results are returned inline rather than through the object store, so no transfer occurs.
 
 \emph{Does the node layout matter?} Not measurably. Holding the GPU count fixed and adding a
 node boundary --- $2\times1$ against $1\times2$, and $2\times2$ against $1\times4$ --- changes

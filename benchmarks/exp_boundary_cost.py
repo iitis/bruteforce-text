@@ -60,7 +60,15 @@ def main():
     parser.add_argument("--num-tasks", type=int, default=2000)
     parser.add_argument("--num-objects", type=int, default=1024)
     parser.add_argument("--num-variables", type=int, default=60)
-    parser.add_argument("--num-states", type=int, default=1)
+    parser.add_argument(
+        "--num-states",
+        type=int,
+        nargs="+",
+        default=[1, 1000],
+        help="payload sizes to sweep. Ray returns results below ~100 KiB inline with the task "
+        "reply, so they never enter the distributed object store; the default sweep therefore "
+        "brackets that threshold (num_states=1 is ~1 kB, 1000 is ~0.5 MB at N=60)",
+    )
     parser.add_argument("--repeats", type=int, default=5)
     args = parser.parse_args()
 
@@ -123,16 +131,17 @@ def main():
     # Fetching the SAME objects repeatedly would measure almost nothing: ray.get pulls a
     # remote object into the local object store, so every fetch after the first is a local
     # shared-memory read. Each repetition therefore creates a fresh batch on the node under
-    # test and fetches it exactly once. The second fetch of that same batch is timed too, as a
-    # control: for the remote node the cold/warm difference *is* the transfer, and for the
-    # local node the two should coincide.
-    def measure_fetch(node_id, repeats):
+    # test and fetches it exactly once. The second fetch of that batch is timed as a control:
+    # for the remote node the cold/warm difference is the transfer, and for the local node the
+    # two should coincide. Costs are amortized over a bulk fetch, with the pulls pipelined as
+    # they would be in a real merge, so they are the right quantity to multiply by P.
+    def measure_fetch(node_id, num_states, repeats):
         strategy = pin(node_id)
-        cold, warm = [], []
+        cold, warm, last = [], [], None
         for _ in range(repeats + 1):  # first pass discarded as warm-up
             refs = [
                 _make.options(scheduling_strategy=strategy).remote(
-                    args.num_variables, args.num_states, i
+                    args.num_variables, num_states, i
                 )
                 for i in range(args.num_objects)
             ]
@@ -143,54 +152,80 @@ def main():
             start = perf_counter()
             ray.get(refs)  # now resident locally
             warm.append(perf_counter() - start)
+            last = refs[0]
             del refs
-        return float(np.median(cold[1:])), float(np.median(warm[1:]))
+        return float(np.median(cold[1:])), float(np.median(warm[1:])), last
 
-    for where, node_id in (("local", local_node_id), ("remote", remote_node_id)):
-        cold_seconds, warm_seconds = measure_fetch(node_id, args.repeats)
-        measurements[f"object_fetch_{where}_seconds"] = cold_seconds
-        measurements[f"object_fetch_{where}_per_object_seconds"] = cold_seconds / args.num_objects
-        measurements[f"object_refetch_{where}_per_object_seconds"] = (
-            warm_seconds / args.num_objects
+    def describe_payload(ref):
+        """Size of one partial result, and whether Ray inlined it or stored it."""
+        from ray.experimental import get_object_locations
+
+        info = get_object_locations([ref])[ref]
+        return int(info.get("object_size", 0)), bool(info.get("node_ids"))
+
+    by_payload = {}
+    for num_states in args.num_states:
+        entry = {}
+        for where, node_id in (("local", local_node_id), ("remote", remote_node_id)):
+            cold_s, warm_s, sample_ref = measure_fetch(node_id, num_states, args.repeats)
+            entry[f"{where}_cold_per_object_seconds"] = cold_s / args.num_objects
+            entry[f"{where}_warm_per_object_seconds"] = warm_s / args.num_objects
+            if where == "remote":
+                size, stored = describe_payload(sample_ref)
+                entry["payload_bytes"] = size
+                entry["enters_object_store"] = stored
+        entry["boundary_per_object_seconds"] = (
+            entry["remote_cold_per_object_seconds"] - entry["local_cold_per_object_seconds"]
+        )
+        by_payload[str(num_states)] = entry
+
+        where_txt = (
+            "object store" if entry["enters_object_store"] else "inlined in the task reply"
         )
         print(
-            f"  fetching {args.num_objects} partial results from the {where} node: "
-            f"{cold_seconds:7.3f} s ({1e6 * cold_seconds / args.num_objects:7.1f} us/object); "
-            f"re-fetching the same batch: {1e6 * warm_seconds / args.num_objects:7.1f} us/object"
+            f"  num_states={num_states:<6d} payload {entry['payload_bytes'] / 1024:9.1f} kB "
+            f"({where_txt})"
         )
+        print(
+            f"      local  cold {1e6 * entry['local_cold_per_object_seconds']:8.1f} us   "
+            f"warm {1e6 * entry['local_warm_per_object_seconds']:8.1f} us"
+        )
+        print(
+            f"      remote cold {1e6 * entry['remote_cold_per_object_seconds']:8.1f} us   "
+            f"warm {1e6 * entry['remote_warm_per_object_seconds']:8.1f} us   "
+            f"boundary {1e6 * entry['boundary_per_object_seconds']:+8.1f} us/object"
+        )
+    measurements["by_payload"] = by_payload
 
-    per_object_local = measurements["object_fetch_local_per_object_seconds"]
-    per_object_remote = measurements["object_fetch_remote_per_object_seconds"]
     per_task_local = measurements["task_roundtrip_local_per_task_seconds"]
     per_task_remote = measurements["task_roundtrip_remote_per_task_seconds"]
-    measurements["object_fetch_boundary_overhead_per_object_seconds"] = (
-        per_object_remote - per_object_local
-    )
     measurements["task_roundtrip_boundary_overhead_per_task_seconds"] = (
         per_task_remote - per_task_local
     )
 
-    measurements["object_transfer_remote_per_object_seconds"] = (
-        measurements["object_fetch_remote_per_object_seconds"]
-        - measurements["object_refetch_remote_per_object_seconds"]
-    )
-
     print("\nper-unit cost of one node boundary:")
-    print(f"  dispatching a subproblem : {1e6 * (per_task_remote - per_task_local):+8.1f} us")
-    print(f"  collecting a partial result: {1e6 * (per_object_remote - per_object_local):+8.1f} us")
+    print(f"  dispatching a subproblem   : {1e6 * (per_task_remote - per_task_local):+8.1f} us")
+    for entry in by_payload.values():
+        print(
+            f"  collecting a partial result of {entry['payload_bytes'] / 1024:8.1f} kB: "
+            f"{1e6 * entry['boundary_per_object_seconds']:+8.1f} us"
+        )
 
     print("\nextrapolated network term of a direct merge (per-unit cost x P):")
     projection = {}
     for k in (10, 14, 16):
         P = 2**k
         projection[str(P)] = {
-            "collect_seconds": P * per_object_remote,
             "dispatch_seconds": P * per_task_remote,
+            "collect_seconds": {
+                ns: P * e["remote_cold_per_object_seconds"] for ns, e in by_payload.items()
+            },
         }
-        print(
-            f"  P=2^{k:<2} = {P:6d}: collecting {P * per_object_remote:7.1f} s, "
-            f"dispatching {P * per_task_remote:7.1f} s"
+        collect = "  ".join(
+            f"num_states={ns}: {P * e['remote_cold_per_object_seconds']:7.1f} s"
+            for ns, e in by_payload.items()
         )
+        print(f"  P=2^{k:<2} = {P:6d}: dispatching {P * per_task_remote:7.1f} s   {collect}")
     print(
         "\nThese assume the per-unit costs hold at scale, i.e. that neither the head node nor\n"
         "the fabric saturates. A two-node cluster cannot test that assumption, so the figures\n"
@@ -202,7 +237,7 @@ def main():
         "num_tasks": args.num_tasks,
         "num_objects": args.num_objects,
         "num_variables": args.num_variables,
-        "num_states": args.num_states,
+        "num_states_sweep": args.num_states,
         "repeats": args.repeats,
         "measurements": measurements,
         "linear_projection": projection,
