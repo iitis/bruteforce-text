@@ -7,12 +7,12 @@
         "label": "2x1",
         "nodes": [
             {
-                "node_id": "f19b58835e6a6f146aa1503fd5949feb94161cf3f09f4cf9e63ae45f",
+                "node_id": "5eb58216d79339edee3d6e62d791a9093c8c10f14c65bee8f39638fe",
                 "ip": "10.40.40.106",
                 "gpus": 1
             },
             {
-                "node_id": "662d9cfa3f0cd902c7fb90945201d227a94d60d34cbc22f7770a874b",
+                "node_id": "c0600b94bc98e0157aa57b0f3a9f759acaded5c58706bb1f051584e3",
                 "ip": "10.40.40.105",
                 "gpus": 1
             }
@@ -24,29 +24,32 @@
     "num_states": 1,
     "repeats": 5,
     "measurements": {
-        "task_roundtrip_local_seconds": 0.1398035604506731,
-        "task_roundtrip_local_per_task_seconds": 6.990178022533655e-05,
-        "task_roundtrip_remote_seconds": 0.1400915328413248,
-        "task_roundtrip_remote_per_task_seconds": 7.00457664206624e-05,
-        "object_fetch_local_seconds": 0.024208957329392433,
-        "object_fetch_local_per_object_seconds": 2.3641559891984798e-05,
-        "object_fetch_remote_seconds": 0.02505107782781124,
-        "object_fetch_remote_per_object_seconds": 2.4463943191221915e-05,
-        "object_fetch_boundary_overhead_per_object_seconds": 8.223832992371172e-07,
-        "task_roundtrip_boundary_overhead_per_task_seconds": 1.4398619532585762e-07
+        "task_roundtrip_local_seconds": 0.14076820388436317,
+        "task_roundtrip_local_per_task_seconds": 7.03841019421816e-05,
+        "task_roundtrip_remote_seconds": 0.13475519977509975,
+        "task_roundtrip_remote_per_task_seconds": 6.737759988754987e-05,
+        "object_fetch_local_seconds": 0.025377091020345688,
+        "object_fetch_local_per_object_seconds": 2.4782315449556336e-05,
+        "object_refetch_local_per_object_seconds": 2.318480983376503e-05,
+        "object_fetch_remote_seconds": 0.024296997115015984,
+        "object_fetch_remote_per_object_seconds": 2.3727536245132796e-05,
+        "object_refetch_remote_per_object_seconds": 2.3178856281447224e-05,
+        "object_fetch_boundary_overhead_per_object_seconds": -1.0547792044235393e-06,
+        "task_roundtrip_boundary_overhead_per_task_seconds": -3.006502054631719e-06,
+        "object_transfer_remote_per_object_seconds": 5.486799636855721e-07
     },
     "linear_projection": {
         "1024": {
-            "collect_seconds": 0.02505107782781124,
-            "dispatch_seconds": 0.0717268648147583
+            "collect_seconds": 0.024296997115015984,
+            "dispatch_seconds": 0.06899466228485107
         },
         "16384": {
-            "collect_seconds": 0.40081724524497986,
-            "dispatch_seconds": 1.1476298370361329
+            "collect_seconds": 0.38875195384025574,
+            "dispatch_seconds": 1.1039145965576171
         },
         "65536": {
-            "collect_seconds": 1.6032689809799194,
-            "dispatch_seconds": 4.590519348144531
+            "collect_seconds": 1.555007815361023,
+            "dispatch_seconds": 4.415658386230469
         }
     },
     "experiment": "boundary_cost",
