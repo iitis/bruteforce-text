@@ -121,9 +121,11 @@ and it closes by pointing back to that caveat.
 \end{itemize}
 
 The projection is also no longer supported by argument alone. Table~5 of the revision reports
-the controller cost up to $2^{16}$ subproblems, measured on a CPU: at that scale the whole
-controller cost is $7.4$~s merging directly and $3.8$~s merging hierarchically, so for the
-projections above it inflates the wall-clock time by a few percent rather than dominating it.
+the controller cost up to $2^{16}$ subproblems: $7.4$~s merging directly and $3.8$~s merging
+hierarchically. That measurement runs on one machine and so excludes network transfer, which we
+state in the caption and in the text --- it bounds the local component from below rather than
+estimating the total --- but it is enough to establish that the merge \emph{arithmetic}
+($2.1$~s of the $7.4$~s) is not what would limit the projection.
 Nor is the linear-scaling assumption an assumption any more within our envelope: Table~4
 measures every GPU count and node layout at fixed problem size, giving $2.00\times$ on two
 GPUs, $3.99\times$ on four and $7.86\times$ on eight, i.e.\ $98.2\%$ parallel efficiency, with
@@ -296,19 +298,33 @@ sweep up to $2^{16}$ subproblems, and three things follow.
 \item \textbf{The reviewer's expectation of linear rather than logarithmic growth is
 confirmed} for a merge that collects every partial result on the controller: we fit
 $O(P^{0.97})$ over four decades.
-\item \textbf{Its constant, however, is small.} At $2^{16}=65{,}536$ subproblems the whole
-controller cost is $7.4$~s collecting directly and $3.8$~s reducing hierarchically, of which
-the concatenation arithmetic is $2.1$~s. Against the $\approx\!33$~s that one worker would
-spend on its share of an $N=60$ search at that scale, the controller contributes between a
-tenth and a fifth of the total, not a wall.
+\item \textbf{The merge arithmetic is not what would limit it.} At $2^{16}=65{,}536$
+subproblems the concatenation accounts for $2.1$~s of the $7.4$~s direct-merge total. We want to
+be explicit about the limits of this measurement, though, because it bears directly on the
+reviewer's question: it runs on a single machine, so every partial result is fetched from the
+local object store and no network transfer is involved at all. It is a lower bound on the
+controller cost at a given $P$, covering the arithmetic and the local scheduling, and the
+manuscript now says so in both the text and the table caption.
 \item \textbf{The dominant term is not the merge at all}, but Ray's per-task scheduling:
-dispatching and collecting $2^{16}$ \emph{empty} tasks costs $5.4$~s, more than the entire
-hierarchical merge, and that floor applies equally to dispatching the subproblems themselves.
-The ceiling of this decomposition is therefore set by task scheduling --- a property of
-distributing $2^{k}$ pieces of work at all --- rather than by how partial results are combined.
-We have rewritten the future-work item accordingly: the target is the scheduling overhead, for
-instance by grouping several fixed assignments into one task, not the merge.
+even with no network involved, dispatching and collecting $2^{16}$ \emph{empty} tasks costs
+$5.4$~s, more than the entire hierarchical merge, and that floor applies equally to dispatching
+the subproblems themselves. Scheduling is therefore a firmer candidate for the ceiling of this
+decomposition than the way partial results are combined, and we have rewritten the future-work
+item accordingly: the target is the scheduling overhead, for instance by grouping several fixed
+assignments into one task, not the merge.
 \end{enumerate}
+
+That leaves the network term, which is the part of the reviewer's concern a single machine
+cannot address. It is, however, a \emph{per-unit} cost, and a two-node cluster can measure it:
+we added an experiment (\texttt{benchmarks/exp\_boundary\_cost.py}) that measures what one node
+boundary adds to dispatching a task and to collecting one partial result, so that the transfer a
+direct merge would pay can be bounded as unit cost $\times\,P$. What no two-node cluster can
+test is whether those costs stay per-unit --- whether the head node or the fabric saturates once
+thousands of raylets address one controller --- and we now say plainly that this, rather than any
+arithmetic, is where we expect the decomposition to break. It is also an argument for the
+hierarchical merge that does not depend on timings at all: reducing through a tree leaves the
+controller receiving one object instead of $P$, which removes the centralization the reviewer
+asked about rather than merely making it faster.
 
 We implemented the hierarchical reduction as well, and report honestly that it is not
 uniformly better: it overtakes the direct merge only from $P=64$ upwards, because below that
@@ -454,11 +470,14 @@ scaling outlook also appears somewhat optimistic.}
 \textbf{We agree on all three counts, and two of them we can now answer with measurements
 rather than with argument.}
 
-\emph{Does the controller become a bottleneck?} Not first. Table~5 measures it up to $2^{16}$
-subproblems and finds a total cost of $7.4$~s collecting directly, or $3.8$~s reducing
-hierarchically, against Ray's $5.4$~s task-scheduling floor for the same number of tasks. The
-centralization is real but small; what grows and would eventually bind is per-task scheduling,
-which the dispatch of the subproblems pays as well.
+\emph{Does the controller become a bottleneck?} Not through its arithmetic. Table~5 measures
+the local cost up to $2^{16}$ subproblems --- $7.4$~s collecting directly, $3.8$~s reducing
+hierarchically, against Ray's $5.4$~s task-scheduling floor for the same number of tasks --- so
+scheduling already exceeds merging before any network is involved. We are careful not to claim
+more than that: the measurement runs on one machine and excludes both the transfer of $P$
+partial results into one node and any contention at the head. Those are the terms we expect to
+bind, and the new boundary experiment described under R2.2 bounds the first of them from
+two-node measurements.
 
 \emph{Does the node layout matter?} Not measurably. Holding the GPU count fixed and adding a
 node boundary --- $2\times1$ against $1\times2$, and $2\times2$ against $1\times4$ --- changes
@@ -580,7 +599,8 @@ New Table~2 --- \emph{Current executable software version} (S1--S7) & R2.3 \\
 New Table~3 --- strong-scaling speedup and parallel efficiency & R1.3 \\
 New Table~4 --- strong and weak scaling over GPU count and node layout, measured twice & R1.1, R2.2, R3.3 \\
 Node-boundary cost withdrawn: below the reproducibility of two-node timings & own re-check (second run) \\
-New Table~5 --- measured controller cost up to $2^{16}$ subproblems & R2.2, R3.3 \\
+New Table~5 --- local controller cost up to $2^{16}$ subproblems, with its scope stated & R2.2, R3.3 \\
+Boundary-cost experiment added to bound the network term from two nodes & R2.2, R3.3 \\
 New paragraph on the cost and effect of double precision & R2.5 \\
 Instance-family verification across four families reported & R1.2 \\
 Measured BINARY/SPIN runtime ratio & R3.4 \\

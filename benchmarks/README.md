@@ -57,6 +57,7 @@ Individually, cheapest first:
 ./benchmarks/scripts/run_verification.sh          # brute force vs CPU heuristic    ~10 min, no GPU
 ./benchmarks/scripts/run_e6_instance_families.sh  # E6 families vs certified optima ~18 min, 1 GPU
 ./benchmarks/scripts/run_e3_controller_cost.sh    # E3 controller cost to 2^16      ~30 min, no GPU
+./benchmarks/scripts/run_e7_boundary_cost.sh      # E7 per-unit cost of a node boundary ~5 min, 2 nodes
 ./benchmarks/scripts/run_e4_precision.sh          # E4 float32 vs float64           ~30 min, 1 GPU
 ./benchmarks/scripts/run_e5_qubo.sh               # E5 QUBO alongside Ising          ~1.6 h, 1 GPU
 ./benchmarks/scripts/run_e1_strong_scaling.sh     # E1 all six topologies            ~2 h
@@ -208,6 +209,25 @@ against the floor set by Ray's task scheduling.
 python benchmarks/exp_controller_cost.py --max-k 14          # minutes, no GPU
 python benchmarks/exp_controller_cost.py --max-k 16          # 2^16 subproblems, needs RAM
 ```
+
+Note what this does **not** measure. Running on one machine, every partial result is fetched
+from the local object store and every task is scheduled by the local raylet, so the sweep
+contains no network transfer at all. Its numbers bound the local component of the controller
+cost from below; they are not an estimate of what a real allocation of that size would pay.
+
+### E7 - per-unit cost of a node boundary (reviewers 2, 3)
+
+Measures the term E3 omits, in the only form a two-node cluster can: as a unit cost. It times
+task dispatch and partial-result collection with the target pinned to the local node and then to
+the remote one, so the network component of a merge over `P` subproblems can be bounded as unit
+cost x `P`.
+
+```shell
+./benchmarks/scripts/run_e7_boundary_cost.sh --topology 2x1
+```
+
+The extrapolation assumes those costs stay per-unit, i.e. that neither the head node nor the
+fabric saturates. Two nodes cannot test that assumption, and the script says so in its output.
 
 ### E4 - single against double precision (reviewer 2)
 

@@ -9,7 +9,7 @@
 # Total without --with-figure: roughly 9 to 10 hours, dominated by E2 (~4 h) and E1 (~2 h).
 #
 # Usage:
-#   ./scripts/run_all.sh                  # preflight + verification + E3 + E6 + E4 + E5 + E1 + E2
+#   ./scripts/run_all.sh                  # preflight + verification + E3 + E7 + E6 + E4 + E5 + E1 + E2
 #   ./scripts/run_all.sh --cpu-only       # only what needs no GPU
 #   ./scripts/run_all.sh --with-figure    # ... and the multi-day Fig. 1 sweep at the end
 #   ./scripts/run_all.sh --skip preflight,e2
@@ -56,9 +56,11 @@ stage() {
 stage preflight    "${SCRIPTS_DIR}/preflight.sh"
 stage verification "${SCRIPTS_DIR}/run_verification.sh"
 stage e3           "${SCRIPTS_DIR}/run_e3_controller_cost.sh"
+# E7 needs two nodes, so it sits with the GPU stages even though it uses no GPU.
 
 if [ "${CPU_ONLY}" -eq 0 ]; then
     # Short GPU experiments next: each answers one reviewer point in well under an hour.
+    stage e7 "${SCRIPTS_DIR}/run_e7_boundary_cost.sh"       # ~5 min, 2 nodes
     stage e6 "${SCRIPTS_DIR}/run_e6_instance_families.sh"   # ~18 min
     stage e4 "${SCRIPTS_DIR}/run_e4_precision.sh"           # ~30 min
     stage e5 "${SCRIPTS_DIR}/run_e5_qubo.sh"                # ~1.6 h

@@ -487,30 +487,44 @@ $2^{k}$ subproblems is an independent Ray task that fixes its own variables, run
 the CUDA search over the remaining $N-k$ and returns only the requested
 \texttt{num\_states} samples. The single point of centralization is the
 controller, which retrieves the $2^{k}$ partial sample sets and merges them into
-one. Whether that centralization limits the decomposition is a fair question, and
-it can be answered without a large allocation: the number of subproblems is set by
-\texttt{num\_fixed\_vars} and is independent of the number of devices, so the
-controller can be driven on a CPU alone with the partial results that workers
-would have returned. Table~\ref{tab:controller} reports that measurement for
-$2^{k}$ subproblems with $k$ up to $16$, comparing the direct merge --- collect
-every partial result on the controller and concatenate once --- with a
-hierarchical merge performed by a tree of Ray tasks, and both against the floor
-set by Ray's task scheduling alone.
+one. Whether that centralization limits the decomposition is a fair question, and part of it can be
+answered without a large allocation: the number of subproblems is set by
+\texttt{num\_fixed\_vars} and is independent of the number of devices, so the controller can be
+driven on a CPU alone with the partial results that workers would have returned.
+Table~\ref{tab:controller} reports that measurement for $2^{k}$ subproblems with $k$ up to
+$16$, comparing the direct merge --- collect every partial result on the controller and
+concatenate once --- with a hierarchical merge performed by a tree of Ray tasks, and both
+against the floor set by Ray's task scheduling alone.
 
-Three things follow. First, the direct merge does grow essentially linearly in the
-number of subproblems, as one would expect of a sequential concatenation: fitting
-the measured points gives $O(P^{0.97})$ over four decades. Second, its constant is
-small. At $2^{16}=65{,}536$ subproblems the whole controller cost is $7.4$\,s with
-the direct strategy and $3.8$\,s with the hierarchical one, of which the
-concatenation arithmetic is only $2.1$\,s; against the $\approx\!33$\,s that one
-worker would spend on its share of an $N=60$ search at that scale, the controller
-contributes between a tenth and a fifth of the total, not a wall. Third, and least
-expected, the dominant term is not the merge at all but Ray's per-task scheduling:
-dispatching and collecting $2^{16}$ \emph{empty} tasks costs $5.4$\,s, more than the
-entire hierarchical merge, and that floor applies equally to dispatching the
-subproblems themselves. The scaling ceiling of this decomposition is therefore set by
-task scheduling, a property of distributing $2^{k}$ pieces of work at all, rather
-than by the way partial results are combined.
+It is important to be clear about what this does and does not cover. Running on one machine,
+every partial result is fetched from the local object store and every task is scheduled by the
+local raylet, so the numbers contain the merge arithmetic and the local scheduling but
+\emph{no network transfer whatsoever}. They are therefore a lower bound on the controller cost
+at a given $P$, not an estimate of it: a real allocation of that size would additionally move
+$P$ partial results across the fabric into one node, and would place the corresponding
+scheduling load on one head node. Within that bound, three things follow. First, the direct
+merge grows essentially linearly in the number of subproblems, as one would expect of a
+sequential concatenation: fitting the measured points gives $O(P^{0.97})$ over four decades ---
+the reviewer-anticipated linear, rather than logarithmic, behavior. Second, the merge
+\emph{arithmetic} is not what would limit it: at $2^{16}=65{,}536$ subproblems the concatenation
+accounts for $2.1$\,s of the $7.4$\,s direct-merge total. Third, and least expected, even with
+no network involved the dominant term is already Ray's per-task scheduling: dispatching and
+collecting $2^{16}$ \emph{empty} tasks costs $5.4$\,s, more than the entire hierarchical merge,
+and that floor applies equally to dispatching the subproblems themselves. Scheduling, a
+property of distributing $2^{k}$ pieces of work at all, is thus a firmer candidate for the
+ceiling of this decomposition than the way partial results are combined.
+
+The network term that the single-machine measurement omits is the one a two-node cluster can
+still bound, because it is a per-unit cost: the experiment
+\texttt{benchmarks/exp\_boundary\_cost.py} measures what one node boundary adds to dispatching
+a task and to collecting one partial result, and multiplying those unit costs by $P$ bounds the
+transfer a direct merge would pay. What no two-node cluster can test is whether those costs
+stay per-unit --- whether the head node or the fabric saturates when thousands of raylets talk
+to one controller --- and that, rather than any arithmetic, is where we expect the decomposition
+to break. It is also the argument for the hierarchical merge at scale that is independent of
+timing: reducing through a tree leaves the controller receiving a single object instead of $P$
+of them, so the centralization the reviewer asked about is removed rather than merely made
+faster.
 
 The hierarchical merge overtakes the direct one already at $P=64$, where its
 logarithmic depth starts to beat the linear cost of fetching every partial result,
@@ -542,7 +556,9 @@ without requiring $P$ GPUs. \emph{Concatenation}: the merge arithmetic alone, wi
 results already in the controller's memory. \emph{Direct merge}: fetching all $P$ partial
 results and concatenating them once. \emph{Hierarchical merge}: the same reduction performed by
 a tree of Ray tasks combining eight results at a time. \emph{Ray floor}: dispatching and
-collecting $P$ empty tasks, which no distributed strategy can beat. Medians of five
+collecting $P$ empty tasks, which no distributed strategy can beat. All four columns are
+measured on a single machine and therefore exclude network transfer between nodes; they bound
+the local component of the controller cost from below rather than estimating its total. Medians of five
 repetitions after a warm-up, from one sweep over $k=3,\dots,16$; the rows for $k<8$ are omitted
 as all four columns are then below $30$\,ms. Repeating the sweep reproduced every entry to
 within a few percent and put the crossover between the two merge strategies at the same
@@ -567,15 +583,14 @@ would move that limit only to $N \lesssim 76$: two additional variables for a
 fourfold increase in resources is a direct consequence of the $O(2^N)$
 complexity, and is the main reason we regard $N$ in the mid-seventies as a
 practical ceiling for exhaustive certification rather than as a target. These
-projections describe the search phase alone, but the controller measurement of
-Table~\ref{tab:controller} lets us bound what they omit: at $2^{14}$ workers the
-combined dispatch and merge cost is $\approx\!1.6$\,s and at $2^{16}$ it is
-$\approx\!6$\,s, so for the $N=60$ and $N=64$ projections above --- minutes to
-tens of minutes --- the controller inflates the wall-clock time by a few percent
-rather than dominating it. The caveat that remains is the one the measurement
-identifies: per-task scheduling, which grows with the number of subproblems and
-applies to dispatching the search as much as to collecting it, is what would
-eventually set the ceiling, together with per-kernel launch latency.
+projections describe the search phase alone. Table~\ref{tab:controller} bounds the local part
+of what they omit --- $\approx\!1.9$\,s at $2^{14}$ workers and $\approx\!7.4$\,s at $2^{16}$
+for a direct merge --- which is small against the minutes to tens of minutes the search itself
+would take. That bound excludes the network, however, and excludes any contention at the head
+node, so it should be read as establishing that the merge \emph{arithmetic} is not the
+limiting term rather than as a complete accounting. What would set the ceiling is per-task
+scheduling and per-object transfer, both of which grow with the number of subproblems and both
+of which apply to dispatching the search as much as to collecting its results.
 
 \begin{figure}[t]
 \centering
@@ -868,8 +883,11 @@ report & seconds, any \\
 \texttt{verification} & every stored optimum re-checked in \texttt{float64} and
 against the heuristic & 10\,min, CPU \\
 \hline
-\texttt{e3\_controller\_cost} & controller cost up to $2^{16}$ subproblems
+\texttt{e3\_controller\_cost} & local controller cost up to $2^{16}$ subproblems
 (Table~\ref{tab:controller}) & 30\,min, CPU \\
+\hline
+\texttt{e7\_boundary\_cost} & per-unit cost of one node boundary, bounding the network term
+the local sweep omits & 5\,min, 2 nodes \\
 \hline
 \texttt{e6\_instance\_families} & heuristic against certified optima over four
 coupling families & 18\,min, 1 GPU \\
