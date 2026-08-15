@@ -253,12 +253,12 @@ python benchmarks/verify_sbm.py --check
 ```
 
 This recomputes every stored brute-force energy from scratch in `float64`, runs the heuristic
-on the same instances, writes `bf_sbm_cpu_verification_*` tables, and with `--check` compares
-them against the `bf_sbm_verification_*` tables that were produced with a GPU solver. The
-shipped tables are never modified.
+on the same instances, and writes the `bf_sbm_verification_*` tables. With `--check` it also
+acts as a regression gate, exiting non-zero if the heuristic failed to reach the certified
+optimum on any instance.
 
-The CPU implementation reproduces the published record: on all nine instances covered by the
-shipped tables it returns configurations **identical** to the certified ground states (Hamming
+It reaches the certified optimum on every stored brute-force result — all twenty runs,
+N = 38…60 — returning configurations **identical** to the certified ground states (Hamming
 distance 0), with energies agreeing to `float64` round-off.
 
 ## Conventions

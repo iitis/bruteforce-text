@@ -2,9 +2,9 @@
 # Verification of every stored brute-force result against the CPU heuristic. No GPU required.
 #
 # Recomputes each returned energy from scratch in float64, runs the NumPy simulated
-# bifurcation solver on the same instance, writes the bf_sbm_cpu_verification_* tables, and
-# compares them against the bf_sbm_verification_* tables produced with the GPU solver. The
-# shipped tables are never modified.
+# bifurcation solver on the same instance, and writes the bf_sbm_verification_* tables. With
+# --check it also acts as a regression gate, exiting non-zero if the heuristic failed to reach
+# the certified optimum on any instance.
 #
 # A couple of minutes for the full set of stored results.
 #

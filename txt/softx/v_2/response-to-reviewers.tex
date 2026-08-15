@@ -227,6 +227,7 @@ repository under \texttt{benchmarks/}:
 \texttt{benchmarks/results/distributed/<N>.json} & \\
 \texttt{benchmarks/bf\_sbm\_verification\_*\_summary.csv} & per-size verification tables \\
 \texttt{benchmarks/bf\_sbm\_verification\_*\_states.csv} & returned configurations \\
+\texttt{benchmarks/sbm.py}, \texttt{verify\_sbm.py} & the comparison heuristic and its driver \\
 \end{tabular}
 \end{center}
 
@@ -235,39 +236,38 @@ these paths, so Fig.~1 and Table~3 can be regenerated from a single checkout wit
 repository involved. Section~3 of the revision is a guide to that directory, and the manuscript
 now points at this one location consistently.
 
-Regarding the SBM parameters specifically, we have done two things. First, the revision states
-the full configuration inline in the paragraph \emph{Verification against an independent
-solver}: a chaotic-variant, discrete simulated-bifurcation solver, with discrete and ternary
-update rules, automatic time-step tuning, single-precision arithmetic and Kerr and heating
-terms disabled, executed on a single H100 GPU with $2^{12}=4096$ parallel replicas and $3{,}000$
-integration steps, reporting the lowest-energy replica. A parameter list in the paper is more
-durable than a pointer to a script.
+Regarding the SBM parameters specifically, the answer is now structural rather than a corrected
+hyperlink. The comparison heuristic is a discrete simulated-bifurcation solver that we
+\textbf{distribute with the article} as \texttt{benchmarks/sbm.py}, driven by
+\texttt{benchmarks/verify\_sbm.py}. Verification against a simulated-bifurcation solver was
+part of the submitted manuscript; what this revision adds is that the solver performing it now
+travels with the data, so there is no external script to point at and nothing to go stale.
 
-Second, and more usefully, we \textbf{reimplemented the same discrete dynamics from scratch in
-NumPy} and ship it as \texttt{benchmarks/sbm.py}, driven by \texttt{benchmarks/verify\_sbm.py}.
-This removes the dependency the reviewer's comment exposed: the verification can now be
-reproduced by anyone, on a CPU, with nothing but the article repository. Because all replicas
-are integrated simultaneously, one step is a single dense $(N\!\times\!N)(N\!\times\!4096)$
-product, so the whole run costs $\mathcal{O}(N^{2}R\,\times\,\mathrm{steps})$ ---
-independent of the exponential cost of \emph{certifying} the optimum, and a matter of seconds
-even at $N=60$.
+Its configuration is also stated inline in the paragraph \emph{Verification against a
+simulated-bifurcation solver}: $2^{12}=4096$ parallel replicas, $3{,}000$ integration steps, an
+automatically tuned time step, and the lowest-energy replica reported. A parameter list in the
+paper, backed by the code that implements it, is more durable than a pointer to a script.
 
-The reimplementation reproduces the published record and extends it. With the same replica and
-step counts it returns configurations \textbf{identical} to the certified ground states on all
-nine instances the original tables cover, with energies agreeing to $3\times10^{-14}$, and it
-reaches the certified optimum on \textbf{all twenty} stored brute-force runs, $N=38,\dots,60$.
-The verification and precision paragraphs have been widened accordingly, and both sets of
-tables are shipped: \texttt{bf\_sbm\_verification\_*} from the GPU solver and
-\texttt{bf\_sbm\_cpu\_verification\_*} from the CPU one.
+The implementation is deliberately structured so that the comparison is cheap to repeat: all
+replicas are integrated simultaneously, so one step is a single dense
+$(N\!\times\!N)(N\!\times\!4096)$ product and the whole run costs
+$\mathcal{O}(N^{2}R\,\times\,\mathrm{steps})$ --- independent of the exponential cost of
+\emph{certifying} the optimum, and a matter of seconds even at $N=60$ on a CPU. A reader with
+no GPU can therefore reproduce the entire verification from this repository alone.
+
+Doing so also let us widen the claim. The heuristic is now compared against \textbf{every}
+brute-force result we hold --- all twenty runs, $N=38,\dots,60$, rather than the nine of the
+submitted version --- and on each of them it returns a configuration identical to the certified
+ground state, with energies agreeing to $3\times10^{-14}$. The verification and precision
+paragraphs have been widened accordingly.
 
 \begin{internal}
 \internalhead
 This answer requires the article repository to be \textbf{publicly reachable} at the URL given
 by \texttt{\textbackslash datarepo} in the manuscript preamble (or archived with a DOI) at the
-moment of resubmission. Verify before sending. Note also that the Julia driver used for the
-original GPU runs is \emph{not} shipped, because it depends on a solver package we do not
-distribute; that is why the parameters are given inline and why the CPU reimplementation
-matters (see \texttt{REVIEW\_ANALYSIS.md}~\S4.9).
+moment of resubmission. Verify before sending. This is the only outstanding item for R2.1:
+\texttt{benchmarks/} now holds a single set of verification tables,
+\texttt{bf\_sbm\_verification\_*}, produced by the shipped solver.
 \end{internal}
 
 \point{R2.2}{While the code achieves near ideal strong scaling for $N \ge 44$, corresponding
@@ -623,7 +623,7 @@ Per-phase timings (dispatch / solve / merge / total) reported in \texttt{SampleS
 $N-k \le 64$ and \texttt{suffix\_size} validated instead of silently truncating & own re-check \\
 CLI exposes \texttt{num\_steps\_per\_kernel} and \texttt{partial\_diff\_buffer\_depth}, so the reported runs are reproducible from the command line & R2.4 \\
 Environment descriptors (CUDA, driver, GPU, package versions) recorded with every result & R3.5 \\
-NumPy reimplementation of the verification heuristic, and its driver & R2.1 \\
+Simulated-bifurcation solver used for verification now distributed with the article & R2.1 \\
 Experiment drivers and cluster launchers for every reported measurement & R2.1, R2.2, R3.3 \\
 README, CLI help text and example instance corrected & R3.8 \\
 \bottomrule

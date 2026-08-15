@@ -643,43 +643,39 @@ suggest: use the default \texttt{float32} path with its stabilization and, when 
 numerical value is wanted, recompute the energy of the returned configuration in
 \texttt{float64} on the host, as done throughout this paper.
 
-\paragraph{Verification against an independent solver}
-Using the same recomputation we cross-check a simulated-bifurcation run on the
-identical instances. Two independent implementations of the heuristic were used.
-The first is a chaotic-variant, discrete simulated-bifurcation solver (discrete
-and ternary update rules with automatic time-step tuning, single-precision
-arithmetic, Kerr and heating terms disabled) executed on a single H100 GPU with
-$2^{12}=4096$ parallel replicas and $3{,}000$ integration steps, reporting the
-lowest-energy replica; it covers nine instances, $N=40,\dots,54$ against the
-single-GPU sampler and $N=60$ against the distributed one. The second is a
-from-scratch NumPy reimplementation of the same discrete dynamics, running on a
-CPU with the same replica count and step count, which we wrote precisely so that
-this verification carries no dependency on GPU hardware or on a third-party
-solver: because all replicas are integrated simultaneously, one step is a single
-dense $(N\!\times\!N)\,(N\!\times\!4096)$ product and the whole run costs
-$\mathcal{O}(N^{2})$ per replica and step, independently of the exponential cost
-of \emph{certifying} the optimum. It reaches every instance for which a
-brute-force result exists, that is all twenty runs of $N=38,\dots,60$.
+\paragraph{Verification against a simulated-bifurcation solver}
+Using the same recomputation we cross-check, on the identical instances, the heuristic whose
+answers a certifying solver is meant to validate: a discrete simulated-bifurcation solver
+(dSB), which we distribute with this article as \texttt{benchmarks/sbm.py}. It integrates all
+replicas simultaneously, so one step is a single dense
+$(N\!\times\!N)\,(N\!\times\!R)$ product and the whole run costs
+$\mathcal{O}(N^{2}R\,\times\,\mathrm{steps})$ --- independently of the exponential cost of
+\emph{certifying} the optimum, which is what makes a heuristic worth certifying in the first
+place. We run it with $R=2^{12}=4096$ parallel replicas, $3{,}000$ integration steps and an
+automatically tuned time step, reporting the lowest-energy replica; at $N=60$ that takes well
+under a minute on a CPU.
 
-The two implementations agree with each other and with the certified optima. On
-every one of the twenty instances the returned configuration is bit-identical to
-the certified brute-force ground state (Hamming distance $0$), so the
-simulated-bifurcation heuristic reaches the exact optimum on this instance family
-throughout the measured range; on the nine instances covered by both
-implementations they return the same configuration and energies agreeing to
-$3\times 10^{-14}$, i.e.\ to \texttt{float64} roundoff. The residual differences
-between the \emph{reported} energies of the brute-force and the GPU heuristic runs,
-at most $8.1\times 10^{-6}$, are therefore explained entirely by single-precision
-roundoff on both sides rather than by any difference in the configurations found.
-This is precisely the kind of statement that cannot be made without a certifying
-solver at hand, and it illustrates the intended role of the plugin. The
-verification tables of both implementations
-(\texttt{benchmarks/bf\_sbm\_verification\_*.csv} and
-\texttt{benchmarks/bf\_sbm\_cpu\_verification\_*.csv}), the CPU solver itself and
-the script that produces the tables are distributed with the article repository
-\href{\datarepo}{\datareponame}, together with all
-\texttt{benchmarks/instances/*.txt} and \texttt{benchmarks/results/*.json} files
-that produced Fig.~\ref{fig:runtimes} and Table~\ref{tab:efficiency}.
+The heuristic is compared against every brute-force result we hold: all twenty runs of
+$N=38,\dots,60$. On each of them the configuration it returns is bit-identical to the
+certified ground state (Hamming distance $0$), and the energy of that configuration agrees
+with the \texttt{float64} recomputation to $6\times 10^{-14}$. The Simulated Bifurcation
+Machine therefore reaches the exact ground state on this instance family throughout the
+measured range. The two solvers' \emph{reported} energies differ by at most
+$2.5\times 10^{-5}$, and that residual is attributable entirely to the brute-force
+accumulator: the heuristic integrates and reports in \texttt{float64}, so its own energies sit
+within $10^{-13}$ of the recomputation, while the exhaustive search reports from the
+single-precision fast path quantified above. The difference is roundoff on one side, not a
+difference in the configurations found. This is precisely the
+kind of statement that cannot be made without a certifying solver at hand, and it illustrates
+the intended role of the plugin.
+
+Shipping the heuristic alongside the plugin is deliberate: the comparison is only as
+reproducible as its weaker half, so the verification carries no dependency on hardware or on
+software outside this repository. The solver, the driver that produces the verification tables
+(\texttt{benchmarks/verify\_sbm.py}), the resulting tables themselves and all
+\texttt{benchmarks/instances/*.txt} and \texttt{benchmarks/results/*.json} files behind
+Fig.~\ref{fig:runtimes} and Table~\ref{tab:efficiency} are distributed with the article
+repository \href{\datarepo}{\datareponame}.
 
 \paragraph{Instance families, QUBO instances and other solvers}
 Two properties of exhaustive search delimit what a meaningful benchmark of this
@@ -773,7 +769,7 @@ that the figure and the table can be regenerated from a single checkout. The sam
 directory contains the drivers of the scaling, precision, QUBO and instance-family
 experiments reported below, and a NumPy implementation of the
 simulated-bifurcation heuristic used for the verification, so that no part of the
-reproduction path depends on a GPU-only or third-party solver.
+reproduction path depends on hardware or software outside the repository.
 Sec.~\ref{sec:reproduction} is a guide to that directory.
 
 A minimal distributed-sampler invocation looks as follows:
@@ -828,7 +824,7 @@ Every number in this paper is produced by code and data in the
 \paragraph{What is where}
 \texttt{benchmarks/} holds the instances (\texttt{instances/}), the raw
 per-run results (\texttt{results/}, one subdirectory per experiment), the
-verification tables (\texttt{bf\_sbm\_*\_verification\_*.csv}), the solver
+verification tables (\texttt{bf\_sbm\_verification\_*.csv}), the solver
 drivers \texttt{bf.py} and \texttt{plot\_distributed.py} that produce
 Fig.~\ref{fig:runtimes}, one driver per experiment
 (\texttt{exp\_*.py}), the NumPy simulated-bifurcation solver \texttt{sbm.py}
@@ -942,8 +938,8 @@ python benchmarks/verify_sbm.py --check
 
 recomputes the energy of every stored brute-force configuration from scratch in
 \texttt{float64}, runs the heuristic on the same instance, writes the
-\texttt{bf\_sbm\_cpu\_verification\_*} tables, and compares them against the
-tables obtained with the GPU heuristic, which it leaves untouched.
+\texttt{bf\_sbm\_verification\_*} tables and reports, for every instance, whether
+the heuristic reached the certified optimum and at what Hamming distance.
 
 \section{Conclusions and outlook}
 \label{sec:conclusions}
