@@ -534,10 +534,11 @@ variable types --- but the runtimes do not.
 \point{R3.5}{The paper should also specify which version of the CUDA Toolkit was used. \dots\
 Which versions of the CUDA Toolkit are supported?}
 
-\textbf{Added.} The reported measurements were obtained with \textbf{CUDA Toolkit 12.4}, which
-we verified from the toolchain descriptors now recorded with every result file. The plugin is
-built and tested in continuous integration on a $12.4$ and $12.5$ matrix under Python 3.10 and
-3.11. Both numbers appear in C6 and in S5, and S4 records the target architecture of the
+\textbf{Added, in both senses the question has.} The reported measurements were obtained with
+\textbf{CUDA Toolkit 12.4}, which we verified from the toolchain descriptors now recorded with
+every result file. As for which versions are \emph{supported}: the plugin is built and tested in
+continuous integration on a $12.4$ and $12.5$ matrix under Python 3.10 and 3.11, and C6 and S5
+now state that range rather than a single version, and S4 records the target architecture of the
 measurements (NVIDIA H100 96\,GB, compute capability \texttt{sm\_90}).
 
 \point{R3.6}{The license listed in C3 does not exist in C2.}

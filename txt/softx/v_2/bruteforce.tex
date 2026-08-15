@@ -139,9 +139,9 @@ C5 & Software code languages, tools, and services used & Python, C++, Cython,
 CUDA, Ray \\
 \hline
 C6 & Compilation requirements, operating environments \& dependencies & Linux
-(x86-64) with a CUDA-capable NVIDIA GPU; CUDA Toolkit (builds and tests in
-continuous integration use 12.5; the measurements reported here were obtained
-with \cudameas), \texttt{Python >= 3.10}, \texttt{omnisolver >= 0.0.4},
+(x86-64) with a CUDA-capable NVIDIA GPU; CUDA Toolkit 12.4 and 12.5, both built
+and tested in continuous integration; the measurements reported here were
+obtained with \cudameas, \texttt{Python >= 3.10}, \texttt{omnisolver >= 0.0.4},
 \texttt{dimod ~= 0.12}, \texttt{numba ~= 0.58}, \texttt{numpy ~= 2.0};
 \texttt{ray >= 2.9} is additionally required by the distributed sampler \\
 \hline
@@ -175,8 +175,8 @@ S4 & Computing platforms/Operating Systems & Linux (x86-64) with a CUDA-capable
 NVIDIA GPU; the reported measurements were performed on NVIDIA H100 96\,GB
 (compute capability \texttt{sm\_90}) \\
 \hline
-S5 & Installation requirements \& dependencies & CUDA Toolkit (continuous
-integration: 12.5; measurements: \cudameas), \texttt{Python >= 3.10},
+S5 & Installation requirements \& dependencies & CUDA Toolkit 12.4 or 12.5
+(both exercised in continuous integration; measurements: \cudameas), \texttt{Python >= 3.10},
 \texttt{omnisolver >= 0.0.4}, \texttt{dimod}, \texttt{numba}, \texttt{numpy};
 \texttt{ray >= 2.9} for the distributed sampler; at build time additionally
 \texttt{cython} and \texttt{setuptools-cuda} \\
