@@ -1,8 +1,8 @@
 # Benchmarks and verification
 
 Everything needed to reproduce the figures, tables and verification claims of the manuscript:
-the instances, the raw results, the solver drivers, the experiment drivers, and a CPU
-implementation of the heuristic used as an independent check.
+the instances, the raw results, the solver drivers, the experiment drivers, and two CPU
+heuristics used as independent checks.
 
 ```
 benchmarks/
@@ -17,6 +17,8 @@ benchmarks/
 ├── exp_precision.py            E4  float32 against float64
 ├── exp_qubo.py                 E5  QUBO instances alongside Ising ones
 ├── exp_instance_families.py    E6  certified verification across instance families
+├── exp_boundary_cost.py       E7  end-to-end cost of one Ray node boundary
+├── exp_multi_solver.py        E8  dSB and simulated annealing against certified optima
 ├── scripts/                    launchers: one per experiment, plus cluster control
 ├── instances/                  instance files in COO format
 └── results/                    raw results, one directory per experiment
@@ -55,9 +57,10 @@ Individually, cheapest first:
 
 ```shell
 ./benchmarks/scripts/run_verification.sh          # brute force vs CPU heuristic    ~10 min, no GPU
+./benchmarks/scripts/run_e8_multi_solver.sh       # dSB + SA over 20 instances       ~6 min, no GPU
 ./benchmarks/scripts/run_e6_instance_families.sh  # E6 families vs certified optima ~18 min, 1 GPU
 ./benchmarks/scripts/run_e3_controller_cost.sh    # E3 controller cost to 2^16      ~30 min, no GPU
-./benchmarks/scripts/run_e7_boundary_cost.sh      # E7 per-unit cost of a node boundary ~5 min, 2 nodes
+./benchmarks/scripts/run_e7_boundary_cost.sh      # E7 end-to-end node-boundary cost  ~5 min, 2 nodes
 ./benchmarks/scripts/run_e4_precision.sh          # E4 float32 vs float64           ~30 min, 1 GPU
 ./benchmarks/scripts/run_e5_qubo.sh               # E5 QUBO alongside Ising          ~1.6 h, 1 GPU
 ./benchmarks/scripts/run_e1_strong_scaling.sh     # E1 all six topologies            ~2 h
@@ -68,10 +71,10 @@ Individually, cheapest first:
 Times are derived from the measured single-GPU point at *N* = 50 (2112 s); `run_all.sh`
 without `--with-figure` therefore takes **roughly 9 to 10 hours**, dominated by E2 and E1.
 
-Each writes a timestamped log to `benchmarks/logs/`, restarts or stops the Ray cluster as the
-experiment requires, and skips points that already have a result file, so an interrupted run
-can simply be restarted. `run_e1_*` and `run_e2_*` print a speedup/efficiency summary at the
-end.
+Each writes a timestamped log to `benchmarks/logs/` and restarts or stops the Ray cluster as
+the experiment requires. Scaling launchers skip completed points; evidence-producing drivers
+otherwise refuse to overwrite an existing result unless that is requested explicitly.
+`run_e1_*` and `run_e2_*` print a speedup/efficiency summary at the end.
 
 The Fig. 1 sweep is the only multi-day item, and only for points that are missing: with the
 published results in place it skips every size and just redraws the figure in seconds. It costs
@@ -106,13 +109,18 @@ export CUDAHOME=/usr/local/cuda
 python -m pip install "omnisolver-bruteforce[distributed]"   # or -e ../omnisolver-bruteforce
 ```
 
-`sbm.py`, `verify_sbm.py` and `exp_controller_cost.py` need no GPU. Everything else does.
+Rendering Fig. 1 additionally requires a system LaTeX installation because the plotting script
+uses Matplotlib's `text.usetex` mode; Matplotlib and Pillow are included in the Conda file.
+
+`sbm.py`, `verify_sbm.py`, `exp_multi_solver.py` and `exp_controller_cost.py` need no
+GPU. The E7 driver also performs no GPU computation, although its launcher uses the same
+two-node Ray deployment as the GPU experiments.
 
 ## Reproducing Figure 1
 
 ```shell
-python benchmarks/bf.py --start 40 --stop 60 --step 2 --sampler-mode distributed --seed 42 --skip-existing
-python benchmarks/bf.py --start 40 --stop 54 --step 2 --sampler-mode single-gpu  --seed 42 --skip-existing
+python benchmarks/bf.py --start 40 --stop 60 --step 2 --sampler-mode distributed --skip-existing
+python benchmarks/bf.py --start 40 --stop 54 --step 2 --sampler-mode single-gpu  --skip-existing
 python benchmarks/plot_distributed.py
 ```
 
@@ -215,19 +223,26 @@ from the local object store and every task is scheduled by the local raylet, so 
 contains no network transfer at all. Its numbers bound the local component of the controller
 cost from below; they are not an estimate of what a real allocation of that size would pay.
 
-### E7 - per-unit cost of a node boundary (reviewers 2, 3)
+### E7 - end-to-end cost of a node boundary (reviewers 2, 3)
 
-Measures the term E3 omits, in the only form a two-node cluster can: as a unit cost. It times
-task dispatch and partial-result collection with the target pinned to the local node and then to
-the remote one, so the network component of a merge over `P` subproblems can be bounded as unit
-cost x `P`.
+Measures the term E3 omits on the available two-node cluster. The primary path times a matched
+pair of tasks from submission through `ray.get`: both construct the same `SampleSet`, but only
+one returns it. Local, remote and mixed placement are measured at several task counts. There is
+no readiness wait before the timer, so an inline result remains part of the measured
+task-completion path. A separate nested-reference diagnostic calls `ray.put`, waits with
+`fetch_local=False`, records whether Ray reports the value in the producer's object store, and
+then times a cold and warm fetch. This distinction matters because Ray may retain small values
+outside Plasma even when they were passed to `ray.put`.
 
 ```shell
 ./benchmarks/scripts/run_e7_boundary_cost.sh --topology 2x1
 ```
 
-The extrapolation assumes those costs stay per-unit, i.e. that neither the head node nor the
-fabric saturates. Two nodes cannot test that assumption, and the script says so in its output.
+The defaults sweep 1, 100 and 1000 returned states (approximately 1, 50 and 500 kB for
+$N=60$), retain every repetition, and write a timestamped non-overwriting result. Inline return
+means that Ray avoids a separate object-store pull; it does not mean that no bytes cross the
+network. The result describes the tested two-node loads only and is not extrapolated to
+thousands of workers.
 
 ### E4 - single against double precision (reviewer 2)
 
@@ -259,7 +274,24 @@ python benchmarks/exp_instance_families.py --size 44 --replicas 5
 
 Sweeps uniform, bimodal, Gaussian and sparse couplings, and asks for each instance whether the
 heuristic recovers the certified optimum. Roughly 11 minutes at N = 44 for 20 instances on an
-H100; the cost doubles per added variable, so N = 48 is about 3 hours.
+H100; the cost doubles per added variable, so N = 48 is about 3 hours. Each invocation creates
+a timestamped result by default, preserving the shipped canonical source used by E8.
+
+### E8 - targeted multi-solver comparison (reviewer 1)
+
+```shell
+./benchmarks/scripts/run_e8_multi_solver.sh
+```
+
+Reads the immutable E6 certificates and reruns both the shipped dSB heuristic and an
+algorithmically distinct simulated-annealing solver on the same host and the same twenty
+certified $N=44$ instances. dSB uses 4096 replicas, 3000 integration steps and seed 42. SA uses
+4096 reads, 3000 sweeps, a geometric inverse-temperature schedule, randomized update order and
+deterministic seeds 420000 through 420019. The result records each selected state and its
+independently recomputed energy, every SA seed run, instance/source/driver SHA-256 digests,
+effective schedule, timings, environment and family summary. The dSB and SA budgets are
+documented separately; a dSB integration step and an SA sweep are not treated as equal units of
+work.
 
 ## Verification against the heuristic
 
@@ -288,8 +320,11 @@ bias, an off-diagonal entry a coupling, and the energy of a spin configuration i
 `E(s) = sum_i h_i s_i + sum_{i<j} J_ij s_i s_j` — exactly how `dimod` reads the same file with
 `vartype="SPIN"`.
 
-`bf.py` draws its instances sequentially across a sweep, so the content of a given file depends
-on which other sizes were generated in the same invocation. `bench_common.generate_instance`
+The shipped Fig. 1 instance files are the canonical inputs and `bf.py` preserves them by
+default. The `--seed` option affects files that are actually generated. When files are
+deliberately regenerated, `bf.py` draws sequentially across the requested sweep, so a file's
+content depends
+on which other sizes are generated in the same invocation. `bench_common.generate_instance`
 instead seeds from `(seed, size, family, replica)`, so each file is reproducible on its own; it
 never overwrites an existing file, because the instances behind the published results are part
 of the record.

@@ -9,8 +9,9 @@ import bench_common as common
 BruteforceGPUSampler = None
 DistributedBruteforceGPUSampler = None
 
-# Default paths to input instances and results (overridable via CLI flags), resolved
-# relative to this file so the script works from any working directory.
+# Paths are resolved relative to this file so the script works from any working directory.
+# Unless overridden, results are separated by sampler mode because the plotter consumes those
+# two subdirectories independently.
 RESULTS = common.RESULTS_DIR
 INSTANCES = common.INSTANCES_DIR
 
@@ -185,7 +186,10 @@ def main():
         "--results-dir",
         type=Path,
         default=None,
-        help="Directory for result JSON files (default: <repo>/benchmarks/results)",
+        help=(
+            "Directory for result JSON files "
+            "(default: <repo>/benchmarks/results/<sampler-mode>)"
+        ),
     )
     parser.add_argument(
         "--instances-dir",
@@ -196,8 +200,11 @@ def main():
     # Parse the arguments
     args = parser.parse_args()
     global RESULTS, INSTANCES
-    if args.results_dir is not None:
-        RESULTS = args.results_dir
+    RESULTS = (
+        args.results_dir
+        if args.results_dir is not None
+        else common.RESULTS_DIR / args.sampler_mode
+    )
     if args.instances_dir is not None:
         INSTANCES = args.instances_dir
     generate_and_bench(

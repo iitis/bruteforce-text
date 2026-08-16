@@ -21,6 +21,9 @@ Usage::
 from __future__ import annotations
 
 import argparse
+import json
+from datetime import datetime, timezone
+from pathlib import Path
 
 import numpy as np
 
@@ -45,10 +48,21 @@ def main():
     )
     parser.add_argument("--num-replicas", type=int, default=sbm.DEFAULT_NUM_REPLICAS)
     parser.add_argument("--num-steps", type=int, default=sbm.DEFAULT_NUM_STEPS)
+    parser.add_argument("--seed", type=int, default=42, help="dSB random seed")
     parser.add_argument(
         "--skip-bruteforce",
         action="store_true",
         help="only run the heuristic, e.g. to re-analyse an earlier sweep without a GPU",
+    )
+    parser.add_argument(
+        "--output",
+        type=Path,
+        help="output JSON (default: a timestamped file under results/instance_families)",
+    )
+    parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="replace an explicitly selected output file (never enabled implicitly)",
     )
     args = parser.parse_args()
 
@@ -90,13 +104,17 @@ def main():
                 )
 
             heuristic = sbm.solve(
-                reference, num_replicas=args.num_replicas, num_steps=args.num_steps
+                reference,
+                num_replicas=args.num_replicas,
+                num_steps=args.num_steps,
+                seed=args.seed,
             )
             entry.update(
                 {
                     "sbm_energy": heuristic.energy,
                     "sbm_time_seconds": heuristic.time_in_seconds,
                     "sbm_num_optimal_replicas": heuristic.num_optimal_replicas,
+                    "sbm_selected_dt": heuristic.dt,
                     "sbm_state": heuristic.state,
                 }
             )
@@ -127,14 +145,35 @@ def main():
             measurements.append(entry)
 
     payload = {
+        "experiment": "instance_families",
         "num_variables": args.size,
         "families": args.families,
         "replicas_per_family": args.replicas,
-        "sbm_config": {"num_replicas": args.num_replicas, "num_steps": args.num_steps},
+        "sbm_config": {
+            "num_replicas": args.num_replicas,
+            "num_steps": args.num_steps,
+            "seed": args.seed,
+            "dt": "automatic selection from sbm.DT_CANDIDATES",
+            "dtype": "float64",
+        },
         "kernel_params": dict(common.KERNEL_PARAMS, num_states=1),
         "measurements": measurements,
+        "environment": common.environment_descriptors(),
     }
-    path = common.write_result("instance_families", f"N{args.size}", payload)
+    if args.output is None:
+        run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S_%fZ")
+        path = common.RESULTS_DIR / "instance_families" / f"N{args.size}_{run_id}.json"
+    else:
+        path = args.output.resolve()
+    if path.exists() and not args.overwrite:
+        raise FileExistsError(
+            f"refusing to overwrite existing result {path}; pass --overwrite explicitly"
+        )
+    path.parent.mkdir(parents=True, exist_ok=True)
+    mode = "w" if args.overwrite else "x"
+    with path.open(mode) as output:
+        json.dump(payload, output, indent=4, cls=common.NumpyEncoder)
+        output.write("\n")
 
     if sampler is not None:
         print()

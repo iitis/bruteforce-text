@@ -35,8 +35,8 @@ check "omnisolver-bruteforce imports" bash -lc \
     "${NEUTRAL}${ACTIVATE_CMD} && ${PYTHON} -c 'import omnisolver.bruteforce.gpu.sampler'"
 check "distributed sampler imports (needs ray)" bash -lc \
     "${NEUTRAL}${ACTIVATE_CMD} && ${PYTHON} -c 'import omnisolver.bruteforce.gpu.distributed'"
-check "dimod, numpy, numba import" bash -lc \
-    "${NEUTRAL}${ACTIVATE_CMD} && ${PYTHON} -c 'import dimod, numpy, numba'"
+check "dimod, numpy, numba, dwave.samplers import" bash -lc \
+    "${NEUTRAL}${ACTIVATE_CMD} && ${PYTHON} -c 'import dimod, numpy, numba, dwave.samplers'"
 check "CUDA device visible" bash -lc \
     "${NEUTRAL}${ACTIVATE_CMD} && ${PYTHON} -c 'from numba import cuda; assert cuda.is_available()'"
 check "nvidia-smi reports ${GPUS_PER_NODE} GPU(s)" bash -lc \

@@ -121,6 +121,7 @@ def environment_descriptors() -> dict:
                 "omnisolver",
                 "omnisolver-bruteforce",
                 "dimod",
+                "dwave-samplers",
                 "numpy",
                 "numba",
                 "ray",

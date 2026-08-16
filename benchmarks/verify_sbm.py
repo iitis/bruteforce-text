@@ -87,9 +87,7 @@ def verify_mode(mode: str, num_replicas: int, num_steps: int, seed: int) -> list
                 # The heuristic reached the certified optimum iff it returned a configuration
                 # of the same energy; comparing float32-rounded reported values would be
                 # dominated by roundoff rather than by solution quality.
-                "sbm_reached_bf": bool(
-                    hamming == 0 or result.energy <= bf_state_energy + 1e-9
-                ),
+                "sbm_reached_bf": bool(abs(result.energy - bf_state_energy) <= 1e-9),
                 "sbm_state": result.state,
                 "bf_state": bf_state,
                 "sbm_dt": result.dt,

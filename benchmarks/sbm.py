@@ -186,8 +186,8 @@ def solve(
     :param num_replicas: number of replicas integrated in parallel.
     :param num_steps: number of integration steps.
     :param dt: integration time step. When ``None`` (the default), a short probe run is used
-        to pick the best candidate from :data:`DT_CANDIDATES`, mirroring the automatic
-        time-step tuning of the GPU solver used for the shipped verification tables.
+        to pick the best candidate from :data:`DT_CANDIDATES`; this is the tuning procedure
+        used by the article's shipped CPU comparison heuristic.
     :param c0: scale of the coupling term; defaults to :func:`coupling_scale`.
     :param seed: seed of the random number generator used for the initial conditions.
     :param dtype: precision of the dynamics. The reported energies are always recomputed in

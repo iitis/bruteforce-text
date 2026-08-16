@@ -9,7 +9,7 @@
 # Total without --with-figure: roughly 9 to 10 hours, dominated by E2 (~4 h) and E1 (~2 h).
 #
 # Usage:
-#   ./scripts/run_all.sh                  # preflight + verification + E3 + E7 + E6 + E4 + E5 + E1 + E2
+#   ./scripts/run_all.sh                  # preflight + verification + E8 + E3 + E7 + E6 + E4 + E5 + E1 + E2
 #   ./scripts/run_all.sh --cpu-only       # only what needs no GPU
 #   ./scripts/run_all.sh --with-figure    # ... and the multi-day Fig. 1 sweep at the end
 #   ./scripts/run_all.sh --skip preflight,e2
@@ -55,6 +55,7 @@ stage() {
 # Cheap and diagnostic first.
 stage preflight    "${SCRIPTS_DIR}/preflight.sh"
 stage verification "${SCRIPTS_DIR}/run_verification.sh"
+stage e8           "${SCRIPTS_DIR}/run_e8_multi_solver.sh"
 stage e3           "${SCRIPTS_DIR}/run_e3_controller_cost.sh"
 # E7 needs two nodes, so it sits with the GPU stages even though it uses no GPU.
 
