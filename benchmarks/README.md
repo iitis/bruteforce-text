@@ -229,8 +229,8 @@ Note what this does **not** measure. Running on one machine, every partial resul
 from the local object store and every task is scheduled by the local raylet, so the sweep
 contains no network transfer at all. Its numbers bound the local component of the controller
 cost from below; they are not an estimate of what a real allocation of that size would pay.
-The manuscript uses the H100-server production file `results/controller_cost/k3-16.json`;
-the README in that result directory identifies two retained, superseded development fragments.
+The manuscript uses the H100-server production file `results/controller_cost/k3-16.json`,
+which is the only sweep retained in that directory.
 
 ### E7 - end-to-end cost of a node boundary (reviewers 2, 3)
 
