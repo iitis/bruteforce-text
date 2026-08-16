@@ -1,7 +1,5 @@
 """E7 - cost of returning partial results across one Ray node boundary.
 
-This experiment has two deliberately separate parts.
-
 ``end_to_end`` measures the path used by a real worker task.  The timer starts before task
 submission and stops only after ``ray.get`` has materialised every result in the driver.  A
 payload-returning task is compared with a matched task which constructs the same payload but
@@ -9,17 +7,10 @@ returns ``None``.  There is no readiness wait before the timer: small Ray result
 inline with the task-completion reply, so waiting first would move that transfer outside the
 measurement.
 
-``nested_ref_fetch`` isolates a different mechanism.  A task pinned to the selected node calls
-``ray.put`` for each payload and returns a *nested* ObjectRef.  The driver waits for those inner
-references with ``fetch_local=False``, then times their first and second ``ray.get``.  Ray may
-keep small values in worker memory rather than Plasma, so the driver records the storage class
-reported by Ray instead of assuming that every ``ray.put`` value is object-store-backed.  For a
-payload that Ray reports on the producer's object-store node, the first remote get includes the
-store-to-store transfer and the second is a warm-local control.  These measurements are kept
-separate from ordinary task returns.
-
-Both parts retain every repetition.  Local, remote and mixed placement are measured for the
-end-to-end path, and payload sizes are measured rather than inferred from state counts.
+Every repetition is retained.  Local, remote and mixed placement are measured, and payload
+sizes are measured rather than inferred from state counts.  The result is an aggregate return-
+path diagnostic: it does not attempt to separate serialization, transport, storage and
+materialization.
 
 Usage (on an already configured two-node Ray cluster)::
 
@@ -32,6 +23,7 @@ import argparse
 import hashlib
 import re
 from datetime import datetime, timezone
+from pathlib import Path
 from time import perf_counter
 
 import numpy as np
@@ -39,11 +31,12 @@ import numpy as np
 import bench_common as common
 
 
-SCHEMA_VERSION = 3
-DEFAULT_BATCH_SIZES = (32, 256)
+SCHEMA_VERSION = 4
+DEFAULT_BATCH_SIZES = (16, 64)
 DEFAULT_NUM_STATES = (1, 100, 1000)
-DEFAULT_NUM_OBJECTS = 256
 DEFAULT_MAX_BATCH_BYTES = 16 * 1024 * 1024
+DEFAULT_OPERATION_TIMEOUT_SECONDS = 300.0
+DEFAULT_RUN_TIMEOUT_SECONDS = 20 * 60.0
 
 
 def _payload(num_variables: int, num_states: int, seed: int = 0):
@@ -89,6 +82,10 @@ def _run_id(value: str | None) -> str:
     return run_id
 
 
+def _sha256_file(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--topology", default=None, help="expected cluster label, e.g. 2x1")
@@ -97,19 +94,13 @@ def main() -> None:
         type=int,
         nargs="+",
         default=list(DEFAULT_BATCH_SIZES),
-        help="end-to-end task batch sizes (default: 32 256)",
+        help="end-to-end task batch sizes (default: 16 64)",
     )
     parser.add_argument(
         "--num-tasks",
         type=int,
         default=None,
         help="deprecated single-batch alias; overrides --batch-sizes when supplied",
-    )
-    parser.add_argument(
-        "--num-objects",
-        type=int,
-        default=DEFAULT_NUM_OBJECTS,
-        help="requested objects per forced-fetch repetition (default: 256)",
     )
     parser.add_argument("--num-variables", type=int, default=60)
     parser.add_argument(
@@ -126,6 +117,23 @@ def main() -> None:
         help="fixed assignments represented in the common request payload",
     )
     parser.add_argument("--repeats", type=int, default=5)
+    parser.add_argument(
+        "--operation-timeout-seconds",
+        type=float,
+        default=DEFAULT_OPERATION_TIMEOUT_SECONDS,
+        help="maximum wait for one Ray batch or fetch (default: 300)",
+    )
+    parser.add_argument(
+        "--run-timeout-seconds",
+        type=float,
+        default=DEFAULT_RUN_TIMEOUT_SECONDS,
+        help="absolute deadline after connecting to Ray (default: 1200)",
+    )
+    parser.add_argument(
+        "--smoke",
+        action="store_true",
+        help="exercise every E7 payload/placement path with two tasks and one repetition",
+    )
     parser.add_argument(
         "--max-batch-bytes",
         type=int,
@@ -149,19 +157,44 @@ def main() -> None:
         _positive_int(parser, "--batch-sizes values", value)
     for value in num_states_sweep:
         _positive_int(parser, "--num-states values", value)
-    _positive_int(parser, "--num-objects", args.num_objects)
     _positive_int(parser, "--num-variables", args.num_variables)
     _positive_int(parser, "--repeats", args.repeats)
     _positive_int(parser, "--max-batch-bytes", args.max_batch_bytes)
+    if not np.isfinite(args.operation_timeout_seconds) or args.operation_timeout_seconds <= 0:
+        parser.error("--operation-timeout-seconds must be finite and positive")
+    if not np.isfinite(args.run_timeout_seconds) or args.run_timeout_seconds <= 0:
+        parser.error("--run-timeout-seconds must be finite and positive")
     if not 0 <= args.num_fixed_vars <= args.num_variables:
         parser.error("--num-fixed-vars must be between zero and --num-variables")
+
+    if args.smoke:
+        batch_sizes = [2]
+        args.repeats = 1
+        args.operation_timeout_seconds = min(args.operation_timeout_seconds, 30.0)
+        args.run_timeout_seconds = min(args.run_timeout_seconds, 180.0)
 
     run_id = _run_id(args.run_id)
 
     import ray
     import ray.cloudpickle as ray_cloudpickle
-    from ray.experimental import get_object_locations
     from ray.util.scheduling_strategies import NodeAffinitySchedulingStrategy
+
+    run_started = perf_counter()
+
+    def ray_get(refs, stage: str):
+        elapsed = perf_counter() - run_started
+        remaining = args.run_timeout_seconds - elapsed
+        if remaining <= 0:
+            raise TimeoutError(
+                f"E7 exceeded its {args.run_timeout_seconds:g}s run deadline before {stage}"
+            )
+        timeout = min(args.operation_timeout_seconds, remaining)
+        try:
+            return ray.get(refs, timeout=timeout)
+        except ray.exceptions.GetTimeoutError as error:
+            raise TimeoutError(
+                f"E7 timed out after {timeout:.1f}s during {stage}"
+            ) from error
 
     topology = common.require_topology(args.topology)
     if topology["num_nodes"] < 2:
@@ -182,7 +215,8 @@ def main() -> None:
         raise SystemExit("Could not identify a node other than the controller's.")
     remote_node_id = remote_node_ids[0]
 
-    output_name = f"{topology['label']}_{run_id}"
+    mode = "smoke" if args.smoke else "production"
+    output_name = f"{topology['label']}_{mode}_{run_id}"
     output_path = common.RESULTS_DIR / "boundary_cost" / f"{output_name}.json"
     if output_path.exists():
         raise FileExistsError(
@@ -206,18 +240,11 @@ def main() -> None:
         _ = len(request_blob)
         return _payload(num_variables, num_states, seed)
 
-    # Returning a container prevents the inner reference from becoming the task's ordinary
-    # top-level value.  Waiting on that inner reference with fetch_local=False does not pull
-    # its bytes to the driver before the fetch timer starts.
-    @ray.remote(num_cpus=1)
-    def _put_payload_task(num_variables, num_states, seed):
-        payload_ref = ray.put(_payload(num_variables, num_states, seed))
-        return {"payload_ref": payload_ref}
-
     @ray.remote(num_cpus=0)
     def _node_environment():
         import os
         import platform
+        import subprocess
         import sys
         from importlib.metadata import PackageNotFoundError, version
 
@@ -228,6 +255,26 @@ def main() -> None:
             except PackageNotFoundError:
                 packages[package] = None
 
+        gpu_query = subprocess.run(
+            [
+                "nvidia-smi",
+                "--query-gpu=name,uuid,driver_version",
+                "--format=csv,noheader,nounits",
+            ],
+            capture_output=True,
+            check=False,
+            text=True,
+            timeout=10,
+        )
+        gpus = []
+        if gpu_query.returncode == 0:
+            for line in gpu_query.stdout.splitlines():
+                fields = [field.strip() for field in line.split(",", 2)]
+                if len(fields) == 3:
+                    gpus.append(
+                        {"name": fields[0], "uuid": fields[1], "driver": fields[2]}
+                    )
+
         return {
             "node_id": ray.get_runtime_context().get_node_id(),
             "environment": {
@@ -235,6 +282,11 @@ def main() -> None:
                 "platform": platform.platform(),
                 "hostname": platform.node(),
                 "cpu_count": os.cpu_count(),
+                "cuda_visible_devices": os.environ.get("CUDA_VISIBLE_DEVICES"),
+                "gpus": gpus,
+                "nvidia_smi_error": (
+                    gpu_query.stderr.strip() if gpu_query.returncode != 0 else None
+                ),
                 "packages": packages,
             },
         }
@@ -263,13 +315,15 @@ def main() -> None:
 
     node_environments = {}
     for label, node_id in (("local", controller_node_id), ("remote", remote_node_id)):
-        node_environments[label] = ray.get(
-            _node_environment.options(scheduling_strategy=pin(node_id)).remote()
+        node_environments[label] = ray_get(
+            _node_environment.options(scheduling_strategy=pin(node_id)).remote(),
+            f"collecting the {label} node environment",
         )
 
     print(
         f"controller {controller_node_id[:12]}..., remote {remote_node_id[:12]}..., "
-        f"run_id={run_id}"
+        f"run_id={run_id}, mode={mode}",
+        flush=True,
     )
 
     placements = {
@@ -289,14 +343,13 @@ def main() -> None:
             )
             for index, node_id in enumerate(node_ids)
         ]
-        values = ray.get(refs)
+        values = ray_get(refs, "materializing an end-to-end task batch")
         elapsed = perf_counter() - start
         del refs, values
         return elapsed
 
     payload_descriptors = {}
     end_to_end = {}
-    nested_ref_fetch = {}
 
     for num_states in num_states_sweep:
         template = _payload(args.num_variables, num_states, seed=9191 + num_states)
@@ -311,8 +364,9 @@ def main() -> None:
         del template
 
         # Warm both function variants on both nodes outside all recorded intervals.
-        for task in (_discard_task, _payload_task):
-            ray.get(
+        print(f"  states={num_states:<4d} warm-up starting", flush=True)
+        for task_name, task in (("discard", _discard_task), ("payload", _payload_task)):
+            ray_get(
                 [
                     task.options(scheduling_strategy=pin(node_id)).remote(
                         request_blob, args.num_variables, num_states, 8000 + index
@@ -320,7 +374,8 @@ def main() -> None:
                     for index, node_id in enumerate(
                         (controller_node_id, remote_node_id)
                     )
-                ]
+                ],
+                f"warming {task_name} tasks for {num_states} states",
             )
 
         state_end_to_end = {}
@@ -331,8 +386,17 @@ def main() -> None:
                 args.max_batch_bytes,
             )
             runs_by_placement = {name: [] for name in placements}
+            print(
+                f"  states={num_states:<4d} batch={batch_size:<4d} "
+                f"(requested {requested_batch_size}) end-to-end starting",
+                flush=True,
+            )
 
             for repeat in range(args.repeats):
+                print(
+                    f"    end-to-end repeat {repeat + 1}/{args.repeats}",
+                    flush=True,
+                )
                 placement_order = list(placements)
                 shift = repeat % len(placement_order)
                 placement_order = placement_order[shift:] + placement_order[:shift]
@@ -350,6 +414,10 @@ def main() -> None:
                     )
                     seconds = {}
                     for task_name in task_order:
+                        print(
+                            f"      placement={placement_name:<6s} task={task_name}",
+                            flush=True,
+                        )
                         task = _discard_task if task_name == "discard" else _payload_task
                         seconds[task_name] = timed_task_batch(
                             task, node_ids, num_states, seed_base
@@ -424,153 +492,15 @@ def main() -> None:
             }
             print(
                 f"  states={num_states:<4d} batch={batch_size:<4d} "
-                f"(requested {requested_batch_size}) end-to-end complete"
+                f"(requested {requested_batch_size}) end-to-end complete",
+                flush=True,
             )
         end_to_end[str(num_states)] = state_end_to_end
-
-        object_count = _effective_count(
-            args.num_objects, serialized_payload_bytes, args.max_batch_bytes
-        )
-
-        def create_inner_refs(node_id, seed_base):
-            outer_refs = [
-                _put_payload_task.options(scheduling_strategy=pin(node_id)).remote(
-                    args.num_variables, num_states, seed_base + index
-                )
-                for index in range(object_count)
-            ]
-            wrappers = ray.get(outer_refs)
-            inner_refs = [wrapper["payload_ref"] for wrapper in wrappers]
-            ready, remaining = ray.wait(
-                inner_refs, num_returns=len(inner_refs), fetch_local=False
-            )
-            if remaining:
-                raise RuntimeError(
-                    "ray.wait returned before all nested-reference objects were ready"
-                )
-            return ready
-
-        def location_snapshot(refs, expected_node_id):
-            location_info = get_object_locations(refs)
-            sizes = []
-            expected_count = 0
-            objects_with_reported_locations = 0
-            node_id_counts = {}
-            for ref in refs:
-                info = location_info.get(ref, {})
-                sizes.append(int(info.get("object_size", 0)))
-                node_ids = [str(node_id) for node_id in info.get("node_ids", [])]
-                if node_ids:
-                    objects_with_reported_locations += 1
-                if expected_node_id in node_ids:
-                    expected_count += 1
-                for node_id in node_ids:
-                    node_id_counts[node_id] = node_id_counts.get(node_id, 0) + 1
-            unexpected_node_ids = sorted(set(node_id_counts) - {expected_node_id})
-            if expected_count == len(refs) and not unexpected_node_ids:
-                storage_class = "object_store_on_expected_node"
-            elif objects_with_reported_locations == 0:
-                # Ray's direct-call/worker-memory values do not have Plasma node locations.
-                storage_class = "not_reported_in_object_store"
-            else:
-                storage_class = "mixed_or_unexpected"
-            return {
-                "num_objects": len(refs),
-                "objects_with_reported_locations": objects_with_reported_locations,
-                "objects_on_expected_node": expected_count,
-                "all_on_expected_node": expected_count == len(refs),
-                "storage_class": storage_class,
-                "node_id_counts": node_id_counts,
-                "unexpected_node_ids": unexpected_node_ids,
-                "object_size_bytes": {
-                    "min": min(sizes),
-                    "median": float(np.median(sizes)),
-                    "max": max(sizes),
-                },
-            }
-
-        def timed_nested_fetch(node_id, seed_base):
-            refs = create_inner_refs(node_id, seed_base)
-            before = location_snapshot(refs, node_id)
-            if before["storage_class"] == "mixed_or_unexpected":
-                raise RuntimeError(
-                    "Nested-reference location validation failed before fetch: "
-                    f"expected either no Plasma locations or all objects on {node_id}; "
-                    f"observed {before}"
-                )
-            start = perf_counter()
-            values = ray.get(refs)
-            cold_seconds = perf_counter() - start
-            start = perf_counter()
-            warm_values = ray.get(refs)
-            warm_seconds = perf_counter() - start
-            del refs, values, warm_values
-            return {
-                "cold_seconds": cold_seconds,
-                "warm_seconds": warm_seconds,
-                "cold_per_object_seconds": cold_seconds / object_count,
-                "warm_per_object_seconds": warm_seconds / object_count,
-                "locations_before_fetch": before,
-            }
-
-        forced_runs = []
-        for repeat in range(args.repeats):
-            location_order = (
-                ("local", "remote") if repeat % 2 == 0 else ("remote", "local")
-            )
-            observations = {}
-            for label in location_order:
-                node_id = controller_node_id if label == "local" else remote_node_id
-                seed_base = num_states * 20_000_000 + repeat * object_count
-                observations[label] = timed_nested_fetch(node_id, seed_base)
-            forced_runs.append(
-                {
-                    "repeat": repeat,
-                    "location_order": list(location_order),
-                    "local": observations["local"],
-                    "remote": observations["remote"],
-                    "remote_minus_local_cold_seconds": (
-                        observations["remote"]["cold_seconds"]
-                        - observations["local"]["cold_seconds"]
-                    ),
-                    "remote_minus_local_cold_per_object_seconds": (
-                        observations["remote"]["cold_seconds"]
-                        - observations["local"]["cold_seconds"]
-                    )
-                    / object_count,
-                }
-            )
-
-        local_cold = [run["local"]["cold_seconds"] for run in forced_runs]
-        local_warm = [run["local"]["warm_seconds"] for run in forced_runs]
-        remote_cold = [run["remote"]["cold_seconds"] for run in forced_runs]
-        remote_warm = [run["remote"]["warm_seconds"] for run in forced_runs]
-        remote_minus_local = [
-            run["remote_minus_local_cold_seconds"] for run in forced_runs
-        ]
-        nested_ref_fetch[str(num_states)] = {
-            "requested_object_count": args.num_objects,
-            "effective_object_count": object_count,
-            "payload_byte_cap_applied": object_count < args.num_objects,
-            "runs": forced_runs,
-            "summaries": {
-                "local_cold": _summary(local_cold, object_count),
-                "local_warm": _summary(local_warm, object_count),
-                "remote_cold": _summary(remote_cold, object_count),
-                "remote_warm": _summary(remote_warm, object_count),
-                "remote_minus_local_cold": _summary(
-                    remote_minus_local, object_count
-                ),
-            },
-        }
-        print(
-            f"  states={num_states:<4d} objects={object_count:<4d} "
-            f"(requested {args.num_objects}) nested-reference fetch complete"
-        )
 
     result = {
         "schema_version": SCHEMA_VERSION,
         "run_id": run_id,
+        "mode": mode,
         "topology": topology,
         "node_roles": {
             "controller_node_id": controller_node_id,
@@ -586,30 +516,31 @@ def main() -> None:
                 "matched task receives the same request and constructs the same SampleSet, "
                 "but returns None"
             ),
-            "nested_ref_fetch_timer": (
-                "workers call ray.put and return nested ObjectRefs; driver calls "
-                "ray.wait(inner_refs, fetch_local=False) before timing the first ray.get; "
-                "second ray.get is the warm-local control; Ray-reported object locations "
-                "distinguish Plasma-backed values from smaller values retained elsewhere"
-            ),
             "interpretation": (
-                "end-to-end contrasts include scheduling, return serialization and inline "
-                "or object-store delivery; nested-reference remote-minus-local contrasts "
-                "measure the additional first-fetch path under this two-node load, and only "
-                "rows reported on the producer node are identified as object-store transfers; "
-                "neither path establishes scaling or saturation at larger node counts"
+                "payload-minus-discard contrasts include serialization, ordinary Ray delivery "
+                "and materialization; the remote-minus-local difference between those "
+                "contrasts is the observed node-boundary effect under this two-node load, not "
+                "an isolated network term or a prediction of larger-node saturation"
             ),
         },
         "request": request_descriptor,
         "num_variables": args.num_variables,
         "num_states_sweep": num_states_sweep,
         "batch_sizes_requested": batch_sizes,
-        "num_objects_requested": args.num_objects,
         "max_batch_bytes": args.max_batch_bytes,
         "repeats": args.repeats,
+        "operation_timeout_seconds": args.operation_timeout_seconds,
+        "run_timeout_seconds": args.run_timeout_seconds,
+        "provenance": {
+            "driver": str(Path(__file__).resolve().relative_to(common.BENCHMARKS_DIR)),
+            "driver_sha256": _sha256_file(Path(__file__)),
+            "shared_helpers": str(
+                Path(common.__file__).resolve().relative_to(common.BENCHMARKS_DIR)
+            ),
+            "shared_helpers_sha256": _sha256_file(Path(common.__file__)),
+        },
         "payload_descriptors": payload_descriptors,
         "end_to_end": end_to_end,
-        "nested_ref_fetch": nested_ref_fetch,
     }
     written = common.write_result("boundary_cost", output_name, result)
     print(f"wrote {written}")

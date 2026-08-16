@@ -225,24 +225,23 @@ cost from below; they are not an estimate of what a real allocation of that size
 
 ### E7 - end-to-end cost of a node boundary (reviewers 2, 3)
 
-Measures the term E3 omits on the available two-node cluster. The primary path times a matched
-pair of tasks from submission through `ray.get`: both construct the same `SampleSet`, but only
-one returns it. Local, remote and mixed placement are measured at several task counts. There is
-no readiness wait before the timer, so an inline result remains part of the measured
-task-completion path. A separate nested-reference diagnostic calls `ray.put`, waits with
-`fetch_local=False`, records whether Ray reports the value in the producer's object store, and
-then times a cold and warm fetch. This distinction matters because Ray may retain small values
-outside Plasma even when they were passed to `ray.put`.
+Measures the aggregate end-to-end term E3 omits on the available two-node cluster. For each
+payload and batch size, matched tasks receive the same request and construct the same
+`SampleSet`; one returns it and the other returns `None`. The timer begins before task submission
+and ends after `ray.get` has materialized every result. Local, remote and mixed placements are
+measured, task order is alternated, and every repetition is retained.
 
 ```shell
 ./benchmarks/scripts/run_e7_boundary_cost.sh --topology 2x1
 ```
 
-The defaults sweep 1, 100 and 1000 returned states (approximately 1, 50 and 500 kB for
-$N=60$), retain every repetition, and write a timestamped non-overwriting result. Inline return
-means that Ray avoids a separate object-store pull; it does not mean that no bytes cross the
-network. The result describes the tested two-node loads only and is not extrapolated to
-thousands of workers.
+First run `--smoke`; it exercises every payload and placement with one small batch. The
+production defaults sweep 1, 100 and 1000 returned states (approximately 1, 50 and 500 kB for
+$N=60$) at batch sizes 16 and 64, retain five repetitions, and write a timestamped
+non-overwriting result. The experiment uses Ray's ordinary task-return path and does not force
+or classify a storage mechanism. Consequently it reports the combined cost of serialization,
+delivery and materialization rather than standalone network bandwidth. It describes only the
+tested two-node loads and is not extrapolated to thousands of workers.
 
 ### E4 - single against double precision (reviewer 2)
 

@@ -326,16 +326,17 @@ still cross the network in that reply. Table~5 uses empty tasks for its scheduli
 of its merge inputs are local, so we retain its lower-bound interpretation and do not infer a
 network cost from it.
 
-To measure that term without moving inline delivery outside the timed interval, the reproduction package now
-includes a corrected boundary driver, \texttt{benchmarks/exp\_boundary\_cost.py}. Its primary
-measurement starts before submission and ends only after \texttt{ray.get} has materialized the
-payload, comparing matched payload-returning and payload-discarding tasks under local, remote and
-mixed placement. A separate diagnostic obtains nested references from the producer and uses
-\texttt{ray.wait(..., fetch\_local=False)} before timing a cold fetch. Because \texttt{ray.put}
-does not guarantee Plasma storage for small values, the driver records Ray's reported storage
-class and labels a transfer as object-store-backed only when the producer-node location is
-observed. We do not fold that
-two-node diagnostic into Table~5 or extrapolate it to thousands of raylets; head-node and fabric
+To probe the aggregate effect omitted from Table~5 on the available two-node cluster, the
+reproduction package now includes \texttt{benchmarks/exp\_boundary\_cost.py}. Its timer starts
+before submission and ends only after \texttt{ray.get} has materialized every result. Matched
+tasks receive the same request and construct the same payload, but only one returns it; local,
+remote and mixed placements are measured and every repetition is retained. The
+payload-minus-discard contrast measures the incremental result-return path within each
+placement, while the remote-minus-local difference between those contrasts is our observable
+for the node-boundary effect. The measurement follows Ray's ordinary task-return path rather
+than forcing a particular storage mechanism, and therefore does not separately identify
+serialization, transport, scheduling or materialization. We do not fold this two-node
+diagnostic into Table~5 or extrapolate it to thousands of raylets; head-node and fabric
 saturation remain outside the available hardware envelope.
 
 This uncertainty strengthens the architectural case for hierarchical reduction: the tree leaves
@@ -618,7 +619,8 @@ New Table~3 --- strong-scaling speedup and parallel efficiency & R1.3 \\
 New Table~4 --- strong and weak scaling over GPU count and node layout, measured twice & R1.1, R2.2, R3.3 \\
 Node-boundary cost withdrawn: below the reproducibility of two-node timings & own re-check (second run) \\
 New Table~5 --- local controller cost up to $2^{16}$ subproblems, with its scope stated & R2.2, R3.3 \\
-End-to-end boundary-cost driver added, separating inline task return from storage-aware nested-reference fetch & R2.2, R3.3 \\
+End-to-end boundary-cost driver added, comparing matched payload/discard task returns under
+local, remote and mixed placement & R2.2, R3.3 \\
 New paragraph on the cost and effect of double precision & R2.5 \\
 Targeted dSB/SA comparison across four families reported, with certified gaps and timings & R1.2 \\
 Measured BINARY/SPIN runtime ratio & R3.4 \\

@@ -512,17 +512,18 @@ $5.4$\,s. This is a scheduling floor only; a real payload-bearing task additiona
 serialization, delivery and materialization.
 
 Ray can return small values inline with the task-completion reply, avoiding a separate pull
-through the distributed object store. Inline delivery does not eliminate the network transfer:
-the bytes still travel in the completion message. Consequently neither the empty-task floor nor
-the single-machine merge measurements quantify the network contribution, and we do not infer
-one from Table~\ref{tab:controller}. The reproduction package includes
-\texttt{benchmarks/exp\_boundary\_cost.py}, which measures payload-bearing tasks end to end from
-submission through \texttt{ray.get} under local, remote and mixed placement, and separately
-uses nested references and \texttt{ray.wait(..., fetch\_local=False)} to measure cold and warm
-fetches while recording whether Ray reports each payload in the producer's object store. Those
-measurements are kept distinct from Table~5
-and, even on two nodes, cannot establish whether a head node or fabric saturates when thousands
-of workers report simultaneously.
+through the distributed object store. Inline delivery does not eliminate network transfer: the
+bytes still travel in the completion message. Consequently neither the empty-task floor nor the
+single-machine merge measurements quantify the end-to-end cost of a node boundary, and we do
+not infer one from Table~\ref{tab:controller}. The reproduction package includes
+\texttt{benchmarks/exp\_boundary\_cost.py}, which compares matched tasks from submission through
+\texttt{ray.get}: both receive the same serialized request and construct the same
+\texttt{SampleSet}, but only one returns it. Local, remote and mixed placements are measured,
+and every repetition is retained. This ordinary task-return path includes whichever delivery
+mechanism Ray selects; it measures the aggregate effect rather than separately identifying
+serialization, transport, storage or materialization costs. Even on two nodes it cannot
+establish whether a head node or fabric saturates when thousands of workers report
+simultaneously.
 
 This unmeasured centralization is itself the argument for the hierarchical merge: reducing
 through a tree leaves the controller receiving a single object instead of $P$, reducing both
@@ -923,8 +924,8 @@ $N=44$ instances (Table~\ref{tab:multisolver}) & 6\,min, CPU \\
 \texttt{e3\_controller\_cost} & local controller cost up to $2^{16}$ subproblems
 (Table~\ref{tab:controller}) & 30\,min, CPU \\
 \hline
-\texttt{e7\_boundary\_cost} & end-to-end payload return and storage-aware nested-reference
-fetch across one node boundary & 5\,min, 2 nodes \\
+\texttt{e7\_boundary\_cost} & matched end-to-end task returns under local, remote and mixed
+placement across one node boundary & 5\,min, 2 nodes \\
 \hline
 \texttt{e6\_instance\_families} & dSB against certified optima over four
 coupling families & 18\,min, 1 GPU \\
