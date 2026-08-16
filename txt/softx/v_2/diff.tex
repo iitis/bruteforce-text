@@ -1,7 +1,7 @@
 \documentclass[preprint,12pt,a4paper]{elsarticle}
 %DIF LATEXDIFF DIFFERENCE FILE
 %DIF DEL ../v_1/bruteforce.tex   Sat Aug  1 21:39:39 2026
-%DIF ADD bruteforce.tex          Thu Aug 13 20:51:10 2026
+%DIF ADD bruteforce.tex          Sun Aug 16 01:54:03 2026
 
 \usepackage{amssymb}
 \usepackage{float}
@@ -31,18 +31,18 @@
 
 \restylefloat{table}
 \journal{SoftwareX}
- %DIF > 
-% --------------------------------------------------------------------------- %DIF > 
-% TODO(authors) -- resolve before resubmission: \datarepo must resolve publicly. %DIF > 
-% The instances, raw results and verification tables now live in this repository %DIF > 
-% under benchmarks/, so the link below is the article repository itself; it has %DIF > 
-% to be public (or archived with a DOI) before resubmission, since reviewers 2 %DIF > 
-% and 3 both flagged the previous, unreachable data link. %DIF > 
-% --------------------------------------------------------------------------- %DIF > 
-\newcommand{\datarepo}{https://github.com/lpawela/bruteforce-text} %DIF > 
-\newcommand{\datareponame}{\texttt{lpawela/bruteforce-text}} %DIF > 
- %DIF > 
-\newcommand{\cudameas}{12.4} %DIF > 
+ %DIF >
+% --------------------------------------------------------------------------- %DIF >
+% TODO(authors) -- resolve before resubmission: \datarepo must resolve publicly. %DIF >
+% The instances, raw results and verification tables now live in this repository %DIF >
+% under benchmarks/, so the link below is the article repository itself; it has %DIF >
+% to be public (or archived with a DOI) before resubmission, since reviewers 2 %DIF >
+% and 3 both flagged the previous, unreachable data link. %DIF >
+% --------------------------------------------------------------------------- %DIF >
+\newcommand{\datarepo}{https://github.com/lpawela/bruteforce-text} %DIF >
+\newcommand{\datareponame}{\texttt{lpawela/bruteforce-text}} %DIF >
+ %DIF >
+\newcommand{\cudameas}{12.4} %DIF >
 %DIF PREAMBLE EXTENSION ADDED BY LATEXDIFF
 %DIF UNDERLINE PREAMBLE %DIF PREAMBLE
 \RequirePackage[normalem]{ulem} %DIF PREAMBLE
@@ -142,13 +142,12 @@ Measured against the single-GPU sampler on identical instances, }\DIFaddend the 
 sampler \DIFdelbegin \DIFdel{reaching the full $\approx\!8\times$ speedup over a
 single H100 }\DIFdelend \DIFaddbegin \DIFadd{crosses over between $N=40$ and $N=42$, attains $93\%$ parallel
 efficiency at $N=48$ and saturates at the ideal $8\times$ speedup }\DIFaddend from
-\DIFdelbegin \DIFdel{$N\!\gtrsim\!44$ onwards. The plugin thereby serves as a
-practical ground-truth oracle for state-of-the-art classical heuristics such
-as the }\DIFdelend \DIFaddbegin \DIFadd{$N\!\gtrsim\!52$; a dedicated sweep over every GPU count and node layout gives
+\DIFdelbegin \DIFdel{$N\!\gtrsim\!44$ onwards. The plugin thereby serves as a practical ground-truth oracle for state-of-the-art classical heuristics such
+as the Simulated Bifurcation Machine}\DIFdelend \DIFaddbegin \DIFadd{$N\!\gtrsim\!52$; a dedicated sweep over every GPU count and node layout gives
 $98.2\%$ efficiency on eight GPUs, weak scaling flat to within $0.2\%$, and no measurable
-cost for crossing a node boundary at constant compute. The certified optima serve as ground truth for a }\DIFaddend Simulated
-Bifurcation Machine \DIFaddbegin \DIFadd{run on the same instances, which is found to recover the
-exact ground-state configuration in every case tested}\DIFaddend .
+cost for crossing a node boundary at constant compute. In a separate twenty-instance,
+four-family comparison, both discrete simulated bifurcation and simulated annealing recover
+the certified optimum in every case under their stated method-specific budgets}\DIFaddend .
 \end{abstract}
 
 \begin{keyword}
@@ -197,9 +196,9 @@ CUDA, Ray \\
 \hline
 C6 & Compilation requirements, operating environments \& dependencies & Linux
 \DIFdelbeginFL \DIFdelFL{,
-CUDA Toolkit }\DIFdelendFL \DIFaddbeginFL \DIFaddFL{(x86-64) with a CUDA-capable NVIDIA GPU; CUDA Toolkit (builds and tests in
-continuous integration use 12.5; the measurements reported here were obtained
-with \cudameas)}\DIFaddendFL , \texttt{Python >= 3.10}, \texttt{omnisolver >= 0.0.4},
+CUDA Toolkit }\DIFdelendFL \DIFaddbeginFL \DIFaddFL{(x86-64) with a CUDA-capable NVIDIA GPU; CUDA Toolkit 12.4 and 12.5, both built
+and tested in continuous integration; the measurements reported here were
+obtained with \cudameas}\DIFaddendFL , \texttt{Python >= 3.10}, \texttt{omnisolver >= 0.0.4},
 \texttt{dimod \DIFdelbeginFL %DIFDELCMD < \MBLOCKRIGHTBRACE%%%
 \DIFdelFL{, }\texttt{\DIFdelFL{numba}}%DIFAUXCMD
 \DIFdelFL{, }\DIFdelendFL \DIFaddbeginFL \DIFaddFL{~= 0.12}}\DIFaddFL{, }\DIFaddendFL \texttt{\DIFdelbeginFL \DIFdelFL{numpy}\DIFdelendFL \DIFaddbeginFL \DIFaddFL{numba ~= 0.58}\DIFaddendFL }, \texttt{\DIFdelbeginFL \DIFdelFL{ray}\DIFdelendFL \DIFaddbeginFL \DIFaddFL{numpy ~= 2.0}\DIFaddendFL }\DIFaddbeginFL \DIFaddFL{;
@@ -235,8 +234,8 @@ the CUDA Toolkit available on the target machine }\\
 NVIDIA GPU; the reported measurements were performed on NVIDIA H100 96\,GB
 (compute capability }\texttt{\DIFaddFL{sm\_90}}\DIFaddFL{) }\\
 \hline
-\DIFaddFL{S5 }& \DIFaddFL{Installation requirements \& dependencies }& \DIFaddFL{CUDA Toolkit (continuous
-integration: 12.5; measurements: \cudameas), }\texttt{\DIFaddFL{Python >= 3.10}}\DIFaddFL{,
+\DIFaddFL{S5 }& \DIFaddFL{Installation requirements \& dependencies }& \DIFaddFL{CUDA Toolkit 12.4 or 12.5
+(both exercised in continuous integration; measurements: \cudameas), }\texttt{\DIFaddFL{Python >= 3.10}}\DIFaddFL{,
 }\texttt{\DIFaddFL{omnisolver >= 0.0.4}}\DIFaddFL{, }\texttt{\DIFaddFL{dimod}}\DIFaddFL{, }\texttt{\DIFaddFL{numba}}\DIFaddFL{, }\texttt{\DIFaddFL{numpy}}\DIFaddFL{;
 }\texttt{\DIFaddFL{ray >= 2.9}} \DIFaddFL{for the distributed sampler; at build time additionally
 }\texttt{\DIFaddFL{cython}} \DIFaddFL{and }\texttt{\DIFaddFL{setuptools-cuda}} \\
@@ -341,7 +340,7 @@ compensating for the resulting roundoff. \DIFaddbegin \DIFadd{Note that on the h
 single precision buys working-set size rather than speed: the enumeration is bound
 by memory traffic and integer bookkeeping rather than by floating-point throughput,
 and double precision costs only a few percent (see below).
-}\DIFaddend 
+}\DIFaddend
 
 \paragraph{Relation to the \DIFaddbegin \DIFadd{original publication and to the }\DIFaddend predecessor \DIFdelbegin \DIFdel{single-GPU }\DIFdelend solver}
 \DIFdelbegin \DIFdel{On }\DIFdelend \DIFaddbegin \DIFadd{The exhaustive-search plugin is not new, and we state its provenance
@@ -420,10 +419,10 @@ generated by the benchmark script \texttt{\DIFdelbegin \DIFdel{code}\DIFdelend \
 (one instance per size, fixed seed \DIFdelbegin \DIFdel{); }\DIFdelend \DIFaddbegin \DIFadd{$42$; see Sec.~\ref{sec:reproduction}) and }\DIFaddend measured on a local
 in-house cluster of $8\times$ NVIDIA H100 (96\,GB) GPUs (two nodes, 4 GPUs per
 node, interconnected by standard Ethernet). The single-GPU sampler was run on one
-of the same H100s \DIFdelbegin \DIFdel{, }\DIFdelend \DIFaddbegin \DIFadd{and }\DIFaddend the distributed sampler on all eight\DIFaddbegin \DIFadd{, with $k=3$ so that
+of the same H100s \DIFdelbegin \DIFdel{, }\DIFdelend \DIFaddbegin \DIFadd{and }\DIFaddend the distributed sampler on all eight\DIFdelbegin \DIFdel{. }\DIFdelend \DIFaddbegin \DIFadd{, with $k=3$ so that
 the $2^{3}=8$ subproblems map one-to-one onto the available GPUs; both modes used
-}\texttt{\DIFadd{suffix\_size}}\DIFadd{\,$=23$ and }\texttt{\DIFadd{num\_states}}\DIFadd{\,$=1$}\DIFaddend .
-\DIFaddbegin 
+}\texttt{\DIFadd{suffix\_size}}\DIFadd{\,$=23$ and }\texttt{\DIFadd{num\_states}}\DIFadd{\,$=1$.
+}
 
 \DIFadd{Reported times measure the solve phase only. For the single-GPU sampler the timer
 brackets the CUDA search itself, excluding host-side assembly of the QUBO matrix
@@ -591,37 +590,55 @@ the node-boundary comparison.}}
 \end{table}
 
 \paragraph{\DIFadd{Controller cost and the limits of the decomposition}}
-\DIFadd{The search phase itself involves }\DIFaddend no inter-worker communication\DIFdelbegin \DIFdel{during the search and only a trivial merge step
+\DIFadd{The search phase itself involves }\DIFaddend no inter-worker communication\DIFdelbegin \DIFdel{during the
+search and only a trivial merge step
 on the controller}\DIFdelend \DIFaddbegin \DIFadd{: each of the
 $2^{k}$ subproblems is an independent Ray task that fixes its own variables, runs
 the CUDA search over the remaining $N-k$ and returns only the requested
 }\texttt{\DIFadd{num\_states}} \DIFadd{samples. The single point of centralization is the
 controller, which retrieves the $2^{k}$ partial sample sets and merges them into
-one. Whether that centralization limits the decomposition is a fair question, and
-it can be answered without a large allocation: the number of subproblems is set by
-}\texttt{\DIFadd{num\_fixed\_vars}} \DIFadd{and is independent of the number of devices, so the
-controller can be driven on a CPU alone with the partial results that workers
-would have returned. Table~\ref{tab:controller} reports that measurement for
-$2^{k}$ subproblems with $k$ up to $16$, comparing the direct merge --- collect
-every partial result on the controller and concatenate once --- with a
-hierarchical merge performed by a tree of Ray tasks, and both against the floor
-set by Ray's task scheduling alone.
+one. Whether that centralization limits the decomposition is a fair question, and part of it can be
+answered without a large allocation: the number of subproblems is set by
+}\texttt{\DIFadd{num\_fixed\_vars}} \DIFadd{and is independent of the number of devices, so the controller can be
+driven on a CPU alone with the partial results that workers would have returned.
+Table~\ref{tab:controller} reports that measurement for $2^{k}$ subproblems with $k$ up to
+$16$, comparing the direct merge --- collect every partial result on the controller and
+concatenate once --- with a hierarchical merge performed by a tree of Ray tasks, and both
+against the floor set by Ray's task scheduling alone.
 }
 
-\DIFadd{Three things follow. First, the direct merge does grow essentially linearly in the
-number of subproblems, as one would expect of a sequential concatenation: fitting
-the measured points gives $O(P^{0.97})$ over four decades. Second, its constant is
-small. At $2^{16}=65{,}536$ subproblems the whole controller cost is $7.4$\,s with
-the direct strategy and $3.8$\,s with the hierarchical one, of which the
-concatenation arithmetic is only $2.1$\,s; against the $\approx\!33$\,s that one
-worker would spend on its share of an $N=60$ search at that scale, the controller
-contributes between a tenth and a fifth of the total, not a wall. Third, and least
-expected, the dominant term is not the merge at all but Ray's per-task scheduling:
-dispatching and collecting $2^{16}$ }\emph{\DIFadd{empty}} \DIFadd{tasks costs $5.4$\,s, more than the
-entire hierarchical merge, and that floor applies equally to dispatching the
-subproblems themselves. The scaling ceiling of this decomposition is therefore set by
-task scheduling, a property of distributing $2^{k}$ pieces of work at all, rather
-than by the way partial results are combined.
+\DIFadd{It is important to be clear about what this does and does not cover. Running on one machine,
+every partial result is local and every task is scheduled by the local raylet, so the numbers
+contain merge arithmetic and local scheduling but no inter-node transfer. They are therefore a
+lower bound on controller cost at a given $P$, not an estimate of the total: a real allocation
+would additionally move result bytes across the fabric and place scheduling load on a shared
+head node. Within that bound, three things follow. First, the direct merge grows essentially
+linearly in the number of subproblems, as expected for sequential concatenation: fitting the
+measured points gives $O(P^{0.97})$ over four decades, rather than the logarithmic behavior
+anticipated by the reviewer. Second, merge arithmetic is not the limiting local component: at
+$2^{16}=65{,}536$ subproblems concatenation accounts for $2.1$\,s of the $7.4$\,s direct-merge
+measurement. Third, dispatching and collecting $2^{16}$ }\emph{\DIFadd{empty}} \DIFadd{tasks already costs
+$5.4$\,s. This is a scheduling floor only; a real payload-bearing task additionally pays for
+serialization, delivery and materialization.
+}
+
+\DIFadd{Ray can return small values inline with the task-completion reply, avoiding a separate pull
+through the distributed object store. Inline delivery does not eliminate the network transfer:
+the bytes still travel in the completion message. Consequently neither the empty-task floor nor
+the single-machine merge measurements quantify the network contribution, and we do not infer
+one from Table~\ref{tab:controller}. The reproduction package includes
+}\texttt{\DIFadd{benchmarks/exp\_boundary\_cost.py}}\DIFadd{, which measures payload-bearing tasks end to end from
+submission through }\texttt{\DIFadd{ray.get}} \DIFadd{under local, remote and mixed placement, and separately
+uses nested references and }\texttt{\DIFadd{ray.wait(..., fetch\_local=False)}} \DIFadd{to measure cold and warm
+fetches while recording whether Ray reports each payload in the producer's object store. Those
+measurements are kept distinct from Table~5
+and, even on two nodes, cannot establish whether a head node or fabric saturates when thousands
+of workers report simultaneously.
+}
+
+\DIFadd{This unmeasured centralization is itself the argument for the hierarchical merge: reducing
+through a tree leaves the controller receiving a single object instead of $P$, reducing both
+its ingress count and its memory pressure rather than merely accelerating concatenation.
 }
 
 \DIFadd{The hierarchical merge overtakes the direct one already at $P=64$, where its
@@ -655,11 +672,12 @@ without requiring $P$ GPUs. }\emph{\DIFaddFL{Concatenation}}\DIFaddFL{: the merg
 results already in the controller's memory. }\emph{\DIFaddFL{Direct merge}}\DIFaddFL{: fetching all $P$ partial
 results and concatenating them once. }\emph{\DIFaddFL{Hierarchical merge}}\DIFaddFL{: the same reduction performed by
 a tree of Ray tasks combining eight results at a time. }\emph{\DIFaddFL{Ray floor}}\DIFaddFL{: dispatching and
-collecting $P$ empty tasks, which no distributed strategy can beat. Medians of five
+collecting $P$ empty tasks, which no distributed strategy can beat. All four columns are
+measured on a single machine and therefore exclude network transfer between nodes; they bound
+the local component of the controller cost from below rather than estimating its total. Medians of five
 repetitions after a warm-up, from one sweep over $k=3,\dots,16$; the rows for $k<8$ are omitted
-as all four columns are then below $30$\,ms. Repeating the sweep reproduced every entry to
-within a few percent and put the crossover between the two merge strategies at the same
-$P=64$.}}
+for compactness. A separate sweep put the crossover between the two merge strategies at the
+same $P=64$.}}
 \label{tab:controller}
 \end{table}
 
@@ -675,25 +693,21 @@ $\approx\!3.15$ days to \DIFdelbegin \DIFdel{$\approx\!33$ s}\DIFdelend \DIFaddb
 $\approx\!50$ days to \DIFdelbegin \DIFdel{$\approx\!9$ }\DIFdelend \DIFaddbegin \DIFadd{$\approx\!35$ }\DIFaddend min. Under a one-month wall-clock budget on
 the same \DIFdelbegin \DIFdel{$2^{16}$-GPU }\DIFdelend allocation, the doubling rule places the limit for certifiable
 exhaustive search at \DIFdelbegin \DIFdel{$N \lesssim 76$. This linear-in-GPU-count outlook is consistent
-with the algorithmic structure; however, in practice, controller-side merge bandwidth, Ray schedulingoverhead, }\DIFdelend \DIFaddbegin \DIFadd{$N \lesssim 74$, comfortably within the $N \leq 64+k$ bound
+with the algorithmic structure; however, in practice, controller-side merge bandwidth, Ray scheduling overhead, and per-kernel launch latency would set
+the true scaling ceiling, especially as $2^k$ approaches }\DIFdelend \DIFaddbegin \DIFadd{$N \lesssim 74$, comfortably within the $N \leq 64+k$ bound
 imposed by the 64-bit per-worker configuration word. A hypothetical $2^{16}$-GPU
 allocation, which exceeds the accelerator count of any system in operation today,
 would move that limit only to $N \lesssim 76$: two additional variables for a
 fourfold increase in resources is a direct consequence of the $O(2^N)$
 complexity, and is the main reason we regard $N$ in the mid-seventies as a
 practical ceiling for exhaustive certification rather than as a target. These
-projections describe the search phase alone, but the controller measurement of
-Table~\ref{tab:controller} lets us bound what they omit: at $2^{14}$ workers the
-combined dispatch and merge cost is $\approx\!1.6$\,s and at $2^{16}$ it is
-$\approx\!6$\,s, so for the $N=60$ }\DIFaddend and \DIFaddbegin \DIFadd{$N=64$ projections above --- minutes to
-tens of minutes --- the controller inflates the wall-clock time by a few percent
-rather than dominating it. The caveat that remains is the one the measurement
-identifies: per-task scheduling, which grows with the number of subproblems and
-applies to dispatching the search as much as to collecting it, is what would
-eventually set the ceiling, together with }\DIFaddend per-kernel \DIFdelbegin \DIFdel{launch latency would
-set
-the true scaling ceiling, especially as $2^k$ approaches the number of
-available workers}\DIFdelend \DIFaddbegin \DIFadd{launch latency}\DIFaddend .
+projections describe the search phase alone. Table~\ref{tab:controller} separately measures
+the local direct merge at $\approx\!1.9$\,s and the empty-task scheduling floor at
+$\approx\!1.3$\,s for $2^{14}$ subproblems; at $2^{16}$ they are $\approx\!7.4$\,s and
+$\approx\!5.4$\,s, respectively. These components establish that merge arithmetic alone is not
+the limiting term, but they are not an additive estimate of a large allocation. Network
+delivery, payload serialization and contention at the head remain outside the measurement and
+may grow with }\DIFaddend the number of \DIFdelbegin \DIFdel{available workers}\DIFdelend \DIFaddbegin \DIFadd{subproblems}\DIFaddend .
 
 \begin{figure}[t]
 \centering
@@ -726,8 +740,9 @@ size; at the largest size, $N=60$, it is $4.0\times 10^{-6}$. Against }\DIFadden
 magnitude $\mathcal{O}(10^{2})$ \DIFdelbegin \DIFdel{,
 roughly }\DIFdelend \DIFaddbegin \DIFadd{this amounts to seven to }\DIFaddend eight significant
 digits, consistent with the expected accuracy of the stabilized \texttt{float32}
-accumulator. \DIFdelbegin \DIFdel{Using the
-same recomputation}\DIFdelend \DIFaddbegin \DIFadd{The deviation affects the reported energy }\emph{\DIFadd{value}} \DIFadd{only; the
+accumulator. \DIFdelbegin \DIFdel{Using the same recomputation, we cross-check an SBM run on the same instances: a
+simulated bifurcation solver
+running on a single }\DIFdelend \DIFaddbegin \DIFadd{The deviation affects the reported energy }\emph{\DIFadd{value}} \DIFadd{only; the
 returned configuration is an exact bit string, and its energy can be recomputed
 to full }\texttt{\DIFadd{float64}} \DIFadd{accuracy by the caller at negligible cost, which is what
 we do throughout and what we recommend whenever a certified numerical value, and
@@ -746,9 +761,9 @@ changes the wall-clock cost of the search, not its outcome.
 
 \paragraph{\DIFadd{Cost and effect of double precision}}
 \DIFadd{Because the fast path is the single-precision one, it is fair to ask what the alternative
-costs. Repeating the ground-state search at $N=40,\dots,46$ in both precisions on one H100
-gives an unexpected answer: }\texttt{\DIFadd{float64}} \DIFadd{is only $2$--$3\%$ slower than }\texttt{\DIFadd{float32}}
-\DIFadd{(ratios $1.03$}\DIFaddend , \DIFaddbegin \DIFadd{$1.02$ and $1.02$ at $N=42,44,46$), and both precisions return the same
+costs. Repeating the ground-state search at $N=40,\dots,46$ in both precisions on one }\DIFaddend H100
+\DIFdelbegin \DIFdel{GPU with $2^{12}=4096$ parallel samples and }\DIFdelend \DIFaddbegin \DIFadd{gives an unexpected answer: }\texttt{\DIFadd{float64}} \DIFadd{is only $2.9$--$3.3\%$ slower than }\texttt{\DIFadd{float32}}
+\DIFadd{(ratios $1.03$, $1.03$ and $1.03$ at $N=42,44,46$), and both precisions return the same
 configuration at every size. The enumeration is evidently not limited by floating-point
 throughput but by the memory traffic and integer bookkeeping of the Gray-code sweep, so on
 this hardware single precision buys working-set size rather than speed.
@@ -767,92 +782,121 @@ numerical value is wanted, recompute the energy of the returned configuration in
 }\texttt{\DIFadd{float64}} \DIFadd{on the host, as done throughout this paper.
 }
 
-\paragraph{\DIFadd{Verification against an independent solver}}
-\DIFadd{Using the same recomputation }\DIFaddend we cross-check \DIFdelbegin \DIFdel{an SBM }\DIFdelend \DIFaddbegin \DIFadd{a simulated-bifurcation }\DIFaddend run on the
-\DIFdelbegin \DIFdel{same instances: a simulated bifurcation solver running }\DIFdelend \DIFaddbegin \DIFadd{identical instances. Two independent implementations of the heuristic were used.
-The first is a chaotic-variant, discrete simulated-bifurcation solver (discrete
-and ternary update rules with automatic time-step tuning, single-precision
-arithmetic, Kerr and heating terms disabled) executed }\DIFaddend on a single H100 GPU with
-$2^{12}=4096$ parallel \DIFdelbegin \DIFdel{samples }\DIFdelend \DIFaddbegin \DIFadd{replicas }\DIFaddend and $3{,}000$ integration steps, reporting the
-lowest-energy \DIFdelbegin \DIFdel{sample. The recomputed energies of the brute-force and SBM solutions agree to within $6\times 10^{-6}$, and the returned spin
-configurations are }\DIFdelend \DIFaddbegin \DIFadd{replica; it covers nine instances, $N=40,\dots,54$ against the
-single-GPU sampler and $N=60$ against the distributed one. The second is a
-from-scratch NumPy reimplementation of the same discrete dynamics, running on a
-CPU with the same replica count and step count, which we wrote precisely so that
-this verification carries no dependency on GPU hardware or on a third-party
-solver: because all replicas are integrated simultaneously, one step is a single
-dense $(N\!\times\!N)\,(N\!\times\!4096)$ product and the whole run costs
-$\mathcal{O}(N^{2})$ per replica and step, independently of the exponential cost
-of }\emph{\DIFadd{certifying}} \DIFadd{the optimum. It reaches every instance for which a
-brute-force result exists, that is all twenty runs of $N=38,\dots,60$.
+\paragraph{\DIFadd{Verification against a simulated-bifurcation solver}}
+\DIFadd{Using the same recomputation we cross-check, on the identical instances, the heuristic whose
+answers a certifying solver is meant to validate: a discrete simulated-bifurcation solver
+(dSB), which we distribute with this article as }\texttt{\DIFadd{benchmarks/sbm.py}}\DIFadd{. It integrates all
+replicas simultaneously, so one step is a single dense
+$(N\!\times\!N)\,(N\!\times\!R)$ product and the whole run costs
+$\mathcal{O}(N^{2}R\,\times\,\mathrm{steps})$ --- independently of the exponential cost of
+}\emph{\DIFadd{certifying}} \DIFadd{the optimum, which is what makes a heuristic worth certifying in the first
+place. We run it with $R=2^{12}=4096$ parallel replicas, }\DIFaddend $3{,}000$ integration steps \DIFaddbegin \DIFadd{and an
+automatically tuned time step}\DIFaddend , reporting the lowest-energy \DIFdelbegin \DIFdel{sample.
+The recomputed energies of
+the }\DIFdelend \DIFaddbegin \DIFadd{replica; at $N=60$ that takes well
+under a minute on a CPU.
 }
 
-\DIFadd{The two implementations agree with each other and with the certified optima. On
-every one of the twenty instances the returned configuration is }\DIFaddend bit-identical \DIFaddbegin \DIFadd{to
-the certified brute-force ground state }\DIFaddend (Hamming distance $0$)\DIFdelbegin \DIFdel{at $N=56$}\DIFdelend , \DIFdelbegin \DIFdel{$58$,
-and $60$. On these instances, SBM }\DIFdelend \DIFaddbegin \DIFadd{so the
-simulated-bifurcation heuristic }\DIFaddend reaches the exact \DIFdelbegin \DIFdel{ground state certified
-by exhaustive search, and the residual energy-value differences
-are
-}\DIFdelend \DIFaddbegin \DIFadd{optimum on this instance family
-throughout the measured range; on the nine instances covered by both
-implementations they return the same configuration and energies agreeing to
-$3\times 10^{-14}$, i.e.\ to }\texttt{\DIFadd{float64}} \DIFadd{roundoff. The residual differences
-between the }\emph{\DIFadd{reported}} \DIFadd{energies of the brute-force and the GPU heuristic runs,
-at most $8.1\times 10^{-6}$, are therefore }\DIFaddend explained entirely by single-precision
-roundoff \DIFdelbegin \DIFdel{. The full verification harness (Julia driver, SBM parameters, }\DIFdelend \DIFaddbegin \DIFadd{on both sides rather than by any difference in the configurations found.
-This is precisely the kind of statement that cannot be made without a certifying
-solver at hand, and it illustrates the intended role of the plugin. The
-verification tables of both implementations
-(}\texttt{\DIFadd{benchmarks/bf\_sbm\_verification\_*.csv}} \DIFaddend and
-\DIFdelbegin \DIFdel{the resulting
-}\texttt{\DIFdel{bf\_velox\_verification\_*.csv}} %DIFAUXCMD
-\DIFdel{tables ) is available in the companion repository
-}%DIFDELCMD < \href{https://github.com/euro-hpc-pl/omni-bench}{%%%
-\texttt{\DIFdel{euro-hpc-pl/omni-bench}}%DIFAUXCMD
-\DIFdelend \DIFaddbegin \texttt{\DIFadd{benchmarks/bf\_sbm\_cpu\_verification\_*.csv}}\DIFadd{), the CPU solver itself and
-the script that produces the tables are distributed with the article repository
-}\href{\datarepo}{\DIFadd{\datareponame}\DIFaddend }, together with all
-\texttt{\DIFaddbegin \DIFadd{benchmarks/}\DIFaddend instances/*.txt} and \texttt{\DIFaddbegin \DIFadd{benchmarks/}\DIFaddend results/*.json} files
-that produced Fig.~\ref{fig:runtimes} \DIFaddbegin \DIFadd{and Table~\ref{tab:efficiency}.
+\DIFadd{The heuristic is compared against every }\DIFaddend brute-force \DIFdelbegin \DIFdel{and
+SBM solutions agree to within $6\times 10^{-6}$, and the
+returned spin
+configurations are bit-identical }\DIFdelend \DIFaddbegin \DIFadd{result we hold: all twenty runs of
+$N=38,\dots,60$. On each of them the configuration it returns is bit-identical to the
+certified ground state }\DIFaddend (Hamming distance $0$)\DIFdelbegin \DIFdel{at $N=56$}\DIFdelend , \DIFdelbegin \DIFdel{$58$, and $60$. On these instances, SBM }\DIFdelend \DIFaddbegin \DIFadd{and the energy of that configuration agrees
+with the }\texttt{\DIFadd{float64}} \DIFadd{recomputation to $6\times 10^{-14}$. The Simulated Bifurcation
+Machine therefore }\DIFaddend reaches the exact ground state \DIFdelbegin \DIFdel{certified
+by exhaustive search, and the residual energy-value differences are
+explained entirely by }\DIFdelend \DIFaddbegin \DIFadd{on this instance family throughout the
+measured range. The two solvers' }\emph{\DIFadd{reported}} \DIFadd{energies differ by at most
+$2.5\times 10^{-5}$, and that residual is attributable entirely to the brute-force
+accumulator: the heuristic integrates and reports in }\texttt{\DIFadd{float64}}\DIFadd{, so its own energies sit
+within $10^{-13}$ of the recomputation, while the exhaustive search reports from the
+}\DIFaddend single-precision \DIFdelbegin \DIFdel{roundoff. The full verification harness (Julia driver, SBM parameters, and the resulting }\texttt{\DIFdel{bf\_velox\_verification\_*.csv}} %DIFAUXCMD
+\DIFdel{tables ) is available in }\DIFdelend \DIFaddbegin \DIFadd{fast path quantified above. The difference is roundoff on one side, not a
+difference in the configurations found. This is precisely the
+kind of statement that cannot be made without a certifying solver at hand, and it illustrates
+the intended role of the plugin.
 }
 
-\paragraph{\DIFadd{Instance families, QUBO instances and other solvers}}
-\DIFadd{Two properties of exhaustive search delimit what a meaningful benchmark of this
-plugin can show. First, its runtime does not depend on the instance family: all
-$2^{N}$ configurations are enumerated regardless of the distribution of the
-coefficients, and up to the negligible bookkeeping of best-state updates the time
-to solution is a function of $N$ and of the launch geometry alone. Sweeping over
-coupling distributions would therefore reproduce Fig.~\ref{fig:runtimes} rather
-than add information. What does depend on the family is the difficulty seen by
-the heuristics that the plugin is meant to certify, so the informative experiment is to repeat
-the verification across several families and ask whether the heuristic still recovers the
-certified optimum. We did that at $N=44$ for five instances each of four families: couplings
-drawn uniformly on $[-1,1]$, bimodal $J_{ij}\in\{-1,+1\}$, Gaussian, and sparse ($20\%$
-density). The heuristic reached the certified optimum on all twenty instances. On seventeen it
-returned the identical configuration; the three exceptions are all bimodal, and in each of them
-the energy gap to the certified optimum is exactly zero. That is not a discrepancy but
-degeneracy: integer couplings give integer energies --- which incidentally the
-}\texttt{\DIFadd{float32}} \DIFadd{accumulator represents exactly, so the brute-force roundoff on that family is
-identically zero --- and the ground state of such an instance is typically reached by many
-configurations. It also illustrates why agreement has to be judged on energies, with the
-Hamming distance as a secondary indicator, rather than the other way round.
+\DIFadd{Shipping the heuristic alongside the plugin is deliberate: the comparison is only as
+reproducible as its weaker half, so the verification carries no dependency on hardware or on
+software outside this repository. The solver, the driver that produces the verification tables
+(}\texttt{\DIFadd{benchmarks/verify\_sbm.py}}\DIFadd{), }\DIFaddend the \DIFdelbegin \DIFdel{companion repository
+}\href{https://github.com/euro-hpc-pl/omni-bench}{\texttt{\DIFdel{euro-hpc-pl/omni-bench}}%DIFAUXCMD
+}%DIFAUXCMD
+\DIFdel{, together with all }\texttt{\DIFdel{instances/*.txt}} %DIFAUXCMD
+\DIFdel{and }%DIFDELCMD < \texttt{%%%
+\DIFdel{results/*}\DIFdelend \DIFaddbegin \DIFadd{resulting tables themselves and all
+}\texttt{\DIFadd{benchmarks/instances/*.txt}} \DIFadd{and }\texttt{\DIFadd{benchmarks/results/*.json}} \DIFadd{files behind
+Fig.~\ref{fig:runtimes} and Table~\ref{tab:efficiency} are distributed with the article
+repository }\href{\datarepo}{\DIFadd{\datareponame}}\DIFaddend .
+\DIFdelbegin \DIFdel{json}\DIFdelend \DIFaddbegin
+
+\paragraph{\DIFadd{Instance families and targeted multi-solver comparison}}
+\DIFadd{The present plugin performs complete enumeration, evaluating all $2^{N}$ assignments
+regardless of the coefficient distribution. Its own runtime is therefore essentially
+independent of instance family, apart from negligible best-state bookkeeping. This property is
+specific to this implementation: branch-and-bound and structure-aware exact methods can prune
+the search and may have strongly family-dependent behavior.
 }
 
-\DIFadd{Second, the QUBO and Ising paths are the same code path: both samplers convert a SPIN model to
-its BINARY equivalent, solve it as a QUBO and convert the result back, so the timings reported
-here are QUBO timings, the only Ising-specific cost being an $O(N^{2})$ host-side
-transformation performed outside the measured region. Loading the same coefficient files once
-with each variable type confirms it: over $N=42,\dots,50$ the ratio of BINARY to SPIN
-wall-clock time is $0.998$--$1.000$. Correctness is cross-checked against
-}\texttt{\DIFadd{dimod.ExactSolver}} \DIFadd{on instances small enough for CPU enumeration and
-against from-scratch }\texttt{\DIFadd{float64}} \DIFadd{recomputation at benchmark scale; a
-comparison of }\emph{\DIFadd{runtimes}} \DIFadd{against other exact solvers would add little, since
-any exact method must visit an exponential number of configurations and CPU
-implementations are orders of magnitude slower at the sizes considered
-here~\mbox{%DIFAUXCMD
-\cite{jalowiecki2021brute}}\hskip0pt%DIFAUXCMD
-}\DIFaddend .
+\DIFadd{We evaluate the plugin in its intended role as a certification backend using two
+algorithmically distinct heuristics on the same twenty $N=44$ instances: five each with
+couplings uniform on $[-1,1]$, bimodal $J_{ij}\in\{-1,+1\}$, Gaussian, and sparse at $20\%$
+density. The dSB solver uses $4096$ replicas and $3000$ integration steps with its automatically
+tuned time step. The simulated-annealing (SA) solver~\mbox{%DIFAUXCMD
+\cite{kirkpatrick1983optimization} }\hskip0pt%DIFAUXCMD
+is
+}\texttt{\DIFadd{dwave.samplers.SimulatedAnnealingSampler}}\DIFadd{; it uses $4096$ reads, $3000$ sweeps, a
+geometric inverse-temperature schedule, randomized spin-update order and deterministic seeds
+$420000,\dots,420019$. These are documented method-specific budgets: a dSB integration step
+and an SA sweep are not treated as equal units of work.
+}
+
+\DIFadd{Both heuristics reach a certified optimum on all twenty instances. The dSB state is identical
+to the stored certified state on seventeen instances and the SA state on sixteen; every
+different state occurs in the bimodal family and has the same integer energy, reflecting
+ground-state degeneracy rather than an optimization error. Independent }\texttt{\DIFadd{float64}\DIFaddend }
+\DIFdelbegin \DIFdel{files that produced Fig. ~\ref{fig:runtimes}}\DIFdelend \DIFaddbegin \DIFadd{evaluation puts every returned energy within $3.2\times10^{-13}$ of the certified value. The
+family-level results are shown in Table~\ref{tab:multisolver}; the timings describe the stated
+budgets and are not used to rank the algorithms.
+}
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{|l|cc|rr|}
+\hline
+ & \multicolumn{2}{c|}{certified optima} & \multicolumn{2}{c|}{median time [s]} \\
+\DIFaddFL{family }& \DIFaddFL{dSB }& \DIFaddFL{SA }& \DIFaddFL{dSB }& \DIFaddFL{SA }\\
+\hline
+\DIFaddFL{uniform  }& \DIFaddFL{$5/5$ }& \DIFaddFL{$5/5$ }& \DIFaddFL{9.06 }& \DIFaddFL{7.13 }\\
+\DIFaddFL{bimodal  }& \DIFaddFL{$5/5$ }& \DIFaddFL{$5/5$ }& \DIFaddFL{9.11 }& \DIFaddFL{12.09 }\\
+\DIFaddFL{Gaussian }& \DIFaddFL{$5/5$ }& \DIFaddFL{$5/5$ }& \DIFaddFL{9.16 }& \DIFaddFL{6.42 }\\
+\DIFaddFL{sparse   }& \DIFaddFL{$5/5$ }& \DIFaddFL{$5/5$ }& \DIFaddFL{8.77 }& \DIFaddFL{7.85 }\\
+\hline
+\DIFaddFL{all      }& \DIFaddFL{$20/20$ }& \DIFaddFL{$20/20$ }& \DIFaddFL{9.01 }& \DIFaddFL{7.51 }\\
+\hline
+\end{tabular}
+\caption{\DIFaddFL{Targeted comparison of two heuristic mechanisms against exhaustive-search
+certificates on the same twenty $N=44$ instances. Times are wall-clock medians under the
+method-specific budgets stated in the text, not equal-work comparisons. Returned-state
+energies are recomputed independently in }\texttt{\DIFaddFL{float64}}\DIFaddFL{; complete per-instance states,
+seeds, timings, gaps and instance hashes are stored in
+}\texttt{\DIFaddFL{benchmarks/results/multi\_solver/N44.json}}\DIFaddFL{.}}
+\label{tab:multisolver}
+\end{table}
+
+\paragraph{\DIFadd{QUBO path and exact-solver checks}}
+\DIFadd{The QUBO and Ising interfaces use the same computational path: both samplers convert a SPIN
+model to its BINARY equivalent, solve it as a QUBO and convert the result back, so the reported
+timings are QUBO timings. The only Ising-specific cost is an $O(N^{2})$ host-side
+transformation outside the measured region. Loading the same coefficient files once with each
+variable type confirms this: over $N=42,\dots,50$ the ratio of BINARY to SPIN wall-clock time
+is $0.998$--$1.000$. Correctness is cross-checked against }\texttt{\DIFadd{dimod.ExactSolver}} \DIFadd{on
+instances small enough for CPU enumeration and by independent }\texttt{\DIFadd{float64}} \DIFadd{recomputation
+at benchmark scale. These checks validate implementation correctness; they are not a claim of
+comparative performance against every exact algorithm}\DIFaddend .
 
 \paragraph{Limitations and intended scope}
 Exhaustive enumeration scales as $O(2^N)$ irrespective of GPU count or
@@ -869,8 +913,8 @@ word, \DIFdelbegin \DIFdel{capping
 the supported problem size }\DIFdelend \DIFaddbegin \DIFadd{so each subproblem is limited to $N-k \leq 64$ unfixed variables; with
 $k=\texttt{num\_fixed\_vars}$ fixed variables the distributed sampler therefore
 supports $N \leq 64+k$, while the single-GPU sampler is capped }\DIFaddend at $N \leq 64$\DIFaddbegin \DIFadd{,
-and the caller is responsible for respecting this bound, which the release does
-not yet validate}\DIFaddend ; (ii) the per-worker \texttt{suffix\_size} (the number of
+and both samplers validate the applicable bound before launching}\DIFaddend ; (ii) the
+per-worker \texttt{suffix\_size} (the number of
 variables \DIFdelbegin \DIFdel{enumerated inside one CUDA
 kernel launch}\DIFdelend \DIFaddbegin \DIFadd{forming the resident enumeration chunk}\DIFaddend ) is bounded by the GPU's
 L2/working-set budget and \DIFdelbegin \DIFdel{is }\DIFdelend \DIFaddbegin \DIFadd{was }\DIFaddend set to $23$ on \DIFaddbegin \DIFadd{the }\DIFaddend H100 \DIFdelbegin \DIFdel{\,/\,}\DIFdelend \DIFaddbegin \DIFadd{(}\DIFaddend 96\,GB\DIFaddbegin \DIFadd{) }\DIFaddend in our runs, so
@@ -917,7 +961,7 @@ that the figure and the table can be regenerated from a single checkout. The sam
 directory contains the drivers of the scaling, precision, QUBO and instance-family
 experiments reported below, and a NumPy implementation of the
 simulated-bifurcation heuristic used for the verification, so that no part of the
-reproduction path depends on a GPU-only or third-party solver.
+reproduction path depends on hardware or software outside the repository.
 Sec.~\ref{sec:reproduction} is a guide to that directory}\DIFaddend .
 
 A minimal distributed-sampler invocation looks as follows:
@@ -979,17 +1023,18 @@ ray start --address='<HEAD_NODE_IP>:6379' --num-gpus=4
 \paragraph{\DIFadd{What is where}}
 \texttt{\DIFadd{benchmarks/}} \DIFadd{holds the instances (}\texttt{\DIFadd{instances/}}\DIFadd{), the raw
 per-run results (}\texttt{\DIFadd{results/}}\DIFadd{, one subdirectory per experiment), the
-verification tables (}\texttt{\DIFadd{bf\_sbm\_*\_verification\_*.csv}}\DIFadd{), the solver
+verification tables (}\texttt{\DIFadd{bf\_sbm\_verification\_*.csv}}\DIFadd{), the solver
 drivers }\texttt{\DIFadd{bf.py}} \DIFadd{and }\texttt{\DIFadd{plot\_distributed.py}} \DIFadd{that produce
 Fig.~\ref{fig:runtimes}, one driver per experiment
 (}\texttt{\DIFadd{exp\_*.py}}\DIFadd{), the NumPy simulated-bifurcation solver }\texttt{\DIFadd{sbm.py}}
-\DIFadd{with its verification driver }\texttt{\DIFadd{verify\_sbm.py}}\DIFadd{, and the launchers in
+\DIFadd{with its verification driver }\texttt{\DIFadd{verify\_sbm.py}}\DIFadd{, the simulated-annealing
+comparison driver }\texttt{\DIFadd{exp\_multi\_solver.py}}\DIFadd{, and the launchers in
 }\texttt{\DIFadd{scripts/}}\DIFadd{. Shared helpers live in }\texttt{\DIFadd{bench\_common.py}}\DIFadd{: the
-environment descriptors recorded with every result, the detection of the Ray
+environment descriptors recorded by the revision experiments, the detection of the Ray
 topology, and a per-size instance generator whose output does not depend on
-which other sizes are generated alongside it. Instance and result files are
-never overwritten, so re-running a sweep resumes it rather than replacing the
-published record.
+which other sizes are generated alongside it. The long-running scaling launchers
+skip completed points, while the E7 and E8 evidence drivers create non-overwriting
+outputs unless replacement is requested explicitly.
 }
 
 \paragraph{\DIFadd{Prerequisites}}
@@ -1007,10 +1052,10 @@ mismatch between them is found before, rather than after, a long run.
 \DIFadd{Table~\ref{tab:reproduction} lists one launcher per claim. The whole set is run
 by }\texttt{\DIFadd{scripts/run\_all.sh}}\DIFadd{, which executes them cheapest first, records
 each result under }\texttt{\DIFadd{results/}}\DIFadd{, keeps a timestamped log, and continues past
-a failing stage rather than aborting the batch. Two entries need no GPU, and
-they are the ones that check the substance of the verification and of the
-controller analysis. Every launcher skips work whose result file already exists,
-so an interrupted batch is resumed by re-running it.
+a failing stage rather than aborting the batch. The verification, multi-solver
+and controller-cost entries need no GPU. Long-running launchers resume at
+completed points; evidence drivers refuse silent replacement of an existing
+result.
 }
 
 \begin{table}[H]
@@ -1024,12 +1069,18 @@ so an interrupted batch is resumed by re-running it.
 report }& \DIFaddFL{seconds, any }\\
 \hline
 \texttt{\DIFaddFL{verification}} & \DIFaddFL{every stored optimum re-checked in }\texttt{\DIFaddFL{float64}} \DIFaddFL{and
-against the heuristic }& \DIFaddFL{10\,min, CPU }\\
+against dSB }& \DIFaddFL{10\,min, CPU }\\
 \hline
-\texttt{\DIFaddFL{e3\_controller\_cost}} & \DIFaddFL{controller cost up to $2^{16}$ subproblems
+\texttt{\DIFaddFL{e8\_multi\_solver}} & \DIFaddFL{dSB and SA against the same twenty certified
+$N=44$ instances (Table~\ref{tab:multisolver}) }& \DIFaddFL{3\,min, CPU }\\
+\hline
+\texttt{\DIFaddFL{e3\_controller\_cost}} & \DIFaddFL{local controller cost up to $2^{16}$ subproblems
 (Table~\ref{tab:controller}) }& \DIFaddFL{30\,min, CPU }\\
 \hline
-\texttt{\DIFaddFL{e6\_instance\_families}} & \DIFaddFL{heuristic against certified optima over four
+\texttt{\DIFaddFL{e7\_boundary\_cost}} & \DIFaddFL{end-to-end payload return and storage-aware nested-reference
+fetch across one node boundary }& \DIFaddFL{5\,min, 2 nodes }\\
+\hline
+\texttt{\DIFaddFL{e6\_instance\_families}} & \DIFaddFL{dSB against certified optima over four
 coupling families }& \DIFaddFL{18\,min, 1 GPU }\\
 \hline
 \texttt{\DIFaddFL{e4\_precision}} & \texttt{\DIFaddFL{float32}} \DIFaddFL{against }\texttt{\DIFaddFL{float64}} \DIFaddFL{on the
@@ -1106,8 +1157,20 @@ of ~\mbox{%DIFAUXCMD
 \cite{jalowiecki2021brute} }\hskip0pt%DIFAUXCMD
 to a first-class Omnisolver plugin, equips it with distributed multi-GPU execution }\DIFdelend \DIFaddbegin \DIFadd{configuration from scratch in
 }\texttt{\DIFadd{float64}}\DIFadd{, runs the heuristic on the same instance, writes the
-}\texttt{\DIFadd{bf\_sbm\_cpu\_verification\_*}} \DIFadd{tables, and compares them against the
-tables obtained with the GPU heuristic, which it leaves untouched.
+}\texttt{\DIFadd{bf\_sbm\_verification\_*}} \DIFadd{tables and reports, for every instance, whether
+the heuristic reached the certified optimum and at what Hamming distance.
+The targeted multi-solver comparison is likewise CPU-only:
+}
+
+\DIFmodbegin
+\begin{lstlisting}[language=bash,caption={Re-running simulated annealing on the twenty certified family instances},label={lst:multisolver},alsolanguage=DIFcode]
+%DIF > ./benchmarks/scripts/run_e8_multi_solver.sh
+\end{lstlisting}
+\DIFmodend
+
+\DIFadd{It validates the immutable E6 source result and all instance hashes, then records
+the complete SA configuration, deterministic seeds, states, independently
+recomputed energies and family summaries used in Table~\ref{tab:multisolver}.
 }
 
 \section{\DIFadd{Conclusions and outlook}}
