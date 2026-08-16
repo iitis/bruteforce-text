@@ -1,5 +1,6 @@
 from dimod.serialization import coo
 from pathlib import Path
+import hashlib
 import numpy as np
 import argparse
 import json
@@ -125,7 +126,10 @@ def bench(start, stop, step, sampler_mode="distributed", seed=42, skip_existing=
                 "state": state,
                 "energy": result.first.energy,
                 "sampler_mode": sampler_mode,
-                "instance_seed": seed,
+                # The shipped benchmark instances predate the deterministic generator and are
+                # canonical files rather than seed-derived fixtures. Identify the actual input
+                # instead of attaching the requested generation seed to a pre-existing file.
+                "instance_sha256": hashlib.sha256(i_path.read_bytes()).hexdigest(),
                 # Without these, the CUDA toolkit and GPU model behind a timing have to be
                 # reconstructed by hand afterwards.
                 "environment": common.environment_descriptors(),

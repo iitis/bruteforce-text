@@ -57,11 +57,11 @@ Individually, cheapest first:
 
 ```shell
 ./benchmarks/scripts/run_verification.sh          # brute force vs CPU heuristic    ~10 min, no GPU
-./benchmarks/scripts/run_e8_multi_solver.sh       # dSB + SA over 20 instances       ~6 min, no GPU
+./benchmarks/scripts/run_e8_multi_solver.sh       # dSB + SA over 20 instances       ~8 min, no GPU
 ./benchmarks/scripts/run_e6_instance_families.sh  # E6 families vs certified optima ~18 min, 1 GPU
 ./benchmarks/scripts/run_e3_controller_cost.sh    # E3 controller cost to 2^16      ~30 min, no GPU
 ./benchmarks/scripts/run_e7_boundary_cost.sh      # E7 end-to-end node-boundary cost  ~5 min, 2 nodes
-./benchmarks/scripts/run_e4_precision.sh          # E4 float32 vs float64           ~30 min, 1 GPU
+./benchmarks/scripts/run_e4_precision.sh          # E4 float32 vs float64            ~6 min, 1 GPU
 ./benchmarks/scripts/run_e5_qubo.sh               # E5 QUBO alongside Ising          ~1.6 h, 1 GPU
 ./benchmarks/scripts/run_e1_strong_scaling.sh     # E1 all six topologies            ~2 h
 ./benchmarks/scripts/run_e2_weak_scaling.sh       # E2 all six topologies            ~4 h
@@ -72,8 +72,9 @@ Times are derived from the measured single-GPU point at *N* = 50 (2112 s); `run_
 without `--with-figure` therefore takes **roughly 9 to 10 hours**, dominated by E2 and E1.
 
 Each writes a timestamped log to `benchmarks/logs/` and restarts or stops the Ray cluster as
-the experiment requires. Scaling launchers skip completed points; evidence-producing drivers
-otherwise refuse to overwrite an existing result unless that is requested explicitly.
+the experiment requires. Scaling launchers skip completed points, and E6--E8 create
+timestamped, non-overwriting evidence files. The short E3--E5 drivers and verification driver
+update their documented canonical outputs; copy those files first when retaining repeated runs.
 `run_e1_*` and `run_e2_*` print a speedup/efficiency summary at the end.
 
 The Fig. 1 sweep is the only multi-day item, and only for points that are missing: with the
@@ -165,8 +166,9 @@ reviewers asked about on a two-node cluster.
 
 ## Experiments
 
-Each script writes to `results/<experiment>/` and stamps its output with the Python, CUDA,
-driver, GPU and package versions it ran with.
+Each revision-experiment driver writes to `results/<experiment>/` and stamps its output with
+the Python, CUDA, driver, GPU and package versions it ran with. The legacy Figure 1 files
+predate these descriptors and are retained unchanged.
 
 ### E1 - strong scaling (reviewers 1, 2, 3)
 
@@ -205,6 +207,11 @@ python benchmarks/exp_weak_scaling.py --topology 2x4        # N=53, k=3
 
 Roughly 40 minutes per point at 2^50 configurations per GPU.
 
+The top-level E1/E2 JSON files are the second measurement pass quoted in the manuscript. The
+first H100 pass remains in repository history at commit `36a318c`; comparing the two gives a
+maximum change of 0.08% for single-node layouts (0.02% in strong scaling) and 1.5% for
+two-node layouts.
+
 ### E3 - controller cost (reviewers 2, 3)
 
 Answers "would the merge limit the algorithm at 2^16 workers?" **without** 2^16 GPUs: the
@@ -222,6 +229,8 @@ Note what this does **not** measure. Running on one machine, every partial resul
 from the local object store and every task is scheduled by the local raylet, so the sweep
 contains no network transfer at all. Its numbers bound the local component of the controller
 cost from below; they are not an estimate of what a real allocation of that size would pay.
+The manuscript uses the H100-server production file `results/controller_cost/k3-16.json`;
+the README in that result directory identifies two retained, superseded development fragments.
 
 ### E7 - end-to-end cost of a node boundary (reviewers 2, 3)
 
@@ -243,6 +252,13 @@ or classify a storage mechanism. Consequently it reports the combined cost of se
 delivery and materialization rather than standalone network bandwidth. It describes only the
 tested two-node loads and is not extrapolated to thousands of workers.
 
+The shipped production record is
+`results/boundary_cost/2x1_production_20260816T122920_076038Z.json`. For batches of sixteen,
+the paired remote-minus-local payload-return effect is 196.45 microseconds per task for the
+50,165-byte payload and 4.404 milliseconds per task for the 496,575-byte payload. The
+1,061-byte point and the larger batches are scheduling-noisy; consult the retained raw
+repetitions rather than fitting a bandwidth model to these data.
+
 ### E4 - single against double precision (reviewer 2)
 
 ```shell
@@ -251,9 +267,9 @@ python benchmarks/exp_precision.py --sizes 40 42 44 46
 
 Note that `float64` is a different numerical path, not merely a slower one: the compensated
 updates and periodic re-anchoring are enabled only for `float32`, and only from 40 variables
-per kernel upwards. Budget for the double-precision runs being several times slower, and much
-worse than that on consumer GPUs, whose FP64 throughput is a small fraction of their FP32
-throughput.
+per kernel upwards. On the reported H100 run, excluding the N=40 warm-up outlier, `float64`
+was only 2.9--3.3% slower; consumer GPUs with much lower FP64 throughput can behave
+differently.
 
 ### E5 - QUBO instances (reviewer 3)
 
@@ -291,6 +307,11 @@ independently recomputed energy, every SA seed run, instance/source/driver SHA-2
 effective schedule, timings, environment and family summary. The dSB and SA budgets are
 documented separately; a dSB integration step and an SA sweep are not treated as equal units of
 work.
+
+The shipped H100-server production record is
+`results/multi_solver/run_20260816_125511.json`. Both methods reach all 20 certified optima;
+their overall median wall times under the stated, method-specific budgets are 9.21 seconds for
+dSB and 10.80 seconds for SA.
 
 ## Verification against the heuristic
 

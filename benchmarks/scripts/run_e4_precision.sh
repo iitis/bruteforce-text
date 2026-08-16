@@ -5,8 +5,9 @@
 # one: the compensated updates and the periodic re-anchoring are enabled only for float32 and
 # only from 40 variables per kernel upwards.
 #
-# Budget: the float32 runs follow the doubling rule (~3 s at N=40 on an H100), the float64 runs
-# are several times slower on data-centre GPUs and far worse on consumer cards.
+# Budget: about 6 minutes for the default sweep on the reported H100. Excluding the N=40
+# warm-up outlier, the measured float64 penalty there was only 2.9--3.3%; consumer GPUs with
+# much lower FP64 throughput can behave differently.
 #
 # Usage:
 #   ./scripts/run_e4_precision.sh
