@@ -44,6 +44,5 @@
         1
     ],
     "energy": -113.42442942422193,
-    "sampler_mode": "single-gpu",
-    "instance_seed": 42
+    "sampler_mode": "single-gpu"
 }
