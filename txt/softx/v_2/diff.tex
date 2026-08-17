@@ -1,7 +1,7 @@
 \documentclass[preprint,12pt,a4paper]{elsarticle}
 %DIF LATEXDIFF DIFFERENCE FILE
 %DIF DEL ../v_1/bruteforce.tex   Sat Aug  1 21:39:39 2026
-%DIF ADD bruteforce.tex          Mon Aug 17 19:21:06 2026
+%DIF ADD bruteforce.tex          Mon Aug 17 19:40:24 2026
 
 \usepackage{amssymb}
 \usepackage{float}
@@ -150,7 +150,11 @@ change in the reported solve-phase wall-clock time from crossing a node boundary
 computational load. In a
 separate twenty-instance,
 four-family comparison, both discrete simulated bifurcation and simulated annealing recover
-the same exhaustive-search minimum in every case under their stated method-specific budgets}\DIFaddend .
+the same exhaustive-search minimum in every case under their stated method-specific budgets.
+On a planted Wishart family with tunable ruggedness, by contrast, the same
+simulated-bifurcation heuristic misses the certified optimum on nine of ten instances in the
+two most rugged settings while certification takes seconds per instance and matches the
+analytic planted optimum to $4\times10^{-15}$ --- the regime a certifying backend exists for}\DIFaddend .
 \end{abstract}
 
 \begin{keyword}
@@ -319,7 +323,9 @@ Simulated Bifurcation Machine
 (SBM)~\cite{goto2016bifurcation,goto2019combinatorial,goto2021high,pawlowski2026sbqa},
 the current state-of-the-art classical heuristic for dense QUBO/Ising problems.
 Such results rely on \DIFdelbegin \DIFdel{the ability to certify the true optimum }\DIFdelend \DIFaddbegin \DIFadd{high-confidence global reference minima }\DIFaddend on representative
-instances, which is precisely \DIFdelbegin \DIFdel{what }\DIFdelend \DIFaddbegin \DIFadd{the role of }\DIFaddend an exhaustive GPU solver\DIFdelbegin \DIFdel{provides}\DIFdelend .
+instances, which is precisely \DIFdelbegin \DIFdel{what }\DIFdelend \DIFaddbegin \DIFadd{the role of }\DIFaddend an exhaustive GPU solver\DIFdelbegin \DIFdel{provides}\DIFdelend \DIFaddbegin \DIFadd{. A concrete
+case in which the heuristic's answer is wrong and only enumeration can tell is
+reported below}\DIFaddend .
 
 \paragraph{Architecture}
 The plugin \DIFdelbegin \DIFdel{introduced by this software update }\DIFdelend exposes two sampler classes: \texttt{BruteforceGPUSampler}
@@ -613,7 +619,7 @@ above are recomputed from those two sets of raw timings.
 
 \paragraph{\DIFadd{Controller cost and the limits of the decomposition}}
 \DIFadd{The search phase itself involves }\DIFaddend no inter-worker communication\DIFdelbegin \DIFdel{during the search and only a trivial merge step
-on the controller}\DIFdelend \DIFaddbegin \DIFadd{: each of the
+}\DIFdelend \DIFaddbegin \DIFadd{: each of the
 $2^{k}$ subproblems is an independent Ray task that fixes its own variables, runs
 the CUDA search over the remaining $N-k$ and returns only the requested
 }\texttt{\DIFadd{num\_states}} \DIFadd{samples. The single point of centralization is the
@@ -623,7 +629,7 @@ answered without a large allocation: the number of subproblems is set by
 }\texttt{\DIFadd{num\_fixed\_vars}} \DIFadd{and is independent of the number of devices, so the controller can be
 driven on a CPU alone with the partial results that workers would have returned.
 Table~\ref{tab:controller} reports that measurement for $2^{k}$ subproblems with $k$ up to
-$16$, comparing the direct merge --- collect every partial result on the controller and
+$16$, comparing the direct merge --- collect every partial result }\DIFaddend on the controller \DIFaddbegin \DIFadd{and
 concatenate once --- with a hierarchical merge performed by a tree of Ray tasks, and both
 against the floor set by Ray's task scheduling alone.
 }
@@ -863,10 +869,7 @@ within $10^{-13}$ of the recomputation, while the exhaustive search reports from
 \DIFdel{tables ) is available in the companion repository
 }\href{https://github.com/euro-hpc-pl/omni-bench}{\texttt{\DIFdel{euro-hpc-pl/omni-bench}}%DIFAUXCMD
 }%DIFAUXCMD
-\DIFdel{, together with all      }\texttt{\DIFdel{instances/*.txt}} %DIFAUXCMD
-\DIFdel{and }\texttt{\DIFdel{results/*.json}}
-%DIFAUXCMD
-\DIFdel{files that produced Fig. ~\ref{fig:runtimes}}\DIFdelend \DIFaddbegin \DIFadd{fast path --- including, at three sizes, the documented dropped-coupling
+\DIFdel{, together with }\DIFdelend \DIFaddbegin \DIFadd{fast path --- including, at three sizes, the documented dropped-coupling
 offset. The difference is bookkeeping on one side, not a
 difference in the configurations found. This is precisely the
 kind of statement that cannot be made without a certifying solver at hand, and it illustrates
@@ -928,7 +931,10 @@ while their timings describe method-specific budgets rather than equal work.
 \DIFaddFL{Gaussian }& \DIFaddFL{$5/5$ }& \DIFaddFL{$5/5$ }&  \DIFaddFL{9.24 }&  \DIFaddFL{9.38 }\\
 \DIFaddFL{sparse   }& \DIFaddFL{$5/5$ }& \DIFaddFL{$5/5$ }&  \DIFaddFL{8.79 }& \DIFaddFL{11.37 }\\
 \hline
-\DIFaddFL{all      }& \DIFaddFL{$20/20$ }& \DIFaddFL{$20/20$ }&  \DIFaddFL{9.21 }& \DIFaddFL{10.80 }\\
+\DIFaddendFL all      \DIFdelbeginFL \texttt{\DIFdelFL{instances/*.txt}} %DIFAUXCMD
+\DIFdelFL{and }\texttt{\DIFdelFL{results/*.json}}
+%DIFAUXCMD
+\DIFdelFL{files that produced Fig.~\ref{fig:runtimes}}\DIFdelendFL \DIFaddbeginFL & \DIFaddFL{$20/20$ }& \DIFaddFL{$20/20$ }&  \DIFaddFL{9.21 }& \DIFaddFL{10.80 }\\
 \hline
 \end{tabular}
 \caption{\DIFaddFL{Targeted comparison of two heuristic mechanisms against exhaustive-search
@@ -939,6 +945,30 @@ seeds, timings, gaps and instance hashes are stored in
 }\protect\path{benchmarks/results/multi_solver/run_20260816_125511.json}\DIFaddFL{.}}
 \label{tab:multisolver}
 \end{table}
+
+\paragraph{\DIFadd{A planted family where certification is decisive}}
+\DIFadd{The four families above show the heuristics succeeding; they do not show why a certifying
+backend is needed. The complement is the Wishart planted ensemble~\mbox{%DIFAUXCMD
+\cite{hamze2020wishart}}\hskip0pt%DIFAUXCMD
+, a
+fully connected zero-field family with tunable ruggedness: a planted state $t$ is drawn, $M
+\approx \alpha N$ Gaussian columns are projected orthogonal to it and collected in $W$, and
+the couplings are $J_{ij}=(WW^{\mathsf{T}})_{ij}/N$. The construction makes the ground-state
+energy known analytically, $E_0=-\mathrm{tr}(WW^{\mathsf{T}})/(2N)$, attained exactly by
+$\pm t$, and the ratio $\alpha=M/N$ tunes the depth of the first-order barrier in the energy
+landscape; small $\alpha$ is the rugged regime. On five instances per
+$\alpha\in\{0.2,0.3,0.5\}$ at $N=40$, the dSB solver under the same budgets as above recovers
+the certified optimum on all five instances at $\alpha=0.5$, on one of five at $\alpha=0.3$
+and on none at $\alpha=0.2$, terminating $0.16$--$0.82\%$ above it --- on wrong, near-optimal
+configurations that nothing short of a certified reference exposes. The brute-force sampler
+certifies each instance in $\approx\!2$\,s on one H100, at this size less than a single
+$7$--$9$\,s dSB run; it returns the planted configuration on all fifteen instances, and its
+}\texttt{\DIFadd{float64}}\DIFadd{-recomputed certificate matches the analytic $E_0$ to $4\times10^{-15}$, which
+checks the whole pipeline, from the instance files to the kernel, against a value independent
+of both solvers. The deterministic generator, the instances and the raw records ship with the
+article, and the heuristic side of the comparison is re-checkable without a GPU against the
+analytic optimum (Sec.~\ref{sec:reproduction}).
+}
 
 \paragraph{\DIFadd{QUBO path and exact-solver checks}}
 \DIFadd{The QUBO and Ising interfaces use the same computational path: both samplers convert a SPIN
@@ -1084,7 +1114,8 @@ drivers }\texttt{\DIFadd{bf.py}} \DIFadd{and }\texttt{\DIFadd{plot\_distributed.
 Fig.~\ref{fig:runtimes}, one driver per experiment
 (}\texttt{\DIFadd{exp\_*.py}}\DIFadd{), the NumPy simulated-bifurcation solver }\texttt{\DIFadd{sbm.py}}
 \DIFadd{with its verification driver }\texttt{\DIFadd{verify\_sbm.py}}\DIFadd{, the simulated-annealing
-comparison driver }\texttt{\DIFadd{exp\_multi\_solver.py}}\DIFadd{, and the launchers in
+comparison driver }\texttt{\DIFadd{exp\_multi\_solver.py}}\DIFadd{, the planted-Wishart generator
+}\texttt{\DIFadd{gen\_wishart.py}}\DIFadd{, and the launchers in
 }\texttt{\DIFadd{scripts/}}\DIFadd{. Shared helpers live in }\texttt{\DIFadd{bench\_common.py}}\DIFadd{: the
 environment descriptors recorded by the revision experiments, the detection of the Ray
 topology, and a per-size instance generator whose output does not depend on
@@ -1143,6 +1174,9 @@ placement across one node boundary }& \DIFaddFL{5\,min, 2 nodes }\\
 \hline
 \texttt{\DIFaddFL{e6\_instance\_families}} & \DIFaddFL{dSB against certified optima over four
 coupling families }& \DIFaddFL{18\,min, 1 GPU }\\
+\hline
+\texttt{\DIFaddFL{e9\_wishart}} & \DIFaddFL{dSB against certified and analytic optima on the rugged
+Wishart family }& \DIFaddFL{3\,min, 1 GPU }\\
 \hline
 \texttt{\DIFaddFL{e4\_precision}} & \texttt{\DIFaddFL{float32}} \DIFaddFL{against }\texttt{\DIFaddFL{float64}} \DIFaddFL{on the
 ground-state path }& \DIFaddFL{6\,min, 1 GPU }\\
@@ -1254,7 +1288,10 @@ changing the public sampler API. On dense random Ising instances we now certify
 exhaustive ground states up to $N=60$ on $8\times$ H100 GPUs, empirically
 confirming the \DIFaddbegin \DIFadd{asymptotic }\DIFaddend $t_{N+1}=2\,t_N$ doubling \DIFdelbegin \DIFdel{rule across the measured range}\DIFdelend \DIFaddbegin \DIFadd{regime from $N=52$, and we
 quantify the strong scaling of the decomposition, which reaches $93\%$ parallel
-efficiency at $N=48$ and the ideal $8\times$ speedup from $N=52$ on}\DIFaddend . Natural
+efficiency at $N=48$ and the ideal $8\times$ speedup from $N=52$ on. On a planted
+rugged family the certified optima expose heuristic near-misses of a fraction of
+a percent at a size certified in seconds --- the concrete regime such a backend
+exists for}\DIFaddend . Natural
 next steps are: (i) \DIFaddbegin \DIFadd{reducing the per-task scheduling overhead that
 Table~\ref{tab:controller} identifies as one measured source of scaling overhead, for
 instance by grouping several fixed assignments into one task so that the number of

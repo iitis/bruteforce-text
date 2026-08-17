@@ -171,6 +171,18 @@ timings and instance hashes are in
 \path{benchmarks/results/multi_solver/run_20260816_125511.json}, produced by
 \texttt{benchmarks/exp\_multi\_solver.py}.
 
+The revision also adds the case the four families cannot supply: a family on which the
+heuristic \emph{fails}. On the Wishart planted ensemble (Hamze et al., Phys.\ Rev.\ E
+\textbf{101}, 052102 (2020)), whose ground-state energy is known analytically per instance,
+the same dSB budgets recover the certified optimum on five of five instances at $\alpha=0.5$,
+one of five at $\alpha=0.3$ and zero of five at $\alpha=0.2$ ($N=40$), terminating
+$0.16$--$0.82\%$ above the optimum on wrong near-optimal configurations. Every brute-force
+certificate matches the analytic value to $4\times10^{-15}$, checking the whole pipeline
+against a reference independent of both solvers. This is the plugin's intended role made
+concrete (new paragraph \emph{A planted family where certification is decisive}; driver
+\texttt{benchmarks/exp\_wishart.py}, launcher \texttt{run\_e9\_wishart.sh}; the heuristic side
+is re-checkable without a GPU against the analytic optimum).
+
 For implementation correctness we retain the comparison with \texttt{dimod.ExactSolver} at
 CPU-enumerable sizes and independent \texttt{float64} recomputation at benchmark scale. These
 are correctness checks, not claims about comparative performance against every exact method.
@@ -650,6 +662,9 @@ End-to-end boundary-cost driver and two-node production result added, comparing 
 payload/discard task returns under local, remote and mixed placement & R2.2, R3.3 \\
 New paragraph on the cost and effect of double precision & R2.5 \\
 Targeted dSB/SA comparison across four families reported, with certified gaps and timings & R1.2 \\
+New paragraph \emph{A planted family where certification is decisive} --- Wishart ensemble
+with analytic optima; the heuristic misses at small $\alpha$ & R1.2 \\
+COO reader replaced by an exact parser; the known offset in three stored records documented & own re-check via R2.5 \\
 Measured BINARY/SPIN runtime ratio & R3.4 \\
 New paragraph defining what the reported wall-clock times include and exclude & R2.2 \\
 New paragraph \emph{Controller cost and the limits of the decomposition} & R2.2, R3.3 \\
