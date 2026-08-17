@@ -19,6 +19,8 @@ benchmarks/
 ├── exp_instance_families.py    E6  certified verification across instance families
 ├── exp_boundary_cost.py       E7  end-to-end cost of one Ray node boundary
 ├── exp_multi_solver.py        E8  dSB and simulated annealing against certified optima
+├── gen_wishart.py              Wishart planted instances with a closed-form optimum
+├── exp_wishart.py              E9  a family the heuristic fails; certification decides
 ├── scripts/                    launchers: one per experiment, plus cluster control
 ├── instances/                  instance files in COO format
 └── results/                    raw results, one directory per experiment
@@ -59,6 +61,7 @@ Individually, cheapest first:
 ./benchmarks/scripts/run_verification.sh          # brute force vs CPU heuristic    ~10 min, no GPU
 ./benchmarks/scripts/run_e8_multi_solver.sh       # dSB + SA over 20 instances       ~8 min, no GPU
 ./benchmarks/scripts/run_e6_instance_families.sh  # E6 families vs certified optima ~18 min, 1 GPU
+./benchmarks/scripts/run_e9_wishart.sh            # E9 Wishart: heuristic fails      ~6 min, 1 GPU
 ./benchmarks/scripts/run_e3_controller_cost.sh    # E3 controller cost to 2^16      ~30 min, no GPU
 ./benchmarks/scripts/run_e7_boundary_cost.sh      # E7 end-to-end node-boundary cost  ~5 min, 2 nodes
 ./benchmarks/scripts/run_e4_precision.sh          # E4 float32 vs float64            ~6 min, 1 GPU
@@ -312,6 +315,27 @@ The shipped H100-server production record is
 `results/multi_solver/run_20260816_125511.json`. Both methods reach all 20 certified optima;
 their overall median wall times under the stated, method-specific budgets are 9.21 seconds for
 dSB and 10.80 seconds for SA.
+
+### E9 - Wishart planted family (reviewer 1)
+
+```shell
+./benchmarks/scripts/run_e9_wishart.sh
+```
+
+The complement to E6/E8: a family on which the heuristic *fails*. Wishart planted instances
+(Hamze et al., Phys. Rev. E 101, 052102 (2020)) have a first-order landscape whose ruggedness
+is tuned by `alpha = M/N`; small alpha defeats the dSB heuristic at N = 40, a size the
+brute-force sampler certifies in seconds. Every instance carries a closed-form ground-state
+energy `E_0 = -tr(W W^T)/(2N)`, attained by the planted state, so each brute-force certificate
+is checked against an analytic value that is independent of both solvers, and an energy below
+it halts the run. Instances are deterministic in `(seed, size, alpha, replica)`
+(`gen_wishart.py`), written once and re-derived rather than rewritten on later runs. dSB uses
+the same budgets as E6/E8: 4096 replicas, 3000 integration steps, seed 42, float64 dynamics,
+automatic time-step selection. Scoring is on energy; the zero field makes ±planted exactly
+degenerate, so Hamming distances are informational. Each invocation writes a timestamped,
+non-overwriting record under `results/wishart/`. With `--skip-bruteforce` the heuristic is
+scored against the analytic `E_0`, so the family-level conclusion can be re-checked without
+any GPU.
 
 ## Verification against the heuristic
 

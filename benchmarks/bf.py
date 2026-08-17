@@ -1,4 +1,3 @@
-from dimod.serialization import coo
 from pathlib import Path
 import hashlib
 import numpy as np
@@ -89,8 +88,9 @@ def bench(start, stop, step, sampler_mode="distributed", seed=42, skip_existing=
             print(f"[bench] Skipping existing result N={d} ({o_path})")
             continue
         print(f"[bench] Solving instance N={d} with sampler_mode={sampler_mode}")
-        with open(i_path) as fd:
-            bqm = coo.load(fd, vartype="SPIN")
+        # common.load_bqm, not dimod's coo.load: the dimod parser silently drops
+        # exponent-notation couplings (present in the shipped 46/58/60 instances).
+        bqm = common.load_bqm(i_path)
         if sampler_mode == "distributed":
             if DistributedBruteforceGPUSampler is None:
                 raise RuntimeError(

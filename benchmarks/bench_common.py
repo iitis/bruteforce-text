@@ -262,11 +262,32 @@ def generate_instance(
 
 
 def load_bqm(path, vartype: str = "SPIN"):
-    """Read an instance into a ``dimod`` binary quadratic model."""
-    from dimod.serialization import coo
+    """Read an instance into a ``dimod`` binary quadratic model.
 
+    Parses the COO text directly instead of going through ``dimod.serialization.coo``:
+    dimod's line regex does not accept exponent notation, so it silently *drops* any
+    coupling whose repr falls below 1e-4 (e.g. ``5 13 -2.667194324401656e-05``), and the
+    sampler then solves a slightly different Hamiltonian than the one on disk. The
+    semantics here are identical to dimod's for the lines dimod does parse: a diagonal
+    entry is a linear bias, duplicates accumulate.
+    """
+    import dimod
+
+    linear: dict = {}
+    quadratic: dict = {}
     with open(path) as fd:
-        return coo.load(fd, vartype=vartype)
+        for line in fd:
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            i_text, j_text, value_text = line.split()
+            i, j, value = int(i_text), int(j_text), float(value_text)
+            if i == j:
+                linear[i] = linear.get(i, 0.0) + value
+            else:
+                key = (min(i, j), max(i, j))
+                quadratic[key] = quadratic.get(key, 0.0) + value
+    return dimod.BinaryQuadraticModel(linear, quadratic, 0.0, vartype)
 
 
 # --------------------------------------------------------------------------------------
