@@ -12,7 +12,7 @@
             "num_variables": 40,
             "by_dtype": {
                 "float": {
-                    "solve_time_in_seconds": 2.7603378910571337,
+                    "solve_time_in_seconds": 2.6107768397778273,
                     "reported_energy": -113.42442942422193,
                     "recomputed_energy": -113.42443128894476,
                     "roundoff": 1.8647228330337384e-06,
@@ -61,7 +61,7 @@
                     "stabilization_active": true
                 },
                 "double": {
-                    "solve_time_in_seconds": 2.123811338096857,
+                    "solve_time_in_seconds": 2.1028246879577637,
                     "reported_energy": -113.4244312889447,
                     "recomputed_energy": -113.42443128894476,
                     "roundoff": 5.684341886080802e-14,
@@ -110,14 +110,14 @@
                     "stabilization_active": false
                 }
             },
-            "double_over_single_slowdown": 0.7694026680492712,
+            "double_over_single_slowdown": 0.8054402260350642,
             "same_configuration": true
         },
         {
             "num_variables": 42,
             "by_dtype": {
                 "float": {
-                    "solve_time_in_seconds": 8.201418595388532,
+                    "solve_time_in_seconds": 8.20158413797617,
                     "reported_energy": -117.9997714959045,
                     "recomputed_energy": -117.99976902653844,
                     "roundoff": -2.469366052082478e-06,
@@ -168,7 +168,7 @@
                     "stabilization_active": true
                 },
                 "double": {
-                    "solve_time_in_seconds": 8.472035061568022,
+                    "solve_time_in_seconds": 8.390972163528204,
                     "reported_energy": -117.99976902653852,
                     "recomputed_energy": -117.99976902653844,
                     "roundoff": -7.105427357601002e-14,
@@ -219,14 +219,14 @@
                     "stabilization_active": false
                 }
             },
-            "double_over_single_slowdown": 1.0329962997293727,
+            "double_over_single_slowdown": 1.0230916396595997,
             "same_configuration": true
         },
         {
             "num_variables": 44,
             "by_dtype": {
                 "float": {
-                    "solve_time_in_seconds": 32.83379804342985,
+                    "solve_time_in_seconds": 32.833247819915414,
                     "reported_energy": -125.32890293140784,
                     "recomputed_energy": -125.328904165191,
                     "roundoff": 1.233783166298963e-06,
@@ -279,7 +279,7 @@
                     "stabilization_active": true
                 },
                 "double": {
-                    "solve_time_in_seconds": 33.855144092813134,
+                    "solve_time_in_seconds": 33.551982739940286,
                     "reported_energy": -125.32890416519105,
                     "recomputed_energy": -125.328904165191,
                     "roundoff": -4.263256414560601e-14,
@@ -332,17 +332,17 @@
                     "stabilization_active": false
                 }
             },
-            "double_over_single_slowdown": 1.0311065460058058,
+            "double_over_single_slowdown": 1.0218904606686188,
             "same_configuration": true
         },
         {
             "num_variables": 46,
             "by_dtype": {
                 "float": {
-                    "solve_time_in_seconds": 131.53468347154558,
-                    "reported_energy": -125.5862249950051,
+                    "solve_time_in_seconds": 131.539394531399,
+                    "reported_energy": -125.58620589058114,
                     "recomputed_energy": -125.58620153396129,
-                    "roundoff": -2.346104380990255e-05,
+                    "roundoff": -4.356619854206656e-06,
                     "state": [
                         -1,
                         1,
@@ -394,10 +394,10 @@
                     "stabilization_active": true
                 },
                 "double": {
-                    "solve_time_in_seconds": 135.3763380330056,
-                    "reported_energy": -125.5862282059046,
+                    "solve_time_in_seconds": 134.20598936639726,
+                    "reported_energy": -125.58620153396134,
                     "recomputed_energy": -125.58620153396129,
-                    "roundoff": -2.6671943317069235e-05,
+                    "roundoff": -5.684341886080802e-14,
                     "state": [
                         -1,
                         1,
@@ -449,7 +449,7 @@
                     "stabilization_active": false
                 }
             },
-            "double_over_single_slowdown": 1.029206399864041,
+            "double_over_single_slowdown": 1.0202722146053493,
             "same_configuration": true
         }
     ],
@@ -474,6 +474,7 @@
             "omnisolver": "0.0.4",
             "omnisolver-bruteforce": "0.0.6.dev4+g7285f2d4c",
             "dimod": "0.12.21",
+            "dwave-samplers": "1.8.0",
             "numpy": "2.2.6",
             "numba": "0.65.0",
             "ray": "2.52.1"
