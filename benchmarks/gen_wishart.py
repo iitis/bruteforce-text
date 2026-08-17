@@ -26,10 +26,14 @@ which independently checks the brute-force certificate on every single instance.
 barrier; small ``alpha`` is the hard regime for heuristics, at sizes where exhaustive
 certification takes seconds.
 
-Instance files are deterministic in ``(seed, size, alpha, replica)`` and are never rewritten
-once generated, because the instances behind published results are part of the record; an
-existing file is instead re-derived from its seed and compared byte for byte, so silent
-divergence between the file and the generator is impossible.
+Instance files are derived deterministically from ``(seed, size, alpha, replica)`` and are
+never rewritten once generated, because the instances behind published results are part of
+the record. The random streams are platform-stable, but the matrix products go through BLAS
+and may differ in the last ulp between machines, so an existing file is the canonical
+artifact: it is re-derived from its seed and compared at value level (tolerance far below
+every physically meaningful scale), the analytic ground-state energy is evaluated on the
+file's own couplings, and a mismatch beyond floating-point noise is an error rather than a
+rewrite.
 
 Usage::
 
@@ -133,6 +137,20 @@ def _format_instance(couplings: np.ndarray) -> str:
     return "\n".join(lines) + "\n"
 
 
+def _parse_instance(path: Path, num_variables: int) -> np.ndarray:
+    """Strictly upper-triangular couplings of an instance file."""
+    couplings = np.zeros((num_variables, num_variables))
+    for line in path.read_text().splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        i_text, j_text, value_text = line.split()
+        i, j, value = int(i_text), int(j_text), float(value_text)
+        if i != j:
+            couplings[min(i, j), max(i, j)] += value
+    return couplings
+
+
 def generate_instance(
     num_variables: int,
     alpha: float,
@@ -142,22 +160,38 @@ def generate_instance(
 ):
     """Write one instance file unless it exists, and return ``(path, meta)``.
 
-    An existing file is verified against the deterministic re-derivation instead of being
-    rewritten, and a mismatch is an error: the shipped instances are part of the published
-    record and must stay bit-identical to what the generator produces.
+    An existing file is never rewritten: it is the canonical published artifact. It is
+    instead verified against the deterministic re-derivation at value level - BLAS may
+    shift the last ulp of the matrix products between machines, so byte identity across
+    hosts is not a valid expectation - and the analytic ground-state energy is evaluated
+    on the couplings actually stored in the file, which is what both solvers see. A
+    discrepancy beyond floating-point noise (wrong seed, edited file, or a changed NumPy
+    random stream) is an error.
     """
-    couplings, _, meta = build(num_variables, alpha, replica, seed)
-    content = _format_instance(couplings)
+    derived, planted, meta = build(num_variables, alpha, replica, seed)
     path = instance_path(num_variables, alpha, replica, instances_dir)
     if path.is_file():
-        if path.read_text() != content:
+        stored = _parse_instance(path, num_variables)
+        if not np.allclose(stored, derived, rtol=1e-9, atol=1e-12):
+            worst = float(np.max(np.abs(stored - derived)))
             raise RuntimeError(
-                f"existing instance {path} does not match its deterministic re-derivation; "
-                "refusing to proceed with inconsistent inputs"
+                f"existing instance {path} deviates from its deterministic re-derivation "
+                f"by up to {worst:.3e}, far beyond floating-point noise; likely causes are "
+                "a different --seed, an edited file, or a changed NumPy random stream. "
+                "Refusing to proceed with inconsistent inputs."
             )
+        planted_energy = float(planted @ stored @ planted)
+        if abs(planted_energy - meta["analytic_gs_energy"]) > 1e-9 * max(
+            1.0, abs(meta["analytic_gs_energy"])
+        ):
+            raise RuntimeError(
+                f"planted state does not attain the analytic optimum on the stored "
+                f"couplings of {path}: {planted_energy!r} vs {meta['analytic_gs_energy']!r}"
+            )
+        meta = dict(meta, analytic_gs_energy=planted_energy, energy_lower_bound=planted_energy)
         return path, meta
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(content)
+    path.write_text(_format_instance(derived))
     return path, meta
 
 
