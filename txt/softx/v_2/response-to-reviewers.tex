@@ -416,31 +416,36 @@ accordingly, so no script refers to an external repository any more.
 \texttt{num\_states = 1} by conducting the simulation at the default float64 precision. This
 will help users \dots\ quantify the expected slowdown.}
 
-\textbf{Measured, and the answer is not what we expected.} Repeating the ground-state search at
+\textbf{Measured.} Repeating the ground-state search at
 $N=40,\dots,46$ in both precisions on one H100 gives, after excluding the $N=40$ warm-up
-outlier, a \texttt{float64} penalty of only $2.9$--$3.3\%$ (ratios $1.03$, $1.03$, $1.03$ at
+outlier, a \texttt{float64} penalty of only $2.0$--$2.3\%$ (ratios of $1.02$ at
 $N=42,44,46$), with both precisions returning the same configuration at every size. The enumeration is bound by memory traffic and integer
 bookkeeping rather than by floating-point throughput, so on this hardware single precision buys
 working-set size rather than speed. We have corrected the manuscript accordingly: the
 \emph{Architecture} paragraph previously justified \texttt{float32} as maximizing throughput,
 which is not true here.
 
-Two defects had to be fixed before the experiment was even possible, and both changed what a
-user gets. The SPIN$\,\to\,$BINARY recursion in the distributed sampler dropped the requested
-\texttt{dtype}, so SPIN inputs always ran in single precision; and the command line's
+Three defects had to be fixed before the experiment gave trustworthy numbers, and each changed
+what a user gets. The SPIN$\,\to\,$BINARY recursion in the distributed sampler dropped the
+requested \texttt{dtype}, so SPIN inputs always ran in single precision; the command line's
 \texttt{--dtype} never worked at all, because NumPy resolves both \texttt{"float"} and
 \texttt{"double"} to \texttt{float64} --- so from the command line \emph{both} choices ran in
-double precision and the stabilized single-precision path was unreachable.
+double precision and the stabilized single-precision path was unreachable; and the COO reader
+used by the benchmark scripts silently dropped any coupling whose magnitude falls below
+$10^{-4}$ (its line parser does not accept exponent notation), which affected one coupling in
+each of the stored $N=46$, $58$ and $60$ instances. The reader has been replaced by an exact
+parser in the reproduction package, and the manuscript now documents the resulting offset in
+the three affected stored records explicitly.
 
-The more useful finding for the reviewer's purpose is that double precision is \textbf{not} a
-substitute for the stabilization, since the compensated updates and the re-anchoring are
-\texttt{float32} only. Up to $N=44$ the \texttt{float64} accumulator stays within $10^{-13}$ of
-the from-scratch recomputation, but at $N=46$ it drifts to $2.7\times10^{-5}$ --- marginally
-\emph{worse} than the $2.3\times10^{-5}$ of the \emph{stabilized} single-precision run at the
-same size. Both still return the true optimum, which we confirmed independently. Our guidance
-is therefore to use the default \texttt{float32} path and to recompute the energy of the
-returned configuration in \texttt{float64} on the host when a certified numerical value is
-needed; extending the stabilization to the double-precision path is now listed as future work.
+With the reader fixed, the precision picture is clean: the \texttt{float64} accumulator stays
+within $10^{-13}$ of the from-scratch recomputation at every measured size, against
+$1$--$4\times10^{-6}$ for stabilized \texttt{float32}. (The apparent \texttt{float64} drift of
+$2.7\times10^{-5}$ at $N=46$ reported by an earlier version of this experiment was exactly the
+coupling dropped by the reader, not accumulation error.) Both precisions return the same
+configuration at every size, confirmed independently. Our guidance is unchanged: use the
+default \texttt{float32} path and recompute the energy of the returned configuration in
+\texttt{float64} on the host when a certified numerical value is needed; extending the
+stabilization to the (currently unstabilized) double-precision path is listed as future work.
 
 \section*{Reviewer 3}
 

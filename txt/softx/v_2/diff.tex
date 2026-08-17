@@ -1,7 +1,7 @@
 \documentclass[preprint,12pt,a4paper]{elsarticle}
 %DIF LATEXDIFF DIFFERENCE FILE
 %DIF DEL ../v_1/bruteforce.tex   Sat Aug  1 21:39:39 2026
-%DIF ADD bruteforce.tex          Mon Aug 17 17:04:53 2026
+%DIF ADD bruteforce.tex          Mon Aug 17 19:21:06 2026
 
 \usepackage{amssymb}
 \usepackage{float}
@@ -769,18 +769,27 @@ may grow with }\DIFaddend the number of \DIFdelbegin \DIFdel{available workers}\
 Because the GPU backend operates in \texttt{float32} on the fast ground-state
 path, returned energies are subject to incremental-update roundoff. We \DIFaddbegin \DIFadd{therefore
 }\DIFaddend re-evaluate the energy of \DIFdelbegin \DIFdel{each }\DIFdelend \DIFaddbegin \DIFadd{every }\DIFaddend returned spin configuration from scratch in
-\texttt{float64}. \DIFdelbegin \DIFdel{For the largest measured instances ($N=56,58,60$), }\DIFdelend \DIFaddbegin \DIFadd{Across all twenty measured runs }\DIFaddend the absolute deviation between
-\DIFdelbegin \DIFdel{reported and recomputed energies stays below $4\times 10^{-6}$ for }\DIFdelend \DIFaddbegin \DIFadd{the reported and the recomputed energy is at most $2.5\times 10^{-5}$, reached at
-$N=46$ in both sampler modes, and stays below $1\times 10^{-5}$ at every other
-size; at the largest size, $N=60$, it is $4.0\times 10^{-6}$. Against }\DIFaddend energies of
-magnitude $\mathcal{O}(10^{2})$ \DIFdelbegin \DIFdel{,
-roughly }\DIFdelend \DIFaddbegin \DIFadd{this amounts to seven to }\DIFaddend eight significant
-digits, consistent with the expected accuracy of the stabilized \texttt{float32}
-accumulator. \DIFdelbegin \DIFdel{Using the same recomputation, we }\DIFdelend \DIFaddbegin \DIFadd{The returned configuration is an exact bit string, and its energy can be
-recomputed to }\texttt{\DIFadd{float64}} \DIFadd{accuracy by the caller at negligible cost, which is what we do
-throughout. In every }\DIFaddend cross-check \DIFdelbegin \DIFdel{an SBM run on the same instances: a 
+\texttt{float64}. \DIFdelbegin \DIFdel{For the largest measured instances ($N=56,58,60$), the
+absolute deviation between reported and recomputed energies stays below $4\times 10^{-6}$ for }\DIFdelend \DIFaddbegin \DIFadd{Across all twenty measured runs the roundoff of the
+}\texttt{\DIFadd{float32}} \DIFadd{accumulator, obtained as the deviation between the reported and
+the recomputed energy, stays below $1\times 10^{-5}$ in every run --- at most
+$8.4\times 10^{-6}$, at $N=54$; at the largest size, $N=60$, it is
+$6.4\times 10^{-6}$. Against }\DIFaddend energies of magnitude $\mathcal{O}(10^{2})$ \DIFdelbegin \DIFdel{,
+roughly }\DIFdelend \DIFaddbegin \DIFadd{this
+amounts to about }\DIFaddend eight significant digits, consistent with the expected accuracy
+of the stabilized \texttt{float32} accumulator. \DIFdelbegin \DIFdel{Using the same recomputation, we }\DIFdelend \DIFaddbegin \DIFadd{Three stored records ($N=46$,
+$58$ and $60$) additionally contain a second, exactly known offset that is not
+roundoff: the COO reader used at measurement time silently dropped the one
+coupling of each of those instances whose magnitude lies below $10^{-4}$, so the
+kernel enumerated a Hamiltonian differing from the one on disk by a single term
+of up to $2.7\times 10^{-5}$. The returned configurations are unaffected --- they
+match the optima of the full Hamiltonians, confirmed bit for bit by the
+independent }\DIFaddend cross-check \DIFdelbegin \DIFdel{an SBM run on the same instances: a 
 simulated bifurcation solver
-running on a single }\DIFdelend \DIFaddbegin \DIFadd{reported here the finite-precision deviation leaves the
+running on a single }\DIFdelend \DIFaddbegin \DIFadd{below --- and the roundoff figures above remove this
+documented term; the reproduction package now parses the instance files exactly. The returned configuration is an exact bit string, and its energy can be
+recomputed to }\texttt{\DIFadd{float64}} \DIFadd{accuracy by the caller at negligible cost, which is what we do
+throughout. In every cross-check reported here the finite-precision deviation leaves the
 selected state unchanged. Recomputing only that selected state cannot, however, prove that an
 unretained, near-degenerate state was never misordered earlier in the floating-point search.
 The benchmark results are therefore empirically cross-validated exhaustive-search minima; a
@@ -802,23 +811,24 @@ changes the wall-clock cost of the search, not its outcome.
 \DIFadd{Because the fast path is the single-precision one, it is fair to ask what the alternative
 costs. Repeating the ground-state search at $N=40,\dots,46$ in both precisions on one }\DIFaddend H100
 \DIFdelbegin \DIFdel{GPU with $2^{12}=4096$ parallel samples and }\DIFdelend \DIFaddbegin \DIFadd{gives an unexpected answer. Excluding the $N=40$ warm-up outlier, }\texttt{\DIFadd{float64}} \DIFadd{is only
-$2.9$--$3.3\%$ slower than }\texttt{\DIFadd{float32}} \DIFadd{(ratios $1.03$, $1.03$ and $1.03$ at
+$2.0$--$2.3\%$ slower than }\texttt{\DIFadd{float32}} \DIFadd{(ratios of $1.02$ at
 $N=42,44,46$), and both precisions return the same configuration at every size. The small timing difference suggests that the enumeration is not limited by floating-point
 throughput but by the memory traffic and integer bookkeeping of the Gray-code sweep, so on
 this hardware single precision buys working-set size rather than speed.
 }
 
-\DIFadd{Double precision is, however, not a substitute for the stabilization, because the compensated
-updates and the re-anchoring are enabled for }\texttt{\DIFadd{float32}} \DIFadd{only. Up to $N=44$ the
-}\texttt{\DIFadd{float64}} \DIFadd{accumulator stays within $10^{-13}$ of the from-scratch recomputation, against
-$1$--$2\times 10^{-6}$ for stabilized }\texttt{\DIFadd{float32}}\DIFadd{; at $N=46$, however, the unstabilized
-}\texttt{\DIFadd{float64}} \DIFadd{path drifts to $2.7\times 10^{-5}$, marginally }\emph{\DIFadd{worse}} \DIFadd{than the
-$2.3\times 10^{-5}$ of the stabilized single-precision run at the same size. Both still return
-the same lowest-energy state found by the independent cross-check in the next paragraph.
-The practical guidance is therefore the opposite of what a precision argument alone would
-suggest: use the default }\texttt{\DIFadd{float32}} \DIFadd{path with its stabilization and, when a certified
-numerical value is wanted, recompute the energy of the returned configuration in
-}\texttt{\DIFadd{float64}} \DIFadd{on the host, as done throughout this paper.
+\DIFadd{The compensated updates and the re-anchoring are enabled for }\texttt{\DIFadd{float32}} \DIFadd{only, so the
+double-precision path runs unstabilized. In the measured range that is empirically
+inconsequential: the }\texttt{\DIFadd{float64}} \DIFadd{accumulator stays within $10^{-13}$ of the from-scratch
+recomputation at every size up to $N=46$, against $1$--$4\times 10^{-6}$ for stabilized
+}\texttt{\DIFadd{float32}}\DIFadd{. (An earlier revision of this experiment showed an apparent }\texttt{\DIFadd{float64}}
+\DIFadd{drift of $2.7\times 10^{-5}$ at $N=46$; it was exactly the dropped-coupling offset documented
+above, not accumulation error.) Whether the unstabilized double-precision accumulator stays
+clean at larger $N$ is unmeasured, which is why extending the stabilization to that path
+remains listed as future work. The practical guidance is unchanged: use the default
+}\texttt{\DIFadd{float32}} \DIFadd{path with its stabilization and, when a certified numerical value is wanted,
+recompute the energy of the returned configuration in }\texttt{\DIFadd{float64}} \DIFadd{on the host, as done
+throughout this paper.
 }
 
 \paragraph{\DIFadd{Verification against a simulated-bifurcation solver}}
@@ -833,8 +843,7 @@ place. We run it in }\texttt{\DIFadd{float64}} \DIFadd{with $R=2^{12}=4096$ para
 integration steps \DIFdelbegin \DIFdel{, reporting
 }\DIFdelend \DIFaddbegin \DIFadd{and seed 42. A probe selects one global time step from
 $\{0.25,0.5,0.75,1.0,1.25\}$, and the coupling scale is
-$c_0=0.5/(\sqrt{N}\,\mathrm{std}(J))$; we report }\DIFaddend the lowest-energy \DIFdelbegin \DIFdel{sample.
-The recomputed energies of the brute-force and SBM solutions agree to within $6\times 10^{-6}$, and the returned spin
+$c_0=0.5/(\sqrt{N}\,\mathrm{std}(J))$; we report }\DIFaddend the lowest-energy \DIFdelbegin \DIFdel{sample. The recomputed energies of the brute-force and SBM solutions agree to within $6\times 10^{-6}$, and the returned spin
 configurations are }\DIFdelend \DIFaddbegin \DIFadd{replica. At $N=60$ this
 takes well under a minute on a CPU.
 }
@@ -842,16 +851,23 @@ takes well under a minute on a CPU.
 \DIFadd{The heuristic is compared against every stored single-GPU and distributed result: twenty runs
 over $N=38,\dots,60$, comprising all measured points of Fig.~\ref{fig:runtimes} plus one stored
 distributed run at $N=38$, below the figure's range. On each of them the configuration it returns is }\DIFaddend bit-identical \DIFaddbegin \DIFadd{to the
-certified ground state }\DIFaddend (Hamming distance $0$)\DIFdelbegin \DIFdel{at $N=56$}\DIFdelend , \DIFdelbegin \DIFdel{$58$, and $60$. On these instances, SBM reaches the exact ground state certified
-by exhaustive search, and the residual energy-value differences are
-explained entirely by }\DIFdelend \DIFaddbegin \DIFadd{and the energy of that configuration agrees
+certified ground state }\DIFaddend (Hamming distance $0$)\DIFdelbegin \DIFdel{at $N=56$, $58$, and $60$. On these instances, SBM reaches the exact ground state certified
+by exhaustive search}\DIFdelend , and \DIFdelbegin \DIFdel{the residual energy-value differences are explained entirely by }\DIFdelend \DIFaddbegin \DIFadd{the energy of that configuration agrees
 with the }\texttt{\DIFadd{float64}} \DIFadd{recomputation to $6\times 10^{-14}$. The Simulated Bifurcation
 Machine therefore reaches the same exhaustive-search minimum on this instance family throughout the
 measured range. The two solvers' }\emph{\DIFadd{reported}} \DIFadd{energies differ by at most
-$2.5\times 10^{-5}$, and that residual is attributable entirely to the brute-force
-accumulator: the heuristic integrates and reports in }\texttt{\DIFadd{float64}}\DIFadd{, so its own energies sit
+$2.5\times 10^{-5}$, and that residual is attributable entirely to the brute-force side: the
+heuristic integrates and reports in }\texttt{\DIFadd{float64}}\DIFadd{, so its own energies sit
 within $10^{-13}$ of the recomputation, while the exhaustive search reports from the
-}\DIFaddend single-precision \DIFdelbegin \DIFdel{roundoff}\DIFdelend \DIFaddbegin \DIFadd{fast path quantified above. The difference is roundoff on one side, not a
+}\DIFaddend single-precision \DIFdelbegin \DIFdel{roundoff. The full verification harness (Julia driver, SBM parameters, and the resulting }\texttt{\DIFdel{bf\_velox\_verification\_*.csv}} %DIFAUXCMD
+\DIFdel{tables ) is available in the companion repository
+}\href{https://github.com/euro-hpc-pl/omni-bench}{\texttt{\DIFdel{euro-hpc-pl/omni-bench}}%DIFAUXCMD
+}%DIFAUXCMD
+\DIFdel{, together with all      }\texttt{\DIFdel{instances/*.txt}} %DIFAUXCMD
+\DIFdel{and }\texttt{\DIFdel{results/*.json}}
+%DIFAUXCMD
+\DIFdel{files that produced Fig. ~\ref{fig:runtimes}}\DIFdelend \DIFaddbegin \DIFadd{fast path --- including, at three sizes, the documented dropped-coupling
+offset. The difference is bookkeeping on one side, not a
 difference in the configurations found. This is precisely the
 kind of statement that cannot be made without a certifying solver at hand, and it illustrates
 the intended role of the plugin.
@@ -864,15 +880,8 @@ solver implementation; its ordinary Python and NumPy dependencies are declared. 
 }\texttt{\DIFadd{benchmarks/instances/*.txt}}\DIFadd{, }\texttt{\DIFadd{benchmarks/results/single-gpu/*.json}} \DIFadd{and
 }\texttt{\DIFadd{benchmarks/results/distributed/*.json}} \DIFadd{files behind Fig.~\ref{fig:runtimes} and
 Table~\ref{tab:efficiency} are distributed with the article
-repository }\href{\datarepo}{\DIFadd{\datareponame}}\DIFaddend .
-\DIFdelbegin \DIFdel{The full verification harness (Julia driver, SBM parameters, and the resulting }\texttt{\DIFdel{bf\_velox\_verification\_*.csv}} %DIFAUXCMD
-\DIFdel{tables ) is available in the companion repository
-}\href{https://github.com/euro-hpc-pl/omni-bench}{\texttt{\DIFdel{euro-hpc-pl/omni-bench}}%DIFAUXCMD
-}%DIFAUXCMD
-\DIFdel{, together with all      }\texttt{\DIFdel{instances/*.txt}} %DIFAUXCMD
-\DIFdel{and }\texttt{\DIFdel{results/*.json}}
-%DIFAUXCMD
-\DIFdel{files that produced Fig. ~\ref{fig:runtimes}}\DIFdelend \DIFaddbegin 
+repository }\href{\datarepo}{\DIFadd{\datareponame}}\DIFadd{.
+}
 
 \paragraph{\DIFadd{Instance families and targeted multi-solver comparison}}
 \DIFadd{The present plugin performs complete enumeration, evaluating all $2^{N}$ assignments

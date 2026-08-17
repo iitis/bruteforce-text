@@ -645,13 +645,21 @@ may grow with the number of subproblems.
 Because the GPU backend operates in \texttt{float32} on the fast ground-state
 path, returned energies are subject to incremental-update roundoff. We therefore
 re-evaluate the energy of every returned spin configuration from scratch in
-\texttt{float64}. Across all twenty measured runs the absolute deviation between
-the reported and the recomputed energy is at most $2.5\times 10^{-5}$, reached at
-$N=46$ in both sampler modes, and stays below $1\times 10^{-5}$ at every other
-size; at the largest size, $N=60$, it is $4.0\times 10^{-6}$. Against energies of
-magnitude $\mathcal{O}(10^{2})$ this amounts to seven to eight significant
-digits, consistent with the expected accuracy of the stabilized \texttt{float32}
-accumulator. The returned configuration is an exact bit string, and its energy can be
+\texttt{float64}. Across all twenty measured runs the roundoff of the
+\texttt{float32} accumulator, obtained as the deviation between the reported and
+the recomputed energy, stays below $1\times 10^{-5}$ in every run --- at most
+$8.4\times 10^{-6}$, at $N=54$; at the largest size, $N=60$, it is
+$6.4\times 10^{-6}$. Against energies of magnitude $\mathcal{O}(10^{2})$ this
+amounts to about eight significant digits, consistent with the expected accuracy
+of the stabilized \texttt{float32} accumulator. Three stored records ($N=46$,
+$58$ and $60$) additionally contain a second, exactly known offset that is not
+roundoff: the COO reader used at measurement time silently dropped the one
+coupling of each of those instances whose magnitude lies below $10^{-4}$, so the
+kernel enumerated a Hamiltonian differing from the one on disk by a single term
+of up to $2.7\times 10^{-5}$. The returned configurations are unaffected --- they
+match the optima of the full Hamiltonians, confirmed bit for bit by the
+independent cross-check below --- and the roundoff figures above remove this
+documented term; the reproduction package now parses the instance files exactly. The returned configuration is an exact bit string, and its energy can be
 recomputed to \texttt{float64} accuracy by the caller at negligible cost, which is what we do
 throughout. In every cross-check reported here the finite-precision deviation leaves the
 selected state unchanged. Recomputing only that selected state cannot, however, prove that an
@@ -673,22 +681,23 @@ changes the wall-clock cost of the search, not its outcome.
 Because the fast path is the single-precision one, it is fair to ask what the alternative
 costs. Repeating the ground-state search at $N=40,\dots,46$ in both precisions on one H100
 gives an unexpected answer. Excluding the $N=40$ warm-up outlier, \texttt{float64} is only
-$2.9$--$3.3\%$ slower than \texttt{float32} (ratios $1.03$, $1.03$ and $1.03$ at
+$2.0$--$2.3\%$ slower than \texttt{float32} (ratios of $1.02$ at
 $N=42,44,46$), and both precisions return the same configuration at every size. The small timing difference suggests that the enumeration is not limited by floating-point
 throughput but by the memory traffic and integer bookkeeping of the Gray-code sweep, so on
 this hardware single precision buys working-set size rather than speed.
 
-Double precision is, however, not a substitute for the stabilization, because the compensated
-updates and the re-anchoring are enabled for \texttt{float32} only. Up to $N=44$ the
-\texttt{float64} accumulator stays within $10^{-13}$ of the from-scratch recomputation, against
-$1$--$2\times 10^{-6}$ for stabilized \texttt{float32}; at $N=46$, however, the unstabilized
-\texttt{float64} path drifts to $2.7\times 10^{-5}$, marginally \emph{worse} than the
-$2.3\times 10^{-5}$ of the stabilized single-precision run at the same size. Both still return
-the same lowest-energy state found by the independent cross-check in the next paragraph.
-The practical guidance is therefore the opposite of what a precision argument alone would
-suggest: use the default \texttt{float32} path with its stabilization and, when a certified
-numerical value is wanted, recompute the energy of the returned configuration in
-\texttt{float64} on the host, as done throughout this paper.
+The compensated updates and the re-anchoring are enabled for \texttt{float32} only, so the
+double-precision path runs unstabilized. In the measured range that is empirically
+inconsequential: the \texttt{float64} accumulator stays within $10^{-13}$ of the from-scratch
+recomputation at every size up to $N=46$, against $1$--$4\times 10^{-6}$ for stabilized
+\texttt{float32}. (An earlier revision of this experiment showed an apparent \texttt{float64}
+drift of $2.7\times 10^{-5}$ at $N=46$; it was exactly the dropped-coupling offset documented
+above, not accumulation error.) Whether the unstabilized double-precision accumulator stays
+clean at larger $N$ is unmeasured, which is why extending the stabilization to that path
+remains listed as future work. The practical guidance is unchanged: use the default
+\texttt{float32} path with its stabilization and, when a certified numerical value is wanted,
+recompute the energy of the returned configuration in \texttt{float64} on the host, as done
+throughout this paper.
 
 \paragraph{Verification against a simulated-bifurcation solver}
 Using the same recomputation we cross-check, on the identical instances, the heuristic whose
@@ -711,10 +720,11 @@ certified ground state (Hamming distance $0$), and the energy of that configurat
 with the \texttt{float64} recomputation to $6\times 10^{-14}$. The Simulated Bifurcation
 Machine therefore reaches the same exhaustive-search minimum on this instance family throughout the
 measured range. The two solvers' \emph{reported} energies differ by at most
-$2.5\times 10^{-5}$, and that residual is attributable entirely to the brute-force
-accumulator: the heuristic integrates and reports in \texttt{float64}, so its own energies sit
+$2.5\times 10^{-5}$, and that residual is attributable entirely to the brute-force side: the
+heuristic integrates and reports in \texttt{float64}, so its own energies sit
 within $10^{-13}$ of the recomputation, while the exhaustive search reports from the
-single-precision fast path quantified above. The difference is roundoff on one side, not a
+single-precision fast path --- including, at three sizes, the documented dropped-coupling
+offset. The difference is bookkeeping on one side, not a
 difference in the configurations found. This is precisely the
 kind of statement that cannot be made without a certifying solver at hand, and it illustrates
 the intended role of the plugin.
