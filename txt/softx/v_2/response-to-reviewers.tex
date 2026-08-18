@@ -102,12 +102,13 @@ A \texttt{latexdiff} against the submitted version is provided.
 allocations are back-of-the-envelope projections. The authors also note that controller merge
 bandwidth, Ray overhead, and kernel launch latency may limit scaling.}
 
-\textbf{We agree, and we have reduced both the size and the prominence of the projection.}
+\textbf{We agree with this assesment, and we have reduced both the size of the projection
+ and the emphasis placed on it.}
 Three changes:
 
 \begin{itemize}[leftmargin=*]
 \item The projection target is now $2^{14}=16{,}384$ GPUs rather than $2^{16}$. We checked our
-original phrasing and it was simply wrong: calling $2^{16}=65{,}536$ accelerators ``an
+original phrasing and it turned out to be incorrect: calling $2^{16}=65{,}536$ accelerators ``an
 allocation within reach of leadership-class systems'' was not defensible. The revised paragraph gives $N=60$ in
 $\approx\!2.2$~min and $N=64$ in $\approx\!35$~min at $2^{14}$ GPUs, with a one-month budget
 reaching $N \lesssim 74$. $2^{16}$ now appears only as an explicitly hypothetical bound, with
@@ -139,8 +140,8 @@ What remains extrapolated is behavior beyond eight devices and beyond one node b
 against SBM, but it does not provide a broad benchmark against multiple exact or heuristic
 solvers across different instance families.}
 
-\textbf{Agreed. We have added a second, algorithmically distinct heuristic and evaluated both
-heuristics on the same certified instances from four families.}
+\textbf{We aggree with this comment. We have added a second, algorithmically distinct heuristic and evaluated both
+of them on the same certified instances from four families.}
 
 The plugin studied here performs complete enumeration. For this implementation, every run
 evaluates all $2^{N}$ assignments, so its own runtime is essentially independent of coefficient
@@ -171,8 +172,8 @@ timings and instance hashes are in
 \path{benchmarks/results/multi_solver/run_20260816_125511.json}, produced by
 \texttt{benchmarks/exp\_multi\_solver.py}.
 
-The revision also adds the case the four families cannot supply: a family on which the
-heuristic \emph{fails}. On the Wishart planted ensemble (Hamze et al., Phys.\ Rev.\ E
+The revision also adds the case manifestly different from the previous four families: a family
+on which the heuristic \emph{fails}. On the Wishart planted ensemble (Hamze et al., Phys.\ Rev.\ E
 \textbf{101}, 052102 (2020)), whose ground-state energy is known analytically per instance,
 the same dSB budgets recover the certified optimum on five of five instances at $\alpha=0.5$,
 one of five at $\alpha=0.3$ and zero of five at $\alpha=0.2$ ($N=40$), terminating
@@ -185,13 +186,13 @@ is re-checkable without a GPU against the analytic optimum).
 
 For implementation correctness we retain the comparison with \texttt{dimod.ExactSolver} at
 CPU-enumerable sizes and independent \texttt{float64} recomputation at benchmark scale. These
-are correctness checks, not claims about comparative performance against every exact method.
+are just correctness checks, not intended to be claims about comparative performance against every exact method.
 
 \point{R1.3}{The paper claims near-ideal speedup, but does not explicitly calculate or report
 parallel efficiency.}
 
-\textbf{Agreed and added --- and, as noted above, doing so revealed an error in the submitted
-version.}
+\textbf{We agree with the insigthful comment, and we have added a parallel-efficiency table, which
+revealed an error in the submitted version.}
 
 The revision contains a new table (Table~3) and a new paragraph (\emph{Strong scaling and
 parallel efficiency}). Both samplers were run on identical instances, so the two curves of
@@ -224,8 +225,8 @@ single-GPU sampler remains the right choice below the crossover.
 
 We report the value at $N=54$ as measured ($E=100.1\%$) together with a one-sentence
 explanation that it lies within the run-to-run variability of these single-run timings and
-should be read as ideal scaling rather than as superlinear speedup, rather than rounding it
-down silently. We also identified, and now document, why the $N=40$ row overstates the
+should be read as ideal scaling rather than as superlinear speedup.
+We also identified, and now document, why the $N=40$ row overstates the
 efficiency: being the first measurement of its sweep, $t_1$ there includes the one-off creation
 of the CUDA context, and drops from $2.74$~s to $2.11$~s when re-measured after a warm-up.
 
@@ -235,9 +236,9 @@ of the CUDA context, and drops from $2.74$~s to $2.11$~s when re-measured after 
 used for verification currently doesn't work. So, this section should contain the updated
 link.}
 
-\textbf{The reviewer is right. The data now travels with the article rather than in a separate
+\textbf{The reviewer is right to point this out. The data is now included with the article rather than in a separate
 repository.} The
-instances, the raw per-run results and the verification tables are included in the article
+instances, the raw per-run results and the verification tables are all located within the article
 repository under \texttt{benchmarks/}:
 
 \begin{center}
@@ -257,12 +258,10 @@ these paths, so Fig.~1 and Table~3 can be regenerated from a single checkout wit
 repository involved. Section~3 of the revision is a guide to that directory, and the manuscript
 now points at this one location consistently.
 
-Regarding the SBM parameters specifically, the answer is now structural rather than a corrected
-hyperlink. The comparison heuristic is a discrete simulated-bifurcation solver that we
-\textbf{distribute with the article} as \texttt{benchmarks/sbm.py}, driven by
-\texttt{benchmarks/verify\_sbm.py}. Verification against a simulated-bifurcation solver was
+Regarding the SBM parameters specifically, we now \textbf{distribute with the article}
+a discrete simulated-bifurcation solver as \texttt{benchmarks/sbm.py}. Verification against a simulated-bifurcation solver was
 part of the submitted manuscript; what this revision adds is that the solver performing it now
-travels with the data, so there is no external script to point at and nothing to go stale.
+is included with the data, so there is no external script to point at and nothing to go stale.
 
 Its configuration is also stated inline in the paragraph \emph{Verification against a
 simulated-bifurcation solver}: \texttt{float64}, $2^{12}=4096$ parallel replicas, $3{,}000$
@@ -317,7 +316,7 @@ driven on a CPU with the partial results a worker would have returned. Table~5 r
 sweep up to $2^{16}$ subproblems, and three things follow.
 
 \begin{enumerate}[leftmargin=*]
-\item \textbf{The direct merge is linear rather than logarithmic}, as the reviewer anticipated
+\item \textbf{The direct merge is linear rather than logarithmic}, and as the reviewer anticipated it
 might become problematic for a controller that collects every partial result: a log--log fit
 gives $O(P^{0.99})$ over four decades.
 \item \textbf{The merge arithmetic is not what would limit it.} At $2^{16}=65{,}536$
@@ -373,7 +372,7 @@ without relying on a favorable two-node timing.
 We also implemented the hierarchical reduction. It is not uniformly better: it overtakes the
 direct merge only from $P=64$ upwards, because below that
 the concatenation is cheap enough that performing it in remote tasks merely adds rounds of
-scheduling. Both strategies ship, and the released sampler selects between them on that
+scheduling. Both strategies are included in the plugin, and the released sampler selects between them on that
 measured threshold.
 
 We have also defined what the reported times measure, which the submitted version did not. For
@@ -381,8 +380,7 @@ the single-GPU sampler the timer brackets the CUDA search itself, excluding host
 of the QUBO matrix and decoding of the returned configurations; for the distributed sampler it
 brackets subproblem dispatch and completion of every subproblem search, excluding the final
 merge, which is now reported separately in the sampler's own metadata. Both exclusions are
-polynomial in $N$ and negligible at the reported sizes, but they matter for the extrapolations,
-and the reader is entitled to know.
+polynomial in $N$ and negligible at the reported sizes, but they matter for the extrapolations.
 
 Finally, the trade-off in $k$ is now explicit: at fixed $N$, incrementing $k$ halves the work
 per subproblem while doubling the number of results to combine, so a break-even point in $k$
@@ -393,8 +391,8 @@ search-versus-controller break-even on a large allocation.
 \point{R2.3}{While I could locate the code metadata table, I couldn't find the corresponding
 software metadata table.}
 
-\textbf{Added.} The revision contains the \emph{Current executable software version} table
-(S1--S7) as Table~2, next to the existing code metadata table. Two entries deserve a comment:
+\textbf{We added requested table.} The revision contains the \emph{Current executable software version} table
+(S1--S7) as Table~2, next to the existing code metadata table.
 
 \begin{itemize}[leftmargin=*]
 \item \textbf{S2}: the PyPI distribution is a source archive only, so the ``executables'' are
@@ -416,7 +414,7 @@ publishing step under R3.7.
 Also, in Section 2, it is stated that this benchmarking sweep is in C2, but I presume this is
 not the case as other areas in the manuscript reference [omni-bench].}
 
-\textbf{The reviewer identified a genuine internal contradiction, and it is fixed.} The
+\textbf{We thank the referee for identifying this error. It is now fixed.} The
 submitted manuscript attributed the benchmark script to C2 in Section~2 while attributing it to
 the article repository in Section~1. Section~2 now reads: the plugin sources and documentation
 are in the plugin repository (C2); the benchmark and plotting scripts are in the article
@@ -428,7 +426,7 @@ accordingly, so no script refers to an external repository any more.
 \texttt{num\_states = 1} by conducting the simulation at the default float64 precision. This
 will help users \dots\ quantify the expected slowdown.}
 
-\textbf{Measured.} Repeating the ground-state search at
+\textbf{We measured the requested quantity.} Repeating the ground-state search at
 $N=40,\dots,46$ in both precisions on one H100 gives, after excluding the $N=40$ warm-up
 outlier, a \texttt{float64} penalty of only $2.0$--$2.3\%$ (ratios of $1.02$ at
 $N=42,44,46$), with both precisions returning the same configuration at every size. The enumeration is bound by memory traffic and integer
@@ -437,8 +435,8 @@ working-set size rather than speed. We have corrected the manuscript accordingly
 \emph{Architecture} paragraph previously justified \texttt{float32} as maximizing throughput,
 which is not true here.
 
-Three defects had to be fixed before the experiment gave trustworthy numbers, and each changed
-what a user gets. The SPIN$\,\to\,$BINARY recursion in the distributed sampler dropped the
+We have also fixed three defects that affected the precision analysis. 
+The SPIN$\,\to\,$BINARY recursion in the distributed sampler dropped the
 requested \texttt{dtype}, so SPIN inputs always ran in single precision; the command line's
 \texttt{--dtype} never worked at all, because NumPy resolves both \texttt{"float"} and
 \texttt{"double"} to \texttt{float64} --- so from the command line \emph{both} choices ran in
@@ -465,7 +463,7 @@ stabilization to the (currently unstabilized) double-precision path is listed as
 results. It would be helpful to briefly reintroduce Omnisolver and its key parameters in the
 introduction.}
 
-\textbf{Both points addressed.} $N$ is now defined at its first substantive use in the
+\textbf{We have addressed both points mentioned by the referee.} $N$ is now defined at its first substantive use in the
 abstract, again in the second paragraph of Section~1, and once more in the caption of Fig.~1,
 as the number of binary variables of an instance (equivalently, the number of Ising spins), so
 that exhaustive search enumerates all $2^{N}$ configurations.
@@ -484,8 +482,8 @@ Therefore, statements such as ``this update introduces omnisolver-bruteforce'' \
 misleading. The paper should clearly state what is actually introduced by the software update
 described here.}
 
-\textbf{The reviewer is correct, and on checking we found the problem to be broader than
-stated.} The original publication not only lists the plugin and notes that it can be
+\textbf{The reviewer is correct, and we have performed a deeper and more careful revision of the contribution claim.}
+ The original publication not only lists the plugin and notes that it can be
 GPU-accelerated; it also reports a benchmark of the GPU sampler on $1$, $2$, $4$ and $8$ NVIDIA
 A100 GPUs, and describes the plugin as usable up to about $50$ variables. Our submitted
 manuscript therefore claimed \emph{two} things as new that were not: ``first-class Omnisolver
@@ -537,12 +535,12 @@ $2\times2$ against $1\times4$ --- changes
 the wall-clock time by $-0.03\%$ and $-0.12\%$ respectively; the two-node configuration is
 slightly faster in these runs, but the differences are below the experiment's resolution.
 
-We should report how we arrived at that, because our first attempt said otherwise. A first pass
-of the series gave $+1.47\%$ and $+1.12\%$, which we were prepared to present as a small but
+We should report how we arrived at that conclusion, because our first attempt indicated otherwise. A first pass
+of the series gave $+1.47\%$ and $+1.12\%$, which we were going to present as a small but
 real boundary cost. Repeating the entire series on a different day showed that single-node
 configurations reproduce to within $0.08\%$ across both sweeps ($0.02\%$ in the strong-scaling
 half), while two-node ones move by up to $1.5\%$ --- and
-that the first pass had simply caught the two-node points on a slower day. The correct statement
+that the first pass had been an artifact. The correct statement
 is therefore that a single node boundary changes full-solver wall-clock time by less than we
 can resolve, with an upper bound of about $1.5\%$ set by the reproducibility of two-node
 timings rather than by any systematic effect. This is consistent with the absence of
@@ -554,7 +552,7 @@ retained in the article repository history at commit \texttt{d965e54}.
 \emph{More than two nodes} is the one question our hardware cannot settle: two nodes with four
 H100s each, connected by standard Ethernet, is the entire cluster available to us. Rather than
 leave that implicit, item~(v) of \emph{Limitations and intended scope} states it, and extending
-the study past two node boundaries is now item~(ii) of the conclusions rather than a silence:
+the study past two node boundaries is now item~(ii) of the conclusions rather than a silent omission:
 one boundary changes full-solver wall-clock time by less than we can resolve, but a return-path
 effect or an effect below our $1.5\%$ bound could still compound over many of them.
 
@@ -565,8 +563,7 @@ hypothetical bound far beyond the hardware available for this study.
 \point{R3.4}{QUBO instances are not evaluated in the paper, even though they are an important
 target use case for the framework.}
 
-\textbf{The measured path is in fact the QUBO path, and it is now demonstrated rather than
-argued.} Both samplers convert a SPIN model to its BINARY equivalent, solve it as a QUBO on the
+\textbf{The measured path is in fact the QUBO path, which we have stressed in the updated manuscript.} Both samplers convert a SPIN model to its BINARY equivalent, solve it as a QUBO on the
 GPU, and convert the result back, so the timings in Fig.~1 are QUBO timings; the only
 Ising-specific cost is an $O(N^{2})$ host-side transformation performed outside the measured
 region. Loading the same coefficient files once with each variable type and solving both, the
@@ -577,7 +574,7 @@ variable types --- but the runtimes do not.
 \point{R3.5}{The paper should also specify which version of the CUDA Toolkit was used. \dots\
 Which versions of the CUDA Toolkit are supported?}
 
-\textbf{Added, in both senses the question has.} The reported measurements were obtained with
+\textbf{We have added requested information.} The reported measurements were obtained with
 \textbf{CUDA Toolkit 12.4}. The revision-experiment drivers record the toolchain, driver, GPU
 and package descriptors with their outputs; the original Figure~1 files predate that metadata
 field. As for which versions are \emph{supported}: the plugin is built and tested in
@@ -607,7 +604,7 @@ than a fact.
 \point{R3.7}{The documentation linked in C7 is currently almost empty, contains several 404
 errors, and is of little practical use in its current state.}
 
-\textbf{We agree, and the documentation has been rewritten.} The former single page was a copy
+\textbf{We agree with the reviewer, and have rewritten the documentation.} The former single page was a copy
 of the \emph{framework's} landing page, describing Omnisolver in general and installing a
 different plugin in its quickstart. The
 plugin now has its own front page and a user guide covering installation, single- and
@@ -633,13 +630,13 @@ config does not remove the site.
 \point{R3.8}{There are still a few minor typographical and grammatical errors throughout the
 manuscript. A careful proofreading would help eliminate them.}
 
-\textbf{Done.} The manuscript has been proofread in full. Specific corrections include the
+\textbf{We have proofread the manuscript to the best of our abilities.} Specific corrections include the
 broken apposition in ``certified reference, i.e.\ lowest-energy, solutions''; ``while one
 device has both the memory budget and a wall-clock time within reason''; ``compute'' used as a
 noun; the colloquial ``is clean already at $N=40$''; a stray line break and spacing before the
 description of the simulated-bifurcation solver; the typography of ``H100\,/\,96\,GB''; the
 inconsistent capitalization of ``Parallel Tempering''; and the double colon in the title
-(addressed with R3.2). Spelling has been made consistently American throughout.
+(addressed with R3.2). Spelling has been made consistently American english throughout.
 
 \section*{Summary of changes to the manuscript}
 
@@ -647,7 +644,7 @@ inconsistent capitalization of ``Parallel Tempering''; and the double colon in t
 \small
 \begin{tabular}{p{11.2cm}p{3.6cm}}
 \toprule
-\textbf{Change} & \textbf{Driven by} \\
+\textbf{Change} & \textbf{Motivated by} \\
 \midrule
 New title; abstract rewritten & R3.2 \\
 New paragraph \emph{Relation to the original publication and to the predecessor solver} & R3.2 \\
@@ -693,7 +690,7 @@ Full proofread & R3.8 \\
 \small
 \begin{tabular}{p{11.2cm}p{3.6cm}}
 \toprule
-\textbf{Change} & \textbf{Driven by} \\
+\textbf{Change} & \textbf{Motivated by} \\
 \midrule
 Apache-2.0 \texttt{LICENSE} and package license metadata & R3.6 \\
 Plugin documentation rewritten (front page, user guide, reference manual) and published from CI & R3.7 \\
