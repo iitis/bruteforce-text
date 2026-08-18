@@ -1,7 +1,7 @@
 \documentclass[preprint,12pt,a4paper]{elsarticle}
 %DIF LATEXDIFF DIFFERENCE FILE
 %DIF DEL ../v_1/bruteforce.tex   Sat Aug  1 21:39:39 2026
-%DIF ADD bruteforce.tex          Tue Aug 18 22:31:44 2026
+%DIF ADD bruteforce.tex          Tue Aug 18 22:50:42 2026
 
 \usepackage{amssymb}
 \usepackage{float}
@@ -173,12 +173,10 @@ DOI: \url{https://doi.org/10.1016/j.softx.2023.101559}.
 \section*{Metadata}
 \label{metadata}
 
-%DIF >  TODO(authors): C1/C2 -- the repository at tag 0.0.5 still contains no LICENSE
-%DIF >  file (GitHub license endpoint returns 404, pyproject.toml declares no license,
-%DIF >  PyPI shows no license classifier), so C3 below is not yet backed by the code.
-%DIF >  Reviewer 3 checked this.  Add LICENSE (Apache-2.0), the license field and
-%DIF >  classifier in pyproject.toml, `include LICENSE` in MANIFEST.in and per-file
-%DIF >  license headers, cut release 0.0.6 and bump C1/C2/S1/S2 accordingly.
+%DIF >  TODO(authors): verify before submission that release 0.0.6 (referenced in
+%DIF >  C1/C2/S1/S2 below) is tagged and on PyPI: it must contain the LICENSE file,
+%DIF >  the pyproject license metadata and the SPDX headers backing C3/S3, all of
+%DIF >  which are merged from lp/add-docs and lp/better-merge.
 %DIF >  TODO(authors): C7 -- the linked documentation redirects to version 0.0.3, has
 %DIF >  no content about this plugin and contains dead links; the plugin's own
 %DIF >  mkdocs.yml references docs/userguide.md and docs/plugins.md, which do not
@@ -190,10 +188,11 @@ DOI: \url{https://doi.org/10.1016/j.softx.2023.101559}.
 \hline
 \textbf{Nr.} & \textbf{Code metadata description} & \textbf{Value} \\
 \hline
-C1 & Current code version & 0.0.5 \\
+C1 & Current code version & 0.0\DIFdelbeginFL \DIFdelFL{.5 }\DIFdelendFL \DIFaddbeginFL \DIFaddFL{.6 }\DIFaddendFL \\
 \hline
 C2 & Permanent link to code/repository used for this code version &
-\url{https://github.com/euro-hpc-pl/omnisolver-bruteforce/releases/tag/0.0.5} \\
+\DIFdelbeginFL %DIFDELCMD < \url{https://github.com/euro-hpc-pl/omnisolver-bruteforce/releases/tag/0.0.5} %%%
+\DIFdelendFL \DIFaddbeginFL \url{https://github.com/euro-hpc-pl/omnisolver-bruteforce/releases/tag/0.0.6} \DIFaddendFL \\
 \hline
 C3 & Legal Code License & Apache License 2.0 \\
 \hline
@@ -229,10 +228,10 @@ C8 & Support email for questions & \verb|lpawela@iitis.pl| \\
 \textbf{\DIFaddFL{Nr.}} & \textbf{\DIFaddFL{(Executable) software metadata description}} &
 \textbf{\DIFaddFL{Value}} \\
 \hline
-\DIFaddFL{S1 }& \DIFaddFL{Current software version }& \DIFaddFL{0.0.5 }\\
+\DIFaddFL{S1 }& \DIFaddFL{Current software version }& \DIFaddFL{0.0.6 }\\
 \hline
 \DIFaddFL{S2 }& \DIFaddFL{Permanent link to executables of this version }&
-\url{https://pypi.org/project/omnisolver-bruteforce/0.0.5/}\DIFaddFL{; the distribution is
+\url{https://pypi.org/project/omnisolver-bruteforce/0.0.6/}\DIFaddFL{; the distribution is
 a source archive, so the CUDA extension is compiled at installation time against
 the CUDA Toolkit available on the target machine }\\
 \hline
@@ -386,7 +385,7 @@ dependable certification backend, as detailed next}\DIFaddend .
     \item \textbf{\DIFdelbegin \DIFdel{First-class Omnisolver plugin}\DIFdelend \DIFaddbegin \DIFadd{Released, API-stable distributed sampler}\DIFaddend }: the \DIFdelbegin \DIFdel{brute-force kernel is available through Omnisolver's plugin mechanism with a uniform Python and
     CLI interface, returning }\DIFdelend \DIFaddbegin \DIFadd{multi-GPU code
     path is now a documented, versioned public class
-    (}\texttt{\DIFadd{DistributedBruteforceGPUSampler}}\DIFadd{, tagged }\texttt{\DIFadd{0.0.5}} \DIFadd{and
+    (}\texttt{\DIFadd{DistributedBruteforceGPUSampler}}\DIFadd{, tagged }\texttt{\DIFadd{0.0.6}} \DIFadd{and
     published on PyPI) rather than the unreleased code behind the preliminary
     benchmark of~\mbox{%DIFAUXCMD
 \cite{jalowiecki2021omnisolver}}\hskip0pt%DIFAUXCMD
@@ -850,7 +849,8 @@ place. We run it in }\texttt{\DIFadd{float64}} \DIFadd{with $R=2^{12}=4096$ para
 integration steps \DIFdelbegin \DIFdel{, reporting
 }\DIFdelend \DIFaddbegin \DIFadd{and seed 42. A probe selects one global time step from
 $\{0.25,0.5,0.75,1.0,1.25\}$, and the coupling scale is
-$c_0=0.5/(\sqrt{N}\,\mathrm{std}(J))$; we report }\DIFaddend the lowest-energy \DIFdelbegin \DIFdel{sample. The recomputed energies of the brute-force and SBM solutions agree to within $6\times 10^{-6}$, and the returned spin
+$c_0=0.5/(\sqrt{N}\,\mathrm{std}(J))$; we report }\DIFaddend the lowest-energy \DIFdelbegin \DIFdel{sample.
+The recomputed energies of the brute-force and SBM solutions agree to within $6\times 10^{-6}$, and the returned spin
 configurations are }\DIFdelend \DIFaddbegin \DIFadd{replica. At $N=60$ this
 takes well under a minute on a CPU.
 }
