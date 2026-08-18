@@ -816,6 +816,19 @@ of both solvers. The deterministic generator, the instances and the raw records 
 article, and the heuristic side of the comparison is re-checkable without a GPU against the
 analytic optimum (Sec.~\ref{sec:reproduction}).
 
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.85\textwidth]{wishart.pdf}
+\caption{Fraction of Wishart planted instances on which a single run of the shipped dSB
+    heuristic, under the budgets of Table~\ref{tab:multisolver}, reaches the certified
+    optimum, as a function of the ruggedness parameter $\alpha=M/N$ at $N=40$. Twenty
+    instances per $\alpha$, one run each; error bars are $95\%$ Wilson intervals for the
+    per-instance success probability, and each point is annotated with its count.
+    Exhaustive certification costs $\approx\!2$\,s per instance throughout, and every
+    certificate matches the analytic $E_0$ of its instance.}
+\label{fig:wishart}
+\end{figure}
+
 \paragraph{QUBO path and exact-solver checks}
 The QUBO and Ising interfaces use the same computational path: both samplers convert a SPIN
 model to its BINARY equivalent, solve it as a QUBO and convert the result back, so the reported
