@@ -5,15 +5,20 @@ dSB run under the documented budgets reached the certified optimum, with a 95% W
 interval for the per-instance success probability. The style follows plot_distributed.py,
 and the figure is written next to the manuscript as wishart.pdf.
 
+By default the figure shows the unplanted ensemble alone whenever the record contains it:
+that is the manuscript figure, since the planted arm tracks it point for point and exists in
+the record as the analytic anchor of the certificates. Pass ``--ensembles planted unplanted``
+to draw the overlay comparison instead.
+
 Usage::
 
-    python benchmarks/plot_wishart.py                  # newest results/wishart/*.json
-    python benchmarks/plot_wishart.py path/to/run.json
+    python benchmarks/plot_wishart.py                             # manuscript figure
+    python benchmarks/plot_wishart.py --ensembles planted unplanted path/to/run.json
 """
 
+import argparse
 import json
 import math
-import sys
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -44,8 +49,19 @@ def wilson(successes: int, total: int, z: float = 1.959964):
 
 
 def main():
-    if len(sys.argv) > 1:
-        record_path = Path(sys.argv[1])
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("record", nargs="?", type=Path, default=None)
+    parser.add_argument(
+        "--ensembles",
+        nargs="+",
+        choices=["planted", "unplanted"],
+        default=None,
+        help="series to draw (default: unplanted alone if the record has it, else all)",
+    )
+    args = parser.parse_args()
+
+    if args.record is not None:
+        record_path = args.record
     else:
         candidates = sorted(RESULTS.glob("*.json"))
         if not candidates:
@@ -54,7 +70,13 @@ def main():
     with open(record_path) as fd:
         record = json.load(fd)
 
-    ensembles = record.get("ensembles", ["planted"])
+    available = record.get("ensembles", ["planted"])
+    if args.ensembles is not None:
+        ensembles = [e for e in args.ensembles if e in available]
+    elif "unplanted" in available:
+        ensembles = ["unplanted"]
+    else:
+        ensembles = available
     alphas = record["alphas"]
 
     plt.rcParams.update({
@@ -84,6 +106,9 @@ def main():
             labels.append(f"{reached}/{len(rows)}")
             print(f"{ensemble:9s} alpha {alpha:g}: {reached}/{len(rows)} reached, "
                   f"95% Wilson [{low:.3f}, {high:.3f}]")
+        style = (
+            STYLES["planted"] if len(ensembles) == 1 else STYLES[ensemble]
+        )  # a single series wears the house primary regardless of which ensemble it is
         ax.errorbar(
             xs,
             fractions,
@@ -93,7 +118,7 @@ def main():
             linewidth=1.5,
             markersize=6,
             label=ensemble,
-            **STYLES[ensemble],
+            **style,
         )
         if ensemble == ensembles[0]:
             for x, y, text in zip(xs, fractions, labels):
