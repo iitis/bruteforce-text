@@ -61,7 +61,7 @@ Individually, cheapest first:
 ./benchmarks/scripts/run_verification.sh          # brute force vs CPU heuristic    ~10 min, no GPU
 ./benchmarks/scripts/run_e8_multi_solver.sh       # dSB + SA over 20 instances       ~8 min, no GPU
 ./benchmarks/scripts/run_e6_instance_families.sh  # E6 families vs certified optima ~18 min, 1 GPU
-./benchmarks/scripts/run_e9_wishart.sh            # E9 Wishart: heuristic fails      ~6 min, 1 GPU
+./benchmarks/scripts/run_e9_wishart.sh            # E9 Wishart: heuristic fails     ~40 min, 1 GPU
 ./benchmarks/scripts/run_e3_controller_cost.sh    # E3 controller cost to 2^16      ~30 min, no GPU
 ./benchmarks/scripts/run_e7_boundary_cost.sh      # E7 end-to-end node-boundary cost  ~5 min, 2 nodes
 ./benchmarks/scripts/run_e4_precision.sh          # E4 float32 vs float64            ~6 min, 1 GPU
@@ -335,7 +335,8 @@ automatic time-step selection. Scoring is on energy; the zero field makes ±plan
 degenerate, so Hamming distances are informational. Each invocation writes a timestamped,
 non-overwriting record under `results/wishart/`. With `--skip-bruteforce` the heuristic is
 scored against the analytic `E_0`, so the family-level conclusion can be re-checked without
-any GPU.
+any GPU. `plot_wishart.py` renders the success-fraction-versus-alpha figure from the newest
+record (or a given one) into the manuscript directory.
 
 ## Verification against the heuristic
 

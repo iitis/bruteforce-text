@@ -63,7 +63,7 @@ if [ "${CPU_ONLY}" -eq 0 ]; then
     # Short GPU experiments next: each answers one reviewer point in well under an hour.
     stage e7 "${SCRIPTS_DIR}/run_e7_boundary_cost.sh"       # ~5 min, 2 nodes
     stage e6 "${SCRIPTS_DIR}/run_e6_instance_families.sh"   # ~18 min
-    stage e9 "${SCRIPTS_DIR}/run_e9_wishart.sh"             # ~6 min
+    stage e9 "${SCRIPTS_DIR}/run_e9_wishart.sh"             # ~40 min
     stage e4 "${SCRIPTS_DIR}/run_e4_precision.sh"           # ~30 min
     stage e5 "${SCRIPTS_DIR}/run_e5_qubo.sh"                # ~1.6 h
     # The scaling series restart the cluster once per topology and are the expensive ones.
