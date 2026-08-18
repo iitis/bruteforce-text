@@ -328,15 +328,21 @@ is tuned by `alpha = M/N`; small alpha defeats the dSB heuristic at N = 40, a si
 brute-force sampler certifies in seconds. Every instance carries a closed-form ground-state
 energy `E_0 = -tr(W W^T)/(2N)`, attained by the planted state, so each brute-force certificate
 is checked against an analytic value that is independent of both solvers, and an energy below
-it halts the run. Instances are deterministic in `(seed, size, alpha, replica)`
-(`gen_wishart.py`), written once and re-derived rather than rewritten on later runs. dSB uses
-the same budgets as E6/E8: 4096 replicas, 3000 integration steps, seed 42, float64 dynamics,
-automatic time-step selection. Scoring is on energy; the zero field makes ±planted exactly
-degenerate, so Hamming distances are informational. Each invocation writes a timestamped,
-non-overwriting record under `results/wishart/`. With `--skip-bruteforce` the heuristic is
-scored against the analytic `E_0`, so the family-level conclusion can be re-checked without
-any GPU. `plot_wishart.py` renders the success-fraction-versus-alpha figure from the newest
-record (or a given one) into the manuscript directory.
+it halts the run. The experiment runs two paired arms: *planted* (closed-form `E_0`, attained
+by the planted state) and *unplanted* (the projection is skipped, so the optimum is unknown a
+priori and exhaustive search is the only source of truth; `-tr(W W^T)/(2N)` survives as a
+strict lower bound that every certificate must clear). The two arms share their random draws
+per `(alpha, replica)`, so removing the planting is the only difference. Instances are
+deterministic in `(seed, size, alpha, replica)` (`gen_wishart.py`), written once and
+re-derived rather than rewritten on later runs. dSB uses the same budgets as E6/E8: 4096
+replicas, 3000 integration steps, seed 42, float64 dynamics, automatic time-step selection.
+Scoring is on energy; the zero field makes the Z2 mirror exactly degenerate, so Hamming
+distances are informational. Each invocation writes a timestamped, non-overwriting record
+under `results/wishart/`. With `--ensembles planted --skip-bruteforce` the planted arm is
+scored against the analytic `E_0`, so its family-level conclusion can be re-checked without
+any GPU (the unplanted arm has no GPU-free score by construction). `plot_wishart.py` renders
+the success-fraction-versus-alpha figure, one series per ensemble, from the newest record (or
+a given one) into the manuscript directory.
 
 ## Verification against the heuristic
 

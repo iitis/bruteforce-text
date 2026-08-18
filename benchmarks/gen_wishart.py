@@ -58,11 +58,14 @@ def alpha_tag(alpha: float) -> str:
 
 
 def instance_path(
-    num_variables: int, alpha: float, replica: int, instances_dir=None
+    num_variables: int, alpha: float, replica: int, instances_dir=None, plant: bool = True
 ) -> Path:
-    directory = (
-        Path(instances_dir) if instances_dir is not None else common.INSTANCES_DIR / FAMILY
-    )
+    if instances_dir is not None:
+        directory = Path(instances_dir)
+        if not plant:
+            directory = directory / "unplanted"
+    else:
+        directory = common.INSTANCES_DIR / (FAMILY if plant else f"{FAMILY}_unplanted")
     return directory / f"N{num_variables}_a{alpha_tag(alpha)}_r{replica}.txt"
 
 
@@ -71,6 +74,7 @@ def build(
     alpha: float,
     replica: int = 0,
     seed: int = common.DEFAULT_SEED,
+    plant: bool = True,
 ):
     """Couplings, planted state and metadata of one deterministic instance.
 
@@ -78,9 +82,17 @@ def build(
     :func:`bench_common.generate_instance`, so the content of an instance does not depend on
     which other sizes or alphas happen to be generated alongside it.
 
+    With ``plant=False`` the orthogonal projection is skipped: ``W`` stays iid Gaussian, no
+    configuration is exactly orthogonal to every column, and the ground state is unknown a
+    priori --- ``-tr(W W^T)/(2N)`` remains a strict lower bound that only exhaustive search
+    can close. The random draws (``t`` and ``G``) are shared with the planted instance of the
+    same ``(seed, size, alpha, replica)``, so the two ensembles are paired: they differ only
+    in the projection.
+
     :returns: ``(couplings, planted, meta)`` where ``couplings`` is strictly upper
-        triangular, ``planted`` is the planted configuration in {-1,+1}^N and ``meta`` holds
-        the analytic ground-state energy and the ensemble parameters.
+        triangular, ``planted`` is the drawn reference configuration in {-1,+1}^N (the global
+        optimum only when ``plant=True``) and ``meta`` holds the analytic values and the
+        ensemble parameters.
     """
     entropy = [
         seed,
@@ -94,28 +106,37 @@ def build(
 
     planted = rng.choice([-1.0, 1.0], size=num_variables)
     gaussian = rng.standard_normal((num_variables, num_vectors))
-    projected = gaussian - np.outer(planted, planted @ gaussian) / num_variables
-    wishart = projected @ projected.T
+    if plant:
+        vectors = gaussian - np.outer(planted, planted @ gaussian) / num_variables
+    else:
+        vectors = gaussian
+    wishart = vectors @ vectors.T
     couplings = np.triu(wishart / num_variables, k=1)
 
-    analytic_gs_energy = -float(np.trace(wishart)) / (2.0 * num_variables)
-    planted_energy = float(planted @ couplings @ planted)
-    if abs(planted_energy - analytic_gs_energy) > 1e-9 * max(1.0, abs(analytic_gs_energy)):
-        raise AssertionError(
-            f"planted state does not attain the analytic optimum: "
-            f"{planted_energy!r} vs {analytic_gs_energy!r}"
-        )
+    energy_lower_bound = -float(np.trace(wishart)) / (2.0 * num_variables)
+    if plant:
+        planted_energy = float(planted @ couplings @ planted)
+        if abs(planted_energy - energy_lower_bound) > 1e-9 * max(
+            1.0, abs(energy_lower_bound)
+        ):
+            raise AssertionError(
+                f"planted state does not attain the analytic optimum: "
+                f"{planted_energy!r} vs {energy_lower_bound!r}"
+            )
 
     meta = {
-        "family": FAMILY,
+        "family": FAMILY if plant else f"{FAMILY}_unplanted",
         "num_variables": num_variables,
         "alpha": alpha,
         "num_vectors": num_vectors,
         "replica": replica,
         "seed": seed,
-        "analytic_gs_energy": analytic_gs_energy,
-        "energy_lower_bound": analytic_gs_energy,
-        "planted_state": "".join("1" if v > 0 else "0" for v in planted),
+        "planted": plant,
+        "analytic_gs_energy": energy_lower_bound if plant else None,
+        "energy_lower_bound": energy_lower_bound,
+        "planted_state": (
+            "".join("1" if v > 0 else "0" for v in planted) if plant else None
+        ),
     }
     return couplings, planted, meta
 
@@ -157,6 +178,7 @@ def generate_instance(
     replica: int = 0,
     seed: int = common.DEFAULT_SEED,
     instances_dir=None,
+    plant: bool = True,
 ):
     """Write one instance file unless it exists, and return ``(path, meta)``.
 
@@ -168,8 +190,8 @@ def generate_instance(
     discrepancy beyond floating-point noise (wrong seed, edited file, or a changed NumPy
     random stream) is an error.
     """
-    derived, planted, meta = build(num_variables, alpha, replica, seed)
-    path = instance_path(num_variables, alpha, replica, instances_dir)
+    derived, planted, meta = build(num_variables, alpha, replica, seed, plant)
+    path = instance_path(num_variables, alpha, replica, instances_dir, plant)
     if path.is_file():
         stored = _parse_instance(path, num_variables)
         if not np.allclose(stored, derived, rtol=1e-9, atol=1e-12):
@@ -180,15 +202,19 @@ def generate_instance(
                 "a different --seed, an edited file, or a changed NumPy random stream. "
                 "Refusing to proceed with inconsistent inputs."
             )
-        planted_energy = float(planted @ stored @ planted)
-        if abs(planted_energy - meta["analytic_gs_energy"]) > 1e-9 * max(
-            1.0, abs(meta["analytic_gs_energy"])
-        ):
-            raise RuntimeError(
-                f"planted state does not attain the analytic optimum on the stored "
-                f"couplings of {path}: {planted_energy!r} vs {meta['analytic_gs_energy']!r}"
+        if plant:
+            planted_energy = float(planted @ stored @ planted)
+            if abs(planted_energy - meta["analytic_gs_energy"]) > 1e-9 * max(
+                1.0, abs(meta["analytic_gs_energy"])
+            ):
+                raise RuntimeError(
+                    f"planted state does not attain the analytic optimum on the stored "
+                    f"couplings of {path}: {planted_energy!r} vs "
+                    f"{meta['analytic_gs_energy']!r}"
+                )
+            meta = dict(
+                meta, analytic_gs_energy=planted_energy, energy_lower_bound=planted_energy
             )
-        meta = dict(meta, analytic_gs_energy=planted_energy, energy_lower_bound=planted_energy)
         return path, meta
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(_format_instance(derived))
@@ -207,19 +233,29 @@ def main() -> int:
         default=None,
         help="override the output directory (default: benchmarks/instances/wishart)",
     )
+    parser.add_argument(
+        "--no-plant",
+        action="store_true",
+        help="skip the orthogonal projection: the ground state is then unknown a priori "
+        "and -tr(W W^T)/(2N) is only a strict lower bound that exhaustive search closes",
+    )
     args = parser.parse_args()
 
+    plant = not args.no_plant
     for alpha in args.alphas:
         energies = []
         for replica in range(args.replicas):
             path, meta = generate_instance(
-                args.size, alpha, replica, args.seed, args.instances_dir
+                args.size, alpha, replica, args.seed, args.instances_dir, plant
             )
-            energies.append(meta["analytic_gs_energy"])
-            print(f"{path}  E_0 = {meta['analytic_gs_energy']:.12f}")
+            reference = meta["analytic_gs_energy"] if plant else meta["energy_lower_bound"]
+            energies.append(reference)
+            label = "E_0" if plant else "lower bound"
+            print(f"{path}  {label} = {reference:.12f}")
         print(
             f"alpha={alpha:g}: {args.replicas} instance(s), N={args.size}, "
-            f"M={meta['num_vectors']}, analytic E_0 in "
+            f"M={meta['num_vectors']}, "
+            f"{'analytic E_0' if plant else 'energy lower bound'} in "
             f"[{min(energies):.4f}, {max(energies):.4f}]"
         )
     return 0
