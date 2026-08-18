@@ -173,18 +173,22 @@ timings and instance hashes are in
 \texttt{benchmarks/exp\_multi\_solver.py}.
 
 The revision also adds the case manifestly different from the previous four families: a family
-on which the heuristic \emph{fails}. On the Wishart planted ensemble (Hamze et al., Phys.\ Rev.\ E
-\textbf{101}, 052102 (2020)), whose ground-state energy is known analytically per instance,
-the same dSB budgets undergo a sharp transition in the ruggedness parameter (new Fig.~2,
-twenty instances per $\alpha$ at $N=40$): every instance is solved at $\alpha\geq0.45$ and
-$18/20$ at $\alpha=0.4$, but only $3/20$, $1/20$ and $0/20$ at $\alpha=0.3$, $0.25$ and
-$0.2$, with missed runs terminating $0.14$--$1.8\%$ above the optimum on wrong near-optimal
-configurations. Every one of the $140$ brute-force certificates matches the analytic value to
-$4\times10^{-15}$, checking the whole pipeline against a reference independent of both
-solvers. This is the plugin's intended role made
-concrete (new paragraph \emph{A planted family where certification is decisive}; driver
-\texttt{benchmarks/exp\_wishart.py}, launcher \texttt{run\_e9\_wishart.sh}; the heuristic side
-is re-checkable without a GPU against the analytic optimum).
+on which the heuristic \emph{fails}. On the Wishart ensemble (Hamze et al., Phys.\ Rev.\ E
+\textbf{101}, 052102 (2020)) we run two paired arms: \emph{unplanted} instances, whose
+optimum is unknown a priori and is certified only by enumeration, and \emph{planted} ones,
+whose closed-form $E_0$ anchors the certificates. On the unplanted arm the same dSB budgets
+undergo a sharp transition in the ruggedness parameter (new Fig.~2, twenty instances per
+$\alpha$ at $N=40$): every instance is solved at $\alpha\geq0.45$ and $15/20$ at
+$\alpha=0.4$, but only $3/20$, $1/20$ and $0/20$ at $\alpha=0.3$, $0.25$ and $0.2$, with
+missed runs terminating up to $0.6\%$ above optima known only because brute force found
+them. The paired planted arm gives statistically indistinguishable counts, so the difficulty
+is not a planting artifact; all $140$ planted certificates match the analytic $E_0$ to
+$7\times10^{-15}$ and all $140$ unplanted certificates lie strictly above the analytic lower
+bound, checking the whole pipeline against references independent of both solvers. This is
+the plugin's intended role made concrete (new paragraph \emph{A rugged family where
+certification is decisive}; driver \texttt{benchmarks/exp\_wishart.py}, launcher
+\texttt{run\_e9\_wishart.sh}; the planted arm is re-checkable without a GPU against the
+analytic optimum).
 
 For implementation correctness we retain the comparison with \texttt{dimod.ExactSolver} at
 CPU-enumerable sizes and independent \texttt{float64} recomputation at benchmark scale. These
@@ -662,8 +666,8 @@ End-to-end boundary-cost driver and two-node production result added, comparing 
 payload/discard task returns under local, remote and mixed placement & R2.2, R3.3 \\
 New paragraph on the cost and effect of double precision & R2.5 \\
 Targeted dSB/SA comparison across four families reported, with certified gaps and timings & R1.2 \\
-New paragraph \emph{A planted family where certification is decisive} and new Fig.~2 ---
-Wishart ensemble with analytic optima; the heuristic misses at small $\alpha$ & R1.2 \\
+New paragraph \emph{A rugged family where certification is decisive} and new Fig.~2 ---
+paired planted/unplanted Wishart arms; the heuristic misses at small $\alpha$ & R1.2 \\
 COO reader replaced by an exact parser; the known offset in three stored records documented & own re-check via R2.5 \\
 Measured BINARY/SPIN runtime ratio & R3.4 \\
 New paragraph defining what the reported wall-clock times include and exclude & R2.2 \\

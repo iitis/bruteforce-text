@@ -94,10 +94,11 @@ computational load. In a
 separate twenty-instance,
 four-family comparison, both discrete simulated bifurcation and simulated annealing recover
 the same exhaustive-search minimum in every case under their stated method-specific budgets.
-On a planted Wishart family with tunable ruggedness, by contrast, the same
-simulated-bifurcation heuristic misses the certified optimum on $39$ of $40$ instances in the
-two most rugged settings while certification takes seconds per instance and matches the
-analytic planted optimum to $4\times10^{-15}$ --- the regime a certifying backend exists for.
+On unplanted Wishart instances with tunable ruggedness --- whose optima are known only
+through enumeration --- the same simulated-bifurcation heuristic misses the certified
+optimum on $39$ of $40$ instances in the two most rugged settings while certification takes
+seconds per instance; a paired planted arm confirms every certificate against a closed-form
+optimum to $7\times10^{-15}$ --- the regime a certifying backend exists for.
 \end{abstract}
 
 \begin{keyword}
@@ -793,38 +794,51 @@ seeds, timings, gaps and instance hashes are stored in
 \label{tab:multisolver}
 \end{table}
 
-\paragraph{A planted family where certification is decisive}
+\paragraph{A rugged family where certification is decisive}
 The four families above show the heuristics succeeding; they do not show why a certifying
-backend is needed. The complement is the Wishart planted ensemble~\cite{hamze2020wishart}, a
-fully connected zero-field family with tunable ruggedness: a planted state $t$ is drawn, $M
-\approx \alpha N$ Gaussian columns are projected orthogonal to it and collected in $W$, and
-the couplings are $J_{ij}=(WW^{\mathsf{T}})_{ij}/N$. The construction makes the ground-state
-energy known analytically, $E_0=-\mathrm{tr}(WW^{\mathsf{T}})/(2N)$, attained exactly by
-$\pm t$, and the ratio $\alpha=M/N$ tunes the depth of the first-order barrier in the energy
-landscape; small $\alpha$ is the rugged regime. On twenty instances per
-$\alpha\in\{0.20,0.25,\dots,0.50\}$ at $N=40$, the dSB solver under the same budgets as above
-undergoes a sharp transition (Fig.~\ref{fig:wishart}): it recovers the certified optimum on
-every instance at $\alpha\geq0.45$ and on $18/20$ at $\alpha=0.4$, but on only $3/20$, $1/20$
-and $0/20$ at $\alpha=0.3$, $0.25$ and $0.2$, terminating $0.14$--$1.8\%$ above the optimum
---- on wrong, near-optimal configurations that nothing short of a certified reference exposes.
-The brute-force sampler certifies each instance in $\approx\!2$\,s on one H100, at this size
-less than a single $7$--$9$\,s dSB run; it returns the planted configuration on all $140$
-instances, and its \texttt{float64}-recomputed certificate matches the analytic $E_0$ to
-$4\times10^{-15}$ on every one, which checks the whole pipeline, from the instance files to
-the kernel, against a value independent of both solvers. The deterministic generator, the instances and the raw records ship with the
-article, and the heuristic side of the comparison is re-checkable without a GPU against the
-analytic optimum (Sec.~\ref{sec:reproduction}).
+backend is needed. The complement is the Wishart ensemble~\cite{hamze2020wishart}, a fully
+connected zero-field family with tunable ruggedness, which we use in two paired arms sharing
+their random draws. In the \emph{planted} arm, $M \approx \alpha N$ Gaussian columns are
+projected orthogonal to a drawn state $t$ and collected in $W$, with couplings
+$J_{ij}=(WW^{\mathsf{T}})_{ij}/N$; the ground-state energy is then known analytically,
+$E_0=-\mathrm{tr}(WW^{\mathsf{T}})/(2N)$, attained exactly by $\pm t$. In the
+\emph{unplanted} arm the projection is skipped, so no configuration is orthogonal to every
+column, the analytic value survives only as a strict lower bound, and the optimum is unknown
+a priori --- exhaustive search is its only source of truth. In both arms the ratio
+$\alpha=M/N$ tunes the depth of the first-order barrier in the energy landscape; small
+$\alpha$ is the rugged regime.
+
+On twenty unplanted instances per $\alpha\in\{0.20,0.25,\dots,0.50\}$ at $N=40$, the dSB
+solver under the same budgets as above undergoes a sharp transition
+(Fig.~\ref{fig:wishart}): it recovers the certified optimum on every instance at
+$\alpha\geq0.45$ and on $15/20$ at $\alpha=0.4$, but on only $3/20$, $1/20$ and $0/20$ at
+$\alpha=0.3$, $0.25$ and $0.2$, terminating up to $0.6\%$ above optima that were known only
+because brute force found them --- wrong, near-optimal configurations that nothing short of
+a certified reference exposes. The paired planted arm gives statistically indistinguishable
+counts, so the difficulty is a property of the low-rank landscape rather than of the
+planting; its role here is verification: the sampler returns the planted configuration on
+all $140$ planted instances and its \texttt{float64}-recomputed certificates match the
+analytic $E_0$ to $7\times10^{-15}$, while every unplanted certificate lies strictly above
+the analytic lower bound, by $5.5\times10^{-4}$ to $0.36$ in energy, checking the whole
+pipeline, from the instance files to the kernel, against values independent of both solvers.
+Certification costs $\approx\!2$\,s per instance on one H100 throughout, at this size less
+than a single $7$--$9$\,s dSB run. The deterministic paired generator, all $280$ instances
+and the raw records ship with the article, and the planted arm is re-checkable without a GPU
+against the analytic optimum (Sec.~\ref{sec:reproduction}).
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.85\textwidth]{wishart.pdf}
-\caption{Fraction of Wishart planted instances on which a single run of the shipped dSB
-    heuristic, under the budgets of Table~\ref{tab:multisolver}, reaches the certified
-    optimum, as a function of the ruggedness parameter $\alpha=M/N$ at $N=40$. Twenty
-    instances per $\alpha$, one run each; error bars are $95\%$ Wilson intervals for the
-    per-instance success probability, and each point is annotated with its count.
-    Exhaustive certification costs $\approx\!2$\,s per instance throughout, and every
-    certificate matches the analytic $E_0$ of its instance.}
+\caption{Fraction of \emph{unplanted} Wishart instances on which a single run of the shipped
+    dSB heuristic, under the budgets of Table~\ref{tab:multisolver}, reaches the certified
+    optimum, as a function of the ruggedness parameter $\alpha=M/N$ at $N=40$. The optima of
+    these instances are known only because exhaustive search found them: every certificate
+    lies strictly above the analytic lower bound, and the paired planted arm of the
+    experiment (not shown) yields statistically indistinguishable counts while its
+    certificates match the closed-form $E_0$ exactly. Twenty instances per $\alpha$, one run
+    each; error bars are $95\%$ Wilson intervals for the per-instance success probability,
+    and each point is annotated with its count. Exhaustive certification costs
+    $\approx\!2$\,s per instance throughout.}
 \label{fig:wishart}
 \end{figure}
 
@@ -1018,7 +1032,7 @@ placement across one node boundary & 5\,min, 2 nodes \\
 coupling families & 18\,min, 1 GPU \\
 \hline
 \texttt{e9\_wishart} & dSB against certified and analytic optima on the rugged
-Wishart family (Fig.~\ref{fig:wishart}) & 40\,min, 1 GPU \\
+Wishart family, planted and unplanted (Fig.~\ref{fig:wishart}) & 1\,h, 1 GPU \\
 \hline
 \texttt{e4\_precision} & \texttt{float32} against \texttt{float64} on the
 ground-state path & 6\,min, 1 GPU \\
@@ -1111,8 +1125,9 @@ changing the public sampler API. On dense random Ising instances we now certify
 exhaustive ground states up to $N=60$ on $8\times$ H100 GPUs, empirically
 confirming the asymptotic $t_{N+1}=2\,t_N$ doubling regime from $N=52$, and we
 quantify the strong scaling of the decomposition, which reaches $93\%$ parallel
-efficiency at $N=48$ and the ideal $8\times$ speedup from $N=52$ on. On a planted
-rugged family the certified optima expose heuristic near-misses of up to $1.8\%$
+efficiency at $N=48$ and the ideal $8\times$ speedup from $N=52$ on. On a rugged
+Wishart family --- including unplanted instances whose optima only enumeration
+certifies --- the certified optima expose heuristic near-misses of up to $1.8\%$
 at a size certified in seconds --- the concrete regime such a backend
 exists for. Natural
 next steps are: (i) reducing the per-task scheduling overhead that
