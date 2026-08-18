@@ -1,7 +1,7 @@
 \documentclass[preprint,12pt,a4paper]{elsarticle}
 %DIF LATEXDIFF DIFFERENCE FILE
 %DIF DEL ../v_1/bruteforce.tex   Sat Aug  1 21:39:39 2026
-%DIF ADD bruteforce.tex          Mon Aug 17 19:40:24 2026
+%DIF ADD bruteforce.tex          Tue Aug 18 22:31:44 2026
 
 \usepackage{amssymb}
 \usepackage{float}
@@ -92,8 +92,9 @@
 solvers \DIFdelbegin \DIFdel{: adding }\DIFdelend \DIFaddbegin \DIFadd{--- }\DIFaddend a \DIFaddbegin \DIFadd{numerically stabilized, }\DIFaddend distributed GPU \DIFdelbegin \DIFdel{brute-force }\DIFdelend \DIFaddbegin \DIFadd{exhaustive-search }\DIFaddend plugin}
 
 \author[1]{Konrad Ja\l{}owiecki}
-\cortext[cor1]{Corresponding author}
-\author[2,3]{Jakub Paw{\l}owski}
+\DIFdelbegin %DIFDELCMD < \cortext[cor1]{Corresponding author}
+%DIFDELCMD < %%%
+\DIFdelend \author[2,3]{Jakub Paw{\l}owski}
 \author[1,2]{Bart{\l}omiej Gardas}
 \author[1,2]{{\L}ukasz Pawela\corref{cor1}}
 \ead{lpawela@iitis.pl}
@@ -152,7 +153,7 @@ separate twenty-instance,
 four-family comparison, both discrete simulated bifurcation and simulated annealing recover
 the same exhaustive-search minimum in every case under their stated method-specific budgets.
 On a planted Wishart family with tunable ruggedness, by contrast, the same
-simulated-bifurcation heuristic misses the certified optimum on nine of ten instances in the
+simulated-bifurcation heuristic misses the certified optimum on $39$ of $40$ instances in the
 two most rugged settings while certification takes seconds per instance and matches the
 analytic planted optimum to $4\times10^{-15}$ --- the regime a certifying backend exists for}\DIFaddend .
 \end{abstract}
@@ -619,7 +620,7 @@ above are recomputed from those two sets of raw timings.
 
 \paragraph{\DIFadd{Controller cost and the limits of the decomposition}}
 \DIFadd{The search phase itself involves }\DIFaddend no inter-worker communication\DIFdelbegin \DIFdel{during the search and only a trivial merge step
-}\DIFdelend \DIFaddbegin \DIFadd{: each of the
+on the controller}\DIFdelend \DIFaddbegin \DIFadd{: each of the
 $2^{k}$ subproblems is an independent Ray task that fixes its own variables, runs
 the CUDA search over the remaining $N-k$ and returns only the requested
 }\texttt{\DIFadd{num\_states}} \DIFadd{samples. The single point of centralization is the
@@ -629,7 +630,7 @@ answered without a large allocation: the number of subproblems is set by
 }\texttt{\DIFadd{num\_fixed\_vars}} \DIFadd{and is independent of the number of devices, so the controller can be
 driven on a CPU alone with the partial results that workers would have returned.
 Table~\ref{tab:controller} reports that measurement for $2^{k}$ subproblems with $k$ up to
-$16$, comparing the direct merge --- collect every partial result }\DIFaddend on the controller \DIFaddbegin \DIFadd{and
+$16$, comparing the direct merge --- collect every partial result on the controller and
 concatenate once --- with a hierarchical merge performed by a tree of Ray tasks, and both
 against the floor set by Ray's task scheduling alone.
 }
@@ -932,9 +933,7 @@ while their timings describe method-specific budgets rather than equal work.
 \DIFaddFL{sparse   }& \DIFaddFL{$5/5$ }& \DIFaddFL{$5/5$ }&  \DIFaddFL{8.79 }& \DIFaddFL{11.37 }\\
 \hline
 \DIFaddendFL all      \DIFdelbeginFL \texttt{\DIFdelFL{instances/*.txt}} %DIFAUXCMD
-\DIFdelFL{and }\texttt{\DIFdelFL{results/*.json}}
-%DIFAUXCMD
-\DIFdelFL{files that produced Fig.~\ref{fig:runtimes}}\DIFdelendFL \DIFaddbeginFL & \DIFaddFL{$20/20$ }& \DIFaddFL{$20/20$ }&  \DIFaddFL{9.21 }& \DIFaddFL{10.80 }\\
+\DIFdelFL{and }\DIFdelendFL \DIFaddbeginFL & \DIFaddFL{$20/20$ }& \DIFaddFL{$20/20$ }&  \DIFaddFL{9.21 }& \DIFaddFL{10.80 }\\
 \hline
 \end{tabular}
 \caption{\DIFaddFL{Targeted comparison of two heuristic mechanisms against exhaustive-search
@@ -956,19 +955,35 @@ fully connected zero-field family with tunable ruggedness: a planted state $t$ i
 the couplings are $J_{ij}=(WW^{\mathsf{T}})_{ij}/N$. The construction makes the ground-state
 energy known analytically, $E_0=-\mathrm{tr}(WW^{\mathsf{T}})/(2N)$, attained exactly by
 $\pm t$, and the ratio $\alpha=M/N$ tunes the depth of the first-order barrier in the energy
-landscape; small $\alpha$ is the rugged regime. On five instances per
-$\alpha\in\{0.2,0.3,0.5\}$ at $N=40$, the dSB solver under the same budgets as above recovers
-the certified optimum on all five instances at $\alpha=0.5$, on one of five at $\alpha=0.3$
-and on none at $\alpha=0.2$, terminating $0.16$--$0.82\%$ above it --- on wrong, near-optimal
-configurations that nothing short of a certified reference exposes. The brute-force sampler
-certifies each instance in $\approx\!2$\,s on one H100, at this size less than a single
-$7$--$9$\,s dSB run; it returns the planted configuration on all fifteen instances, and its
-}\texttt{\DIFadd{float64}}\DIFadd{-recomputed certificate matches the analytic $E_0$ to $4\times10^{-15}$, which
-checks the whole pipeline, from the instance files to the kernel, against a value independent
-of both solvers. The deterministic generator, the instances and the raw records ship with the
+landscape; small $\alpha$ is the rugged regime. On twenty instances per
+$\alpha\in\{0.20,0.25,\dots,0.50\}$ at $N=40$, the dSB solver under the same budgets as above
+undergoes a sharp transition (Fig.~\ref{fig:wishart}): it recovers the certified optimum on
+every instance at $\alpha\geq0.45$ and on $18/20$ at $\alpha=0.4$, but on only $3/20$, $1/20$
+and $0/20$ at $\alpha=0.3$, $0.25$ and $0.2$, terminating $0.14$--$1.8\%$ above the optimum
+--- on wrong, near-optimal configurations that nothing short of a certified reference exposes.
+The brute-force sampler certifies each instance in $\approx\!2$\,s on one H100, at this size
+less than a single $7$--$9$\,s dSB run; it returns the planted configuration on all $140$
+instances, and its }\DIFaddend \texttt{\DIFdelbegin \DIFdel{results/*.json}%DIFDELCMD < \MBLOCKRIGHTBRACE
+%DIFDELCMD < %%%
+\DIFdel{files that produced Fig.~\ref{fig:runtimes}}\DIFdelend \DIFaddbegin \DIFadd{float64}}\DIFadd{-recomputed certificate matches the analytic $E_0$ to
+$4\times10^{-15}$ on every one, which checks the whole pipeline, from the instance files to
+the kernel, against a value independent of both solvers. The deterministic generator, the instances and the raw records ship with the
 article, and the heuristic side of the comparison is re-checkable without a GPU against the
 analytic optimum (Sec.~\ref{sec:reproduction}).
 }
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.85\textwidth]{wishart.pdf}
+\caption{\DIFaddFL{Fraction of Wishart planted instances on which a single run of the shipped dSB
+    heuristic, under the budgets of Table~\ref{tab:multisolver}, reaches the certified
+    optimum, as a function of the ruggedness parameter $\alpha=M/N$ at $N=40$. Twenty
+    instances per $\alpha$, one run each; error bars are $95\%$ Wilson intervals for the
+    per-instance success probability, and each point is annotated with its count.
+    Exhaustive certification costs $\approx\!2$\,s per instance throughout, and every
+    certificate matches the analytic $E_0$ of its instance.}}
+\label{fig:wishart}
+\end{figure}
 
 \paragraph{\DIFadd{QUBO path and exact-solver checks}}
 \DIFadd{The QUBO and Ising interfaces use the same computational path: both samplers convert a SPIN
@@ -1176,7 +1191,7 @@ placement across one node boundary }& \DIFaddFL{5\,min, 2 nodes }\\
 coupling families }& \DIFaddFL{18\,min, 1 GPU }\\
 \hline
 \texttt{\DIFaddFL{e9\_wishart}} & \DIFaddFL{dSB against certified and analytic optima on the rugged
-Wishart family }& \DIFaddFL{3\,min, 1 GPU }\\
+Wishart family (Fig.~\ref{fig:wishart}) }& \DIFaddFL{40\,min, 1 GPU }\\
 \hline
 \texttt{\DIFaddFL{e4\_precision}} & \texttt{\DIFaddFL{float32}} \DIFaddFL{against }\texttt{\DIFaddFL{float64}} \DIFaddFL{on the
 ground-state path }& \DIFaddFL{6\,min, 1 GPU }\\
@@ -1289,8 +1304,8 @@ exhaustive ground states up to $N=60$ on $8\times$ H100 GPUs, empirically
 confirming the \DIFaddbegin \DIFadd{asymptotic }\DIFaddend $t_{N+1}=2\,t_N$ doubling \DIFdelbegin \DIFdel{rule across the measured range}\DIFdelend \DIFaddbegin \DIFadd{regime from $N=52$, and we
 quantify the strong scaling of the decomposition, which reaches $93\%$ parallel
 efficiency at $N=48$ and the ideal $8\times$ speedup from $N=52$ on. On a planted
-rugged family the certified optima expose heuristic near-misses of a fraction of
-a percent at a size certified in seconds --- the concrete regime such a backend
+rugged family the certified optima expose heuristic near-misses of up to $1.8\%$
+at a size certified in seconds --- the concrete regime such a backend
 exists for}\DIFaddend . Natural
 next steps are: (i) \DIFaddbegin \DIFadd{reducing the per-task scheduling overhead that
 Table~\ref{tab:controller} identifies as one measured source of scaling overhead, for

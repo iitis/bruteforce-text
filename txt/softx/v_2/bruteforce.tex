@@ -95,7 +95,7 @@ separate twenty-instance,
 four-family comparison, both discrete simulated bifurcation and simulated annealing recover
 the same exhaustive-search minimum in every case under their stated method-specific budgets.
 On a planted Wishart family with tunable ruggedness, by contrast, the same
-simulated-bifurcation heuristic misses the certified optimum on nine of ten instances in the
+simulated-bifurcation heuristic misses the certified optimum on $39$ of $40$ instances in the
 two most rugged settings while certification takes seconds per instance and matches the
 analytic planted optimum to $4\times10^{-15}$ --- the regime a certifying backend exists for.
 \end{abstract}
@@ -803,16 +803,17 @@ fully connected zero-field family with tunable ruggedness: a planted state $t$ i
 the couplings are $J_{ij}=(WW^{\mathsf{T}})_{ij}/N$. The construction makes the ground-state
 energy known analytically, $E_0=-\mathrm{tr}(WW^{\mathsf{T}})/(2N)$, attained exactly by
 $\pm t$, and the ratio $\alpha=M/N$ tunes the depth of the first-order barrier in the energy
-landscape; small $\alpha$ is the rugged regime. On five instances per
-$\alpha\in\{0.2,0.3,0.5\}$ at $N=40$, the dSB solver under the same budgets as above recovers
-the certified optimum on all five instances at $\alpha=0.5$, on one of five at $\alpha=0.3$
-and on none at $\alpha=0.2$, terminating $0.16$--$0.82\%$ above it --- on wrong, near-optimal
-configurations that nothing short of a certified reference exposes. The brute-force sampler
-certifies each instance in $\approx\!2$\,s on one H100, at this size less than a single
-$7$--$9$\,s dSB run; it returns the planted configuration on all fifteen instances, and its
-\texttt{float64}-recomputed certificate matches the analytic $E_0$ to $4\times10^{-15}$, which
-checks the whole pipeline, from the instance files to the kernel, against a value independent
-of both solvers. The deterministic generator, the instances and the raw records ship with the
+landscape; small $\alpha$ is the rugged regime. On twenty instances per
+$\alpha\in\{0.20,0.25,\dots,0.50\}$ at $N=40$, the dSB solver under the same budgets as above
+undergoes a sharp transition (Fig.~\ref{fig:wishart}): it recovers the certified optimum on
+every instance at $\alpha\geq0.45$ and on $18/20$ at $\alpha=0.4$, but on only $3/20$, $1/20$
+and $0/20$ at $\alpha=0.3$, $0.25$ and $0.2$, terminating $0.14$--$1.8\%$ above the optimum
+--- on wrong, near-optimal configurations that nothing short of a certified reference exposes.
+The brute-force sampler certifies each instance in $\approx\!2$\,s on one H100, at this size
+less than a single $7$--$9$\,s dSB run; it returns the planted configuration on all $140$
+instances, and its \texttt{float64}-recomputed certificate matches the analytic $E_0$ to
+$4\times10^{-15}$ on every one, which checks the whole pipeline, from the instance files to
+the kernel, against a value independent of both solvers. The deterministic generator, the instances and the raw records ship with the
 article, and the heuristic side of the comparison is re-checkable without a GPU against the
 analytic optimum (Sec.~\ref{sec:reproduction}).
 
@@ -1113,8 +1114,8 @@ exhaustive ground states up to $N=60$ on $8\times$ H100 GPUs, empirically
 confirming the asymptotic $t_{N+1}=2\,t_N$ doubling regime from $N=52$, and we
 quantify the strong scaling of the decomposition, which reaches $93\%$ parallel
 efficiency at $N=48$ and the ideal $8\times$ speedup from $N=52$ on. On a planted
-rugged family the certified optima expose heuristic near-misses of a fraction of
-a percent at a size certified in seconds --- the concrete regime such a backend
+rugged family the certified optima expose heuristic near-misses of up to $1.8\%$
+at a size certified in seconds --- the concrete regime such a backend
 exists for. Natural
 next steps are: (i) reducing the per-task scheduling overhead that
 Table~\ref{tab:controller} identifies as one measured source of scaling overhead, for
