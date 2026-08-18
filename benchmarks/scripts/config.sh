@@ -77,6 +77,10 @@ REPO_DIR="$(cd "${BENCHMARKS_DIR}/.." && pwd)"
 # Skip an experiment point whose result file already exists.
 : "${SKIP_EXISTING:=1}"
 
+# Stream experiment output line by line: the launchers pipe through tee, and Python would
+# otherwise block-buffer its progress lines into multi-minute bursts.
+export PYTHONUNBUFFERED=1
+
 mkdir -p "${LOG_DIR}"
 
 # --- helpers ---------------------------------------------------------------------------
