@@ -7,6 +7,8 @@
 \usepackage{hyperref}
 \usepackage{xcolor}
 \usepackage{lineno}
+\usepackage{longtable}
+\usepackage{booktabs}
 \setlength{\parindent}{0pt}
 \emergencystretch=3em
 \sloppy
@@ -67,38 +69,52 @@ of Technology, Wroc{\l}aw University of Science and Technology,
 This software update matures \texttt{omnisolver-bruteforce}, the exhaustive-search
 plugin of Omnisolver~\cite{jalowiecki2021omnisolver}, into a released and
 API-stable exhaustive-search reference backend for QUBO and Ising
-instances on CUDA-enabled GPUs. Throughout, $N$ denotes the number of binary
-variables of an instance (equivalently, the number of Ising spins), so that
-exhaustive search enumerates all $2^{N}$ configurations. The plugin itself,
+instances on CUDA-enabled GPUs. 
+% Throughout, $N$ denotes the number of binary
+% variables of an instance (equivalently, the number of Ising spins), so that
+% exhaustive search enumerates all $2^{N}$ configurations. 
+The plugin itself,
 together with a preliminary multi-GPU benchmark, was already announced in the
-original publication; the present update contributes a released Ray-based
-distributed sampler that splits the search into $2^{k}$ fixed-variable
+original publication. The present update contributes: (i) a released Ray-based
+distributed engine that splits the search into $2^{k}$ fixed-variable
 subproblems, dispatches them across multiple GPUs and hosts and merges the
-partial results on a controller; numerical stabilization of the fast
+partial results on a controller, (ii) numerical stabilization of the fast
 \texttt{float32} ground-state path through compensated incremental updates,
 periodic from-scratch energy re-anchoring and best-buffer refresh, enabled
 automatically for per-kernel subproblems of at least $40$ variables and leaving
-the public sampler API unchanged; and 64-bit-safe enumeration bookkeeping that
-lifts the reachable problem size beyond the original single-GPU regime. On dense
-random Ising instances we report cross-validated exhaustive-search minima up to $N=60$ on
-$8\times$ NVIDIA H100 (96\,GB) GPUs, reaching $\approx\!3.15$ days at $N=60$, in
-agreement with the empirical $t_{N+1}=2\,t_N$ doubling rule to within $0.3\%$.
-Measured against the single-GPU sampler on identical instances, the distributed
-sampler crosses over between $N=40$ and $N=42$, attains $93\%$ parallel
-efficiency at $N=48$ and saturates at the ideal $8\times$ speedup from
-$N\!\gtrsim\!52$; a dedicated sweep over every tested power-of-two GPU count and
-realizable node layout gives
-$98.2\%$ efficiency on eight GPUs, weak scaling flat to within $0.2\%$, and no measurable
-change in the reported solve-phase wall-clock time from crossing a node boundary at constant
-computational load. In a
-separate twenty-instance,
-four-family comparison, both discrete simulated bifurcation and simulated annealing recover
-the same exhaustive-search minimum in every case under their stated method-specific budgets.
-On unplanted Wishart instances with tunable ruggedness --- whose optima are known only
-through enumeration --- the same simulated-bifurcation heuristic misses the certified
-optimum on $39$ of $40$ instances in the two most rugged settings while certification takes
-seconds per instance; a paired planted arm confirms every certificate against a closed-form
-optimum to $7\times10^{-15}$ --- the regime a certifying backend exists for.
+the public API unchanged, and (iii) 64-bit-safe enumeration bookkeeping that
+lifts the reachable problem size beyond the original single-GPU regime. 
+
+On dense random Ising instances, exhaustive-search of minima up to \(N=60\) took
+\(\approx 3.15\) days on \(8\times\) H100 GPUs and followed
+\(t_{N+1}=2t_N\) within \(0.3\%\). Distributed sampling reached ideal
+\(8\times\) speedup by \(N\gtrsim 52\), with \(98.2\%\) eight-GPU efficiency,
+flat weak scaling, and no node-boundary penalty. In a 20-instance four-family
+comparison, simulated bifurcation and simulated annealing always found the exhaustive
+minimum. Conversely, on rugged unplanted Wishart instances, simulated
+bifurcation missed the certified optimum in 39 of 40 cases, while planted
+certificates agreed with closed-form optima to \(7\times10^{-15}\).
+
+% On dense
+% random Ising instances we report cross-validated exhaustive-search minima up to $N=60$ on
+% $8\times$ NVIDIA H100 (96\,GB) GPUs, reaching $\approx\!3.15$ days at $N=60$, in
+% agreement with the empirical $t_{N+1}=2\,t_N$ doubling rule to within $0.3\%$.
+% Measured against the single-GPU sampler on identical instances, the distributed
+% sampler crosses over between $N=40$ and $N=42$, attains $93\%$ parallel
+% efficiency at $N=48$ and saturates at the ideal $8\times$ speedup from
+% $N\!\gtrsim\!52$; a dedicated sweep over every tested power-of-two GPU count and
+% realizable node layout gives
+% $98.2\%$ efficiency on eight GPUs, weak scaling flat to within $0.2\%$, and no measurable
+% change in the reported solve-phase wall-clock time from crossing a node boundary at constant
+% computational load. In a
+% separate twenty-instance,
+% four-family comparison, both discrete simulated bifurcation and simulated annealing recover
+% the same exhaustive-search minimum in every case under their stated method-specific budgets.
+% On unplanted Wishart instances with tunable ruggedness --- whose optima are known only
+% through enumeration --- the same simulated-bifurcation heuristic misses the certified
+% optimum on $39$ of $40$ instances in the two most rugged settings while certification takes
+% seconds per instance. A paired planted arm confirms every certificate against a closed-form
+% optimum to $7\times10^{-15}$ --- the regime a certifying backend exists for.
 \end{abstract}
 
 \begin{keyword}
@@ -249,8 +265,8 @@ Simulated Bifurcation Machine
 the current state-of-the-art classical heuristic for dense QUBO/Ising problems.
 Such results rely on high-confidence global reference minima on representative
 instances, which is precisely the role of an exhaustive GPU solver. A concrete
-case in which the heuristic's answer is wrong and only enumeration can tell is
-reported below.
+case in which the heuristic's answer is wrong and only exhaustive enumeration 
+can guarantee reaching optimum is reported below.
 
 \paragraph{Architecture}
 The plugin exposes two sampler classes: \texttt{BruteforceGPUSampler}
@@ -281,8 +297,7 @@ enumeration is limited by memory traffic and integer bookkeeping rather than by 
 and double precision costs only a few percent (see below).
 
 \paragraph{Relation to the original publication and to the predecessor solver}
-The exhaustive-search plugin is not new, and we state its provenance
-explicitly. The original Omnisolver
+The exhaustive-search plugin is not new, the original Omnisolver
 publication~\cite{jalowiecki2021omnisolver} already lists
 \texttt{omnisolver-bruteforce} among the available plugins, notes that it can be
 accelerated on CUDA-enabled GPUs, describes it as usable for instances of up to
@@ -332,8 +347,8 @@ dependable certification backend, as detailed next.
 Figure~\ref{fig:runtimes} reports wall-clock solve times of both sampler modes on
 all-to-all random Ising instances with $J_{ij},h_i\sim \mathcal{U}[-1,1]$ i.i.d.,
 generated by the benchmark script \texttt{benchmarks/bf.py} of the article repository
-(one archived instance per size; these shipped instance files, rather than an unrecoverable
-legacy RNG state, define the benchmark; see Sec.~\ref{sec:reproduction}) and measured on a local
+(one archived instance per size; these shipped instance files,
+define the benchmark; see Sec.~\ref{sec:reproduction}) and measured on a local
 in-house cluster of $8\times$ NVIDIA H100 (96\,GB) GPUs (two nodes, 4 GPUs per
 node, interconnected by standard Ethernet). The single-GPU sampler was run on one
 of the same H100s and the distributed sampler on all eight, with $k=3$ so that
@@ -516,7 +531,7 @@ $16$, comparing the direct merge --- collect every partial result on the control
 concatenate once --- with a hierarchical merge performed by a tree of Ray tasks, and both
 against the floor set by Ray's task scheduling alone.
 
-It is important to be clear about what this does and does not cover. Running on one machine,
+It is worth emphasising what this does and does not cover. Running on one machine,
 every partial result is local and every task is scheduled by the local raylet, so the numbers
 contain merge arithmetic and local scheduling but no inter-node transfer. They are therefore a
 lower bound on controller cost at a given $P$, not an estimate of the total: a real allocation
@@ -698,7 +713,7 @@ recomputation at every size up to $N=46$, against $1$--$4\times 10^{-6}$ for sta
 drift of $2.7\times 10^{-5}$ at $N=46$; it was exactly the dropped-coupling offset documented
 above, not accumulation error.) Whether the unstabilized double-precision accumulator stays
 clean at larger $N$ is unmeasured, which is why extending the stabilization to that path
-remains listed as future work. The practical guidance is unchanged: use the default
+remains listed as future work. The practical guidance is unchanged: one should use the default
 \texttt{float32} path with its stabilization and, when a certified numerical value is wanted,
 recompute the energy of the returned configuration in \texttt{float64} on the host, as done
 throughout this paper.
@@ -733,9 +748,10 @@ difference in the configurations found. This is precisely the
 kind of statement that cannot be made without a certifying solver at hand, and it illustrates
 the intended role of the plugin.
 
-Shipping the heuristic alongside the article's reproduction package is deliberate: the comparison is only as
-reproducible as its weaker half, so the verification needs neither GPU hardware nor an external
-solver implementation; its ordinary Python and NumPy dependencies are declared. The solver, the driver that produces the verification tables
+We deliberately include the heuristic alongside the article's reproduction package, so
+the verification needs neither GPU hardware nor an external
+solver implementation; its ordinary Python and NumPy dependencies are declared. The solver,
+ the driver that produces the verification tables
 (\texttt{benchmarks/verify\_sbm.py}), the resulting tables themselves and all
 \texttt{benchmarks/instances/*.txt}, \texttt{benchmarks/results/single-gpu/*.json} and
 \texttt{benchmarks/results/distributed/*.json} files behind Fig.~\ref{fig:runtimes} and
@@ -766,7 +782,7 @@ different state occurs in the bimodal family and has the same integer energy, re
 ground-state degeneracy rather than an optimization error. Independent \texttt{float64}
 evaluation puts each selected state's energy within $3.2\times10^{-13}$ of the certified value.
 The family-level results are shown in Table~\ref{tab:multisolver}; both heuristics were rerun
-sequentially by the same driver on the same CPU host (\texttt{alice}, an H100-equipped server),
+sequentially by the same driver on the same CPU host (an H100-equipped server),
 while their timings describe method-specific budgets rather than equal work.
 
 \begin{table}[H]
@@ -965,7 +981,7 @@ Every number in this paper is produced by code and data in the
 \href{\datarepo}{\datareponame}, and a substantial part of it can be re-checked
 \emph{without a GPU at all}. This section is a guide to that directory.
 
-\paragraph{What is where}
+\paragraph{Contents}
 \texttt{benchmarks/} holds the instances (\texttt{instances/}), the raw
 per-run results (\texttt{results/}, one subdirectory per experiment), the
 verification tables (\texttt{bf\_sbm\_verification\_*.csv}), the solver
@@ -1006,13 +1022,34 @@ and E6--E8 create timestamped, non-overwriting evidence records. The short E3--E
 the verification driver update their documented canonical outputs, so those files should be
 copied before an intentional repeat if both runs are to be retained.
 
-\begin{table}[H]
-\setlength{\tabcolsep}{4pt}
-\centering
-\begin{tabular}{|p{4.2cm}|p{5.3cm}|p{2.0cm}|}
+\begin{longtable}{|p{4.2cm}|p{5.3cm}|p{2.0cm}|}
+\caption{Launchers provided for reproducing the reported results, in the order in
+which \texttt{scripts/run\_all.sh} executes them; each is the script
+\texttt{scripts/run\_<name>.sh}, except \texttt{preflight}. Costs are for
+H100-class GPUs, measured on the runs reported in this paper, and are dominated by the
+exhaustive searches themselves; the whole set without the figure is an overnight job.
+\texttt{manuscript\_figure} re-draws the figure in seconds when the published
+results are present, since it skips sizes that already have a result file;
+regenerating them from scratch is the only multi-day item, because $N=58$ alone
+takes $\approx\!19$\,h and $N=60$ $\approx\!3.15$ days.}
+\label{tab:reproduction} \\
+
 \hline
 \textbf{Launcher} & \textbf{What it establishes} & \textbf{Cost} \\
 \hline
+\endfirsthead
+
+\hline
+\textbf{Launcher} & \textbf{What it establishes} & \textbf{Cost} \\
+\hline
+\endhead
+
+\hline
+\endfoot
+
+\hline
+\endlastfoot
+
 \texttt{preflight} & both nodes can run the experiments; per-node toolchain
 report & seconds, any \\
 \hline
@@ -1048,19 +1085,64 @@ and node layout & 2\,h, 1--8 GPUs \\
 \hline
 \texttt{manuscript\_figure} & Fig.~\ref{fig:runtimes} and
 Table~\ref{tab:efficiency} & see caption \\
-\hline
-\end{tabular}
-\caption{Launchers provided for reproducing the reported results, in the order in
-which \texttt{scripts/run\_all.sh} executes them; each is the script
-\texttt{scripts/run\_<name>.sh}, except \texttt{preflight}. Costs are for
-H100-class GPUs, measured on the runs reported in this paper, and are dominated by the
-exhaustive searches themselves; the whole set without the figure is an overnight job. \texttt{manuscript\_figure}
-re-draws the figure in seconds when the published results are present, since it
-skips sizes that already have a result file; regenerating them from scratch is
-the only multi-day item, because $N=58$ alone takes $\approx\!19$\,h and $N=60$
-$\approx\!3.15$ days.}
-\label{tab:reproduction}
-\end{table}
+
+\end{longtable}
+
+% \begin{table}[H]
+% \setlength{\tabcolsep}{4pt}
+% \centering
+% \begin{tabular}{|p{4.2cm}|p{5.3cm}|p{2.0cm}|}
+% \hline
+% \textbf{Launcher} & \textbf{What it establishes} & \textbf{Cost} \\
+% \hline
+% \texttt{preflight} & both nodes can run the experiments; per-node toolchain
+% report & seconds, any \\
+% \hline
+% \texttt{verification} & every stored optimum re-checked in \texttt{float64} and
+% against dSB & 10\,min, CPU \\
+% \hline
+% \texttt{e8\_multi\_solver} & dSB and SA rerun on the same host against the same twenty certified
+% $N=44$ instances (Table~\ref{tab:multisolver}) & 8\,min, CPU \\
+% \hline
+% \texttt{e3\_controller\_cost} & local controller cost up to $2^{16}$ subproblems
+% (Table~\ref{tab:controller}) & 30\,min, CPU \\
+% \hline
+% \texttt{e7\_boundary\_cost} & matched end-to-end task returns under local, remote and mixed
+% placement across one node boundary & 5\,min, 2 nodes \\
+% \hline
+% \texttt{e6\_instance\_families} & dSB against certified optima over four
+% coupling families & 18\,min, 1 GPU \\
+% \hline
+% \texttt{e9\_wishart} & dSB against certified and analytic optima on the rugged
+% Wishart family, planted and unplanted (Fig.~\ref{fig:wishart}) & 1\,h, 1 GPU \\
+% \hline
+% \texttt{e4\_precision} & \texttt{float32} against \texttt{float64} on the
+% ground-state path & 6\,min, 1 GPU \\
+% \hline
+% \texttt{e5\_qubo} & QUBO and Ising runtimes on identical coefficients &
+% 1.6\,h, 1 GPU \\
+% \hline
+% \texttt{e1\_strong\_scaling} & speedup and parallel efficiency over GPU count
+% and node layout & 2\,h, 1--8 GPUs \\
+% \hline
+% \texttt{e2\_weak\_scaling} & weak scaling at constant work per GPU &
+% 4\,h, 1--8 GPUs \\
+% \hline
+% \texttt{manuscript\_figure} & Fig.~\ref{fig:runtimes} and
+% Table~\ref{tab:efficiency} & see caption \\
+% \hline
+% \end{tabular}
+% \caption{Launchers provided for reproducing the reported results, in the order in
+% which \texttt{scripts/run\_all.sh} executes them; each is the script
+% \texttt{scripts/run\_<name>.sh}, except \texttt{preflight}. Costs are for
+% H100-class GPUs, measured on the runs reported in this paper, and are dominated by the
+% exhaustive searches themselves; the whole set without the figure is an overnight job. \texttt{manuscript\_figure}
+% re-draws the figure in seconds when the published results are present, since it
+% skips sizes that already have a result file; regenerating them from scratch is
+% the only multi-day item, because $N=58$ alone takes $\approx\!19$\,h and $N=60$
+% $\approx\!3.15$ days.}
+% \label{tab:reproduction}
+% \end{table}
 
 \paragraph{Cluster topologies}
 Ray cannot rearrange a running cluster, so the GPU layout is fixed when Ray is
