@@ -73,6 +73,21 @@ def main():
     parser.add_argument("--num-steps", type=int, default=sbm.DEFAULT_NUM_STEPS)
     parser.add_argument("--seed", type=int, default=42, help="dSB random seed")
     parser.add_argument(
+        "--heuristic-repeats",
+        type=int,
+        default=1,
+        help="independent dSB runs per instance (seeds seed, seed+1, ...); more than one "
+        "estimates the per-instance success probability behind the time-to-solution "
+        "analysis, at the documented per-run budget",
+    )
+    parser.add_argument(
+        "--bf-dtype",
+        choices=["float", "double"],
+        default="float",
+        help="precision of the brute-force certification; 'double' makes the certificate "
+        "a from-scratch float64 ranking, the conservative denominator for time-to-solution",
+    )
+    parser.add_argument(
         "--skip-bruteforce",
         action="store_true",
         help="only run the heuristic and score it against the analytic E_0; this needs no "
@@ -149,7 +164,9 @@ def main():
                             f"expected {args.size * (args.size - 1) // 2}: the sampler "
                             "would solve a different Hamiltonian than the one scored"
                         )
-                    bf = sampler.sample(bqm, num_states=1, **common.KERNEL_PARAMS)
+                    bf = sampler.sample(
+                        bqm, num_states=1, dtype=args.bf_dtype, **common.KERNEL_PARAMS
+                    )
                     bf_state = np.asarray(bf.samples()[0, range(args.size)])
                     bf_state_energy = reference.energy(bf_state)
                     if bf_state_energy < bound - 1e-9 * max(1.0, abs(bound)):
@@ -189,18 +206,22 @@ def main():
                 else:
                     certified_energy = analytic
 
-                heuristic = sbm.solve(
-                    reference,
-                    num_replicas=args.num_replicas,
-                    num_steps=args.num_steps,
-                    seed=args.seed,
-                )
-                gap = heuristic.energy - certified_energy
-                if gap < -1e-6:
-                    raise CertificateViolation(
-                        f"heuristic energy {heuristic.energy!r} lies below the certified "
-                        f"optimum {certified_energy!r} on {instance_file}"
+                repeats = []
+                for repeat in range(args.heuristic_repeats):
+                    run = sbm.solve(
+                        reference,
+                        num_replicas=args.num_replicas,
+                        num_steps=args.num_steps,
+                        seed=args.seed + repeat,
                     )
+                    run_gap = run.energy - certified_energy
+                    if run_gap < -1e-6:
+                        raise CertificateViolation(
+                            f"heuristic energy {run.energy!r} lies below the certified "
+                            f"optimum {certified_energy!r} on {instance_file}"
+                        )
+                    repeats.append((run, run_gap))
+                heuristic, gap = repeats[0]
                 entry.update(
                     {
                         "sbm_energy": heuristic.energy,
@@ -217,6 +238,22 @@ def main():
                         "sbm_reached_optimum": bool(gap <= 1e-9),
                     }
                 )
+                if args.heuristic_repeats > 1:
+                    tolerance = 1e-9 * max(1.0, abs(certified_energy))
+                    entry["sbm_repeats"] = [
+                        {
+                            "seed": args.seed + i,
+                            "energy": run.energy,
+                            "gap": run_gap,
+                            "reached": bool(run_gap <= tolerance),
+                            "time_in_seconds": run.time_in_seconds,
+                            "selected_dt": run.dt,
+                        }
+                        for i, (run, run_gap) in enumerate(repeats)
+                    ]
+                    entry["sbm_successes"] = sum(
+                        r["reached"] for r in entry["sbm_repeats"]
+                    )
                 if plant:
                     entry["sbm_hamming_to_planted"] = int(
                         min(
@@ -235,11 +272,15 @@ def main():
                     note = f"bound_slack={entry['bound_slack']:+.3e}  "
                 else:
                     note = "vs analytic E_0  "
+                outcome = (
+                    f"k={entry['sbm_successes']}/{args.heuristic_repeats}"
+                    if args.heuristic_repeats > 1
+                    else ("reached" if entry["sbm_reached_optimum"] else "MISSED")
+                )
                 print(
                     f"wishart[{ensemble:9s}] a={alpha:<4g} r{replica} N={args.size}  "
                     f"ref={certified_energy:.8f}  sbm={heuristic.energy:.8f}  "
-                    f"gap={gap:+.2e}  {note}"
-                    f"{'reached' if entry['sbm_reached_optimum'] else 'MISSED'}"
+                    f"gap={gap:+.2e}  {note}{outcome}"
                 )
                 measurements.append(entry)
 
@@ -249,6 +290,8 @@ def main():
         "alphas": args.alphas,
         "ensembles": args.ensembles,
         "replicas_per_alpha": args.replicas,
+        "heuristic_repeats": args.heuristic_repeats,
+        "bf_dtype": args.bf_dtype,
         "sbm_config": {
             "num_replicas": args.num_replicas,
             "num_steps": args.num_steps,

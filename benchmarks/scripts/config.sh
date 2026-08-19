@@ -74,6 +74,8 @@ REPO_DIR="$(cd "${BENCHMARKS_DIR}/.." && pwd)"
 : "${WISHART_REPLICAS:=20}"
 : "${WISHART_ALPHAS:=0.2 0.25 0.3 0.35 0.4 0.45 0.5}"
 : "${WISHART_ENSEMBLES:=planted unplanted}"
+: "${WISHART_TTS_ALPHAS:=0.2}"
+: "${WISHART_TTS_REPEATS:=100}"
 : "${CONTROLLER_MAX_K:=16}"
 # Skip an experiment point whose result file already exists.
 : "${SKIP_EXISTING:=1}"

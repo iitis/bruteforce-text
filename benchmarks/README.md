@@ -61,7 +61,8 @@ Individually, cheapest first:
 ./benchmarks/scripts/run_verification.sh          # brute force vs CPU heuristic    ~10 min, no GPU
 ./benchmarks/scripts/run_e8_multi_solver.sh       # dSB + SA over 20 instances       ~8 min, no GPU
 ./benchmarks/scripts/run_e6_instance_families.sh  # E6 families vs certified optima ~18 min, 1 GPU
-./benchmarks/scripts/run_e9_wishart.sh            # E9 Wishart: heuristic fails     ~40 min, 1 GPU
+./benchmarks/scripts/run_e9_wishart.sh            # E9 Wishart: heuristic fails       ~1 h, 1 GPU
+./benchmarks/scripts/run_e9b_wishart_tts.sh       # E9b per-instance TTS, alpha=0.2  ~11 h, CPU
 ./benchmarks/scripts/run_e3_controller_cost.sh    # E3 controller cost to 2^16      ~30 min, no GPU
 ./benchmarks/scripts/run_e7_boundary_cost.sh      # E7 end-to-end node-boundary cost  ~5 min, 2 nodes
 ./benchmarks/scripts/run_e4_precision.sh          # E4 float32 vs float64            ~6 min, 1 GPU
@@ -340,9 +341,21 @@ Scoring is on energy; the zero field makes the Z2 mirror exactly degenerate, so 
 distances are informational. Each invocation writes a timestamped, non-overwriting record
 under `results/wishart/`. With `--ensembles planted --skip-bruteforce` the planted arm is
 scored against the analytic `E_0`, so its family-level conclusion can be re-checked without
-any GPU (the unplanted arm has no GPU-free score by construction). `plot_wishart.py` renders
-the success-fraction-versus-alpha figure, one series per ensemble, from the newest record (or
-a given one) into the manuscript directory.
+any GPU (the unplanted arm has no GPU-free score by construction).
+
+E9b (`run_e9b_wishart_tts.sh`) adds the per-instance time-to-solution at the hard point
+`alpha = 0.2`: the dSB heuristic is repeated many times per instance with independent seeds
+(default 100, per-run budget unchanged), giving each instance a success probability `p_i`,
+hence `TTS_99(i) = t_run * ceil(ln 0.01 / ln(1 - p_i))`, compared against float64
+certification time (`--bf-dtype double`, so the denominator is a from-scratch double-precision
+ranking). An instance never solved contributes the smallest TTS its repeat count permits (the
+exact one-sided Clopper-Pearson bound at k = 0) and is marked as a bound. This is CPU-bound
+and takes about 11 hours at the defaults; `--repeats 50` halves it.
+
+`plot_wishart.py` renders the figure from the newest records into the manuscript directory:
+panel (a), success fraction versus alpha with one series per ensemble, from the newest sweep
+record; and, when a repeats record exists, panel (b), the per-instance `D_i = TTS_99 / T_BF64`
+distribution.
 
 ## Verification against the heuristic
 
