@@ -126,10 +126,16 @@ def panel_tts(ax, record, rng_seed=0):
     alphas = sorted({m["alpha"] for m in entries})
     t_run = float(np.median([r["time_in_seconds"] for m in entries for r in m["sbm_repeats"]]))
     t_bf = float(np.median([m["bf_time_seconds"] for m in entries]))
-    ensembles = [e for e in ("unplanted", "planted") if any(m["ensemble"] == e for m in entries)]
+    ensembles = [e for e in ("planted", "unplanted") if any(m["ensemble"] == e for m in entries)]
 
-    for ensemble in ensembles:
-        rows = [m for m in entries if m["ensemble"] == ensemble]
+    # one row per (alpha, ensemble), hardest alpha on top, planted above unplanted
+    keys = [(a, e) for a in alphas for e in ensembles]
+    positions = {key: float(len(keys) - 1 - i) for i, key in enumerate(keys)}
+    d_max = 1.0
+
+    for key in keys:
+        alpha, ensemble = key
+        rows = [m for m in entries if m["alpha"] == alpha and m["ensemble"] == ensemble]
         ds, bounds = [], []
         for m in rows:
             n = len(m["sbm_repeats"])
@@ -145,39 +151,38 @@ def panel_tts(ax, record, rng_seed=0):
             bounds.append(bound)
         ds = np.array(ds)
         bounds = np.array(bounds)
-        y = ROW[ensemble] + rng.uniform(-0.16, 0.16, size=len(ds))
+        d_max = max(d_max, float(ds.max()))
+        y0 = positions[key]
+        y = y0 + rng.uniform(-0.16, 0.16, size=len(ds))
         style = STYLES[ensemble]
         measured = ~bounds
         if measured.any():
             ax.plot(ds[measured], y[measured], linestyle="none", markersize=6,
                     marker=style["marker"], color=style["color"],
-                    markerfacecolor=style["color"])
+                    markerfacecolor=style["color"], alpha=0.85)
         if bounds.any():
             ax.plot(ds[bounds], y[bounds], linestyle="none", markersize=6,
                     marker="^", color=style["color"], markerfacecolor="white")
         median = float(np.median(ds))
-        ax.plot([median, median], [ROW[ensemble] - 0.26, ROW[ensemble] + 0.26],
+        ax.plot([median, median], [y0 - 0.26, y0 + 0.26],
                 color=style["color"], linewidth=2)
         ax.annotate(rf"median ${median:.0f}\times$",
-                    (median, ROW[ensemble] + 0.32), ha="center", fontsize=10,
+                    (median, y0 + 0.30), ha="center", fontsize=9,
                     color=style["color"])
-        print(f"TTS {ensemble:9s}: median D={median:.1f}x, "
-              f"never solved {int(bounds.sum())}/{len(ds)} (lower bounds), "
-              f"t_run={t_run:.2f}s, T_BF={t_bf:.2f}s")
+        print(f"TTS alpha={alpha:g} {ensemble:9s}: median D={median:.1f}x, "
+              f"never solved {int(bounds.sum())}/{len(ds)} (lower bounds)")
+    print(f"TTS scales: t_run={t_run:.2f}s, T_BF64={t_bf:.2f}s")
 
-    ax.axvspan(ax.get_xlim()[0] if ax.get_xlim()[0] < 1 else 0.05, 1.0,
-               color="tab:orange", alpha=0.08)
-    ax.axvline(1.0, color="tab:orange", linestyle="--", linewidth=1.2)
-    ax.text(0.93, -0.42, "heuristic faster", ha="right", fontsize=10,
-            color="tab:orange")
     ax.set_xscale("log")
-    ax.set_yticks([ROW[e] for e in ensembles])
-    ax.set_yticklabels(ensembles)
-    ax.set_ylim(-0.55, 1.55)
-    ax.set_xlabel(
-        r"$D_i = \mathrm{TTS}_{99}(i)\,/\,T_{\mathrm{BF64}}$"
-        + (rf"  at $\alpha={alphas[0]:g}$" if len(alphas) == 1 else "")
-    )
+    ax.set_xlim(0.55, d_max * 2.6)
+    ax.axvspan(0.55, 1.0, color="tab:orange", alpha=0.10)
+    ax.axvline(1.0, color="tab:orange", linestyle="--", linewidth=1.2)
+    ax.text(0.74, (len(keys) - 1) / 2.0, "heuristic faster", rotation=90,
+            ha="center", va="center", fontsize=9, color="tab:orange")
+    ax.set_yticks([positions[k] for k in keys])
+    ax.set_yticklabels([rf"{e}, $\alpha={a:g}$" for a, e in keys], fontsize=10)
+    ax.set_ylim(-0.55, len(keys) - 1 + 0.62)
+    ax.set_xlabel(r"$D_i = \mathrm{TTS}_{99}(i)\,/\,T_{\mathrm{BF64}}$")
     ax.grid(axis="x", linestyle=":", linewidth=0.6, alpha=0.5)
 
 

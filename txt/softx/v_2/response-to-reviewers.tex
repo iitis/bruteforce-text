@@ -190,6 +190,15 @@ certification is decisive}; driver \texttt{benchmarks/exp\_wishart.py}, launcher
 \texttt{run\_e9\_wishart.sh}; the planted arm is re-checkable without a GPU against the
 analytic optimum).
 
+Fig.~2(b) further quantifies the cost of relying on the heuristic where it struggles: one
+hundred independently seeded dSB runs per instance at the two hardest points give each
+instance a success probability and hence a time-to-solution. Against from-scratch
+\texttt{float64} certification of the same instance, certification is $24$--$354\times$
+faster at $\alpha=0.3$, and at $\alpha=0.2$ --- where $26$ of $40$ instances are never
+solved in one hundred attempts --- at least $\approx\!600\times$ faster even under the most
+optimistic success rates the data allow. The per-attempt and certification times are stated
+in the caption, so the ratios can be rescaled for any faster heuristic implementation.
+
 For implementation correctness we retain the comparison with \texttt{dimod.ExactSolver} at
 CPU-enumerable sizes and independent \texttt{float64} recomputation at benchmark scale. These
 are just correctness checks, not intended to be claims about comparative performance against every exact method.
@@ -667,7 +676,8 @@ payload/discard task returns under local, remote and mixed placement & R2.2, R3.
 New paragraph on the cost and effect of double precision & R2.5 \\
 Targeted dSB/SA comparison across four families reported, with certified gaps and timings & R1.2 \\
 New paragraph \emph{A rugged family where certification is decisive} and new Fig.~2 ---
-paired planted/unplanted Wishart arms; the heuristic misses at small $\alpha$ & R1.2 \\
+paired planted/unplanted Wishart arms; the heuristic misses at small $\alpha$; per-instance
+time-to-solution at the two hardest points & R1.2 \\
 COO reader replaced by an exact parser; the known offset in three stored records documented & own re-check via R2.5 \\
 Measured BINARY/SPIN runtime ratio & R3.4 \\
 New paragraph defining what the reported wall-clock times include and exclude & R2.2 \\

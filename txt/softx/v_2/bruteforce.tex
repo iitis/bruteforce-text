@@ -830,19 +830,39 @@ than a single $7$--$9$\,s dSB run. The deterministic paired generator, all $280$
 and the raw records ship with the article, and the planted arm is re-checkable without a GPU
 against the analytic optimum (Sec.~\ref{sec:reproduction}).
 
+Figure~\ref{fig:wishart}b quantifies what relying on the heuristic costs where it
+struggles. Repeating dSB one hundred times per instance, with independent seeds and the
+unchanged per-run budget, gives every instance its own success probability $p_i$ and hence a
+time-to-solution $\mathrm{TTS}_{99}(i)=t_{\mathrm{run}}\lceil\ln 0.01/\ln(1-p_i)\rceil$,
+compared against from-scratch \texttt{float64} certification of the same instance. At
+$\alpha=0.3$ every instance is solved eventually, yet certification is $24$--$354\times$
+faster (medians $122\times$ planted, $146\times$ unplanted); at $\alpha=0.2$, $26$ of the
+$40$ instances are never solved at all, and granting them the most optimistic success rate
+their one hundred attempts allow still leaves certification at least $\approx\!600\times$
+faster --- the instances that are solved fare no better, reaching $D_i\approx1800\times$.
+The comparison uses the shipped implementations under their documented budgets ($8.4$\,s
+per CPU attempt, $2.1$\,s per \texttt{float64} certificate on one H100), so the ratios
+rescale trivially for a faster heuristic implementation.
+
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.85\textwidth]{wishart.pdf}
-\caption{Fraction of \emph{unplanted} Wishart instances on which a single run of the shipped
-    dSB heuristic, under the budgets of Table~\ref{tab:multisolver}, reaches the certified
-    optimum, as a function of the ruggedness parameter $\alpha=M/N$ at $N=40$. The optima of
-    these instances are known only because exhaustive search found them: every certificate
-    lies strictly above the analytic lower bound, and the paired planted arm of the
-    experiment (not shown) yields statistically indistinguishable counts while its
-    certificates match the closed-form $E_0$ exactly. Twenty instances per $\alpha$, one run
-    each; error bars are $95\%$ Wilson intervals for the per-instance success probability,
-    and each point is annotated with its count. Exhaustive certification costs
-    $\approx\!2$\,s per instance throughout.}
+\includegraphics[width=\textwidth]{wishart.pdf}
+\caption{(a) Fraction of Wishart instances on which a single run of the shipped dSB
+    heuristic, under the budgets of Table~\ref{tab:multisolver}, reaches the certified
+    optimum, versus the ruggedness parameter $\alpha=M/N$ at $N=40$; twenty instances per
+    $\alpha$ and arm, one run each, error bars are $95\%$ Wilson intervals for the
+    per-instance success probability. The paired arms track each other, so the difficulty
+    is not a planting artifact --- and the unplanted optima are known only because
+    exhaustive search found them, every certificate lying strictly above the analytic lower
+    bound. (b) The per-instance cost of relying on the heuristic at the two hardest points:
+    $D_i=\mathrm{TTS}_{99}(i)/T_{\mathrm{BF64}}$ from one hundred independently seeded runs
+    per instance, with median $t_{\mathrm{run}}=8.4$\,s per CPU attempt against
+    $T_{\mathrm{BF64}}=2.1$\,s of \texttt{float64} certification on one H100 ---
+    method-specific budgets of the shipped implementations, stated so that the ratio can be
+    rescaled. Open triangles: instances never solved in one hundred attempts, placed at the
+    smallest $D_i$ their repeat count permits (one-sided $95\%$ Clopper--Pearson bound);
+    vertical bars: row medians. Every instance sits two to three orders of magnitude to the
+    right of $D_i=1$, where the heuristic would be the faster route to a certified answer.}
 \label{fig:wishart}
 \end{figure}
 
@@ -1013,9 +1033,11 @@ copied before an intentional repeat if both runs are to be retained.
 \begin{longtable}{|p{4.2cm}|p{5.3cm}|p{2.0cm}|}
 \caption{Launchers provided for reproducing the reported results, in the order in
 which \texttt{scripts/run\_all.sh} executes them; each is the script
-\texttt{scripts/run\_<name>.sh}, except \texttt{preflight}. Costs are for
+\texttt{scripts/run\_<name>.sh}, except \texttt{preflight}, and the CPU-bound
+\texttt{e9b\_wishart\_tts} sweep is launched separately. Costs are for
 H100-class GPUs, measured on the runs reported in this paper, and are dominated by the
-exhaustive searches themselves; the whole set without the figure is an overnight job.
+exhaustive searches themselves; the whole set without the figure and the separate
+\texttt{e9b} sweep is an overnight job.
 \texttt{manuscript\_figure} re-draws the figure in seconds when the published
 results are present, since it skips sizes that already have a result file;
 regenerating them from scratch is the only multi-day item, because $N=58$ alone
@@ -1057,7 +1079,10 @@ placement across one node boundary & 5\,min, 2 nodes \\
 coupling families & 18\,min, 1 GPU \\
 \hline
 \texttt{e9\_wishart} & dSB against certified and analytic optima on the rugged
-Wishart family, planted and unplanted (Fig.~\ref{fig:wishart}) & 1\,h, 1 GPU \\
+Wishart family, planted and unplanted (Fig.~\ref{fig:wishart}a) & 1\,h, 1 GPU \\
+\hline
+\texttt{e9b\_wishart\_tts} & per-instance time-to-solution of the heuristic at the
+two hardest Wishart points (Fig.~\ref{fig:wishart}b) & 19\,h, CPU \\
 \hline
 \texttt{e4\_precision} & \texttt{float32} against \texttt{float64} on the
 ground-state path & 6\,min, 1 GPU \\
