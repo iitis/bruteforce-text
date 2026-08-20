@@ -1,7 +1,7 @@
 \documentclass[preprint,12pt,a4paper]{elsarticle}
 %DIF LATEXDIFF DIFFERENCE FILE
-%DIF DEL ../v_1/bruteforce.tex   Tue Aug 18 12:08:01 2026
-%DIF ADD bruteforce.tex          Wed Aug 19 22:40:51 2026
+%DIF DEL ../v_1/bruteforce.tex   Thu Aug 20 11:15:53 2026
+%DIF ADD bruteforce.tex          Thu Aug 20 11:58:48 2026
 
 \usepackage{amssymb}
 \usepackage{float}
@@ -799,39 +799,26 @@ may grow with the number of subproblems}\DIFaddend .
 \end{figure}
 
 \paragraph{Precision of the reported energies}
-Because the GPU backend operates in \texttt{float32} on the fast ground-state
-path, returned energies are subject to incremental-update roundoff. We \DIFaddbegin \DIFadd{therefore
-}\DIFaddend re-evaluate the energy of \DIFdelbegin \DIFdel{each }\DIFdelend \DIFaddbegin \DIFadd{every }\DIFaddend returned spin configuration from scratch in
-\texttt{float64}. \DIFdelbegin \DIFdel{For the largest measured instances ($N=56,58,60$), the
-absolute deviation between reported and recomputed energies stays below $4\times 10^{-6}$ for }\DIFdelend \DIFaddbegin \DIFadd{Across all twenty measured runs the roundoff of the
-}\texttt{\DIFadd{float32}} \DIFadd{accumulator, obtained as the deviation between the reported and
-the recomputed energy, stays below $1\times 10^{-5}$ in every run --- at most
-$8.4\times 10^{-6}$, at $N=54$; at the largest size, $N=60$, it is
-$6.4\times 10^{-6}$. Against }\DIFaddend energies of magnitude $\mathcal{O}(10^{2})$ \DIFdelbegin \DIFdel{,
-roughly }\DIFdelend \DIFaddbegin \DIFadd{this
-amounts to about }\DIFaddend eight significant digits, consistent with the expected accuracy
-of the stabilized \texttt{float32} accumulator. \DIFdelbegin \DIFdel{Using the same recomputation, we }\DIFdelend \DIFaddbegin \DIFadd{Three stored records ($N=46$,
-$58$ and $60$) additionally contain a second, exactly known offset that is not
-roundoff: the COO reader used at measurement time silently dropped the one
-coupling of each of those instances whose magnitude lies below $10^{-4}$, so the
-kernel enumerated a Hamiltonian differing from the one on disk by a single term
-of up to $2.7\times 10^{-5}$. The returned configurations are unaffected --- they
-match the optima of the full Hamiltonians, confirmed bit for bit by the
-independent }\DIFaddend cross-check \DIFdelbegin \DIFdel{an SBM run on
-the same instances: a 
-simulated bifurcation solver
-running on a single }\DIFdelend \DIFaddbegin \DIFadd{below --- and the roundoff figures above remove this
-documented term; the reproduction package now parses the instance files exactly. The returned configuration is an exact bit string, and its energy can be
-recomputed to }\texttt{\DIFadd{float64}} \DIFadd{accuracy by the caller at negligible cost, which is what we do
-throughout. In every cross-check reported here the finite-precision deviation leaves the
-selected state unchanged. Recomputing only that selected state cannot, however, prove that an
-unretained, near-degenerate state was never misordered earlier in the floating-point search.
-The benchmark results are therefore empirically cross-validated exhaustive-search minima; a
-formal numerical certificate for arbitrary real coefficients would require exact or interval
-arithmetic, or an error bound smaller than the gap to every competing state.
-}
-
-\DIFadd{The two samplers also provide an independent check of the decomposition itself,
+\DIFdelbegin \DIFdel{Because the GPU backend operates in }\texttt{\DIFdel{float32}} %DIFAUXCMD
+\DIFdel{on the }\DIFdelend \DIFaddbegin \DIFadd{The }\DIFaddend fast ground-state path \DIFdelbegin \DIFdel{, returned energies are subject to incremental-update roundoff. We
+re-evaluate the energy of each returned spin }\DIFdelend \DIFaddbegin \DIFadd{uses }\texttt{\DIFadd{float32}}\DIFadd{, so we recompute every returned
+}\DIFaddend configuration from scratch in \texttt{float64}. \DIFdelbegin \DIFdel{For the largest measured instances ($N=56,58,60$), the
+absolute deviation between reported and recomputed energies stays below
+}\DIFdelend \DIFaddbegin \DIFadd{After excluding known input-parsing
+offsets, the accumulator deviation remains below $10^{-5}$ across all twenty
+measured runs: at most $8.4\times10^{-6}$, and $6.4\times10^{-6}$ at $N=60$,
+corresponding to about eight significant digits for energies of magnitude
+$\mathcal{O}(10^2)$. Care is required with the }\texttt{\DIFadd{dimod.serialization.coo}}
+\DIFadd{reader used for the original timing measurements, which omitted coefficients written
+in exponent notation. This affected one coupling in each of the $N=46$, $58$,
+and $60$ records, producing offsets of at most $2.7\times10^{-5}$ but leaving the
+selected configurations unchanged, as confirmed by independent cross-checks. The
+reproduction package now uses a custom parser that preserves every coefficient.
+Although recomputation provides an accurate energy for the returned state,
+it cannot formally exclude floating-point misordering of an unretained
+near-degenerate state; our minima are therefore empirically cross-validated rather
+than formal numerical certificates for arbitrary real coefficients.
+The two samplers also provide an independent check of the decomposition itself,
 since at the eight sizes where both are feasible ($N=40,\dots,54$) they solve the
 same instances by different routes: a single sweep over $2^{N}$ configurations on
 one device, against eight independent sweeps over $2^{N-3}$ configurations each.
@@ -843,30 +830,32 @@ changes the wall-clock cost of the search, not its outcome.
 
 \paragraph{\DIFadd{Cost and effect of double precision}}
 \DIFadd{Because the fast path is the single-precision one, it is fair to ask what the alternative
-costs. Repeating the ground-state search at $N=40,\dots,46$ in both precisions on one }\DIFaddend H100
-\DIFdelbegin \DIFdel{GPU with $2^{12}=4096$ parallel samples and }\DIFdelend \DIFaddbegin \DIFadd{gives an unexpected answer. Excluding the $N=40$ warm-up outlier, }\texttt{\DIFadd{float64}} \DIFadd{is only
+costs. Repeating the ground-state search at $N=40,\dots,46$ in both precisions on one H100
+gives an unexpected answer. Excluding the $N=40$ warm-up outlier, }\texttt{\DIFadd{float64}} \DIFadd{is only
 $2.0$--$2.3\%$ slower than }\texttt{\DIFadd{float32}} \DIFadd{(ratios of $1.02$ at
 $N=42,44,46$), and both precisions return the same configuration at every size. The small timing difference suggests that the enumeration is not limited by floating-point
 throughput but by the memory traffic and integer bookkeeping of the Gray-code sweep, so on
 this hardware single precision buys working-set size rather than speed.
-}
-
-\DIFadd{The compensated updates and the re-anchoring are enabled for }\texttt{\DIFadd{float32}} \DIFadd{only, so the
+The compensated updates and the re-anchoring are enabled for }\texttt{\DIFadd{float32}} \DIFadd{only, so the
 double-precision path runs unstabilized. In the measured range that is empirically
 inconsequential: the }\texttt{\DIFadd{float64}} \DIFadd{accumulator stays within $10^{-13}$ of the from-scratch
-recomputation at every size up to $N=46$, against $1$--$4\times 10^{-6}$ for stabilized
-}\texttt{\DIFadd{float32}}\DIFadd{. (An earlier revision of this experiment showed an apparent }\texttt{\DIFadd{float64}}
+recomputation at every size up to $N=46$, against $1$--}\DIFaddend $4\times 10^{-6}$ for \DIFdelbegin \DIFdel{energies of magnitude $\mathcal{O}(10^{2})$, roughly eight significant digits, consistent with the expected accuracy of the }\DIFdelend stabilized
+\DIFaddbegin \texttt{\DIFadd{float32}}\DIFadd{. (An earlier revision of this experiment showed an apparent }\texttt{\DIFadd{float64}}
 \DIFadd{drift of $2.7\times 10^{-5}$ at $N=46$; it was exactly the dropped-coupling offset documented
 above, not accumulation error.) Whether the unstabilized double-precision accumulator stays
 clean at larger $N$ is unmeasured, which is why extending the stabilization to that path
 remains listed as future work. The practical guidance is unchanged: one should use the default
 }\texttt{\DIFadd{float32}} \DIFadd{path with its stabilization and, when a certified numerical value is wanted,
-recompute the energy of the returned configuration in }\texttt{\DIFadd{float64}} \DIFadd{on the host, as done
+recompute the energy of the returned configuration in }\DIFaddend \texttt{\DIFdelbegin \DIFdel{float32}\DIFdelend \DIFaddbegin \DIFadd{float64}\DIFaddend } \DIFdelbegin \DIFdel{accumulator.
+}\DIFdelend \DIFaddbegin \DIFadd{on the host, as done
 throughout this paper.
 }
 
 \paragraph{\DIFadd{Verification against a simulated-bifurcation solver}}
-\DIFadd{Using the same recomputation we cross-check, on the identical instances, the heuristic whose
+\DIFaddend Using the same recomputation \DIFdelbegin \DIFdel{,
+}\DIFdelend we cross-check\DIFdelbegin \DIFdel{an SBM run on the same instances: a 
+simulated bifurcation solver
+running on a single H100 GPU with $2^{12}=4096$ parallel samples and }\DIFdelend \DIFaddbegin \DIFadd{, on the identical instances, the heuristic whose
 answers a certifying solver is meant to validate: a discrete simulated-bifurcation solver
 (dSB), which we distribute with this article as }\texttt{\DIFadd{benchmarks/sbm.py}}\DIFadd{. It integrates all
 replicas simultaneously, so one step is a single dense
