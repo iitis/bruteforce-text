@@ -132,25 +132,16 @@ DOI: \url{https://doi.org/10.1016/j.softx.2023.101559}.
 \section*{Metadata}
 \label{metadata}
 
-% TODO(authors): verify before submission that release 0.0.6 (referenced in
-% C1/C2/S1/S2 below) is tagged and on PyPI: it must contain the LICENSE file,
-% the pyproject license metadata and the SPDX headers backing C3/S3, all of
-% which are merged from lp/add-docs and lp/better-merge.
-% TODO(authors): C7 -- the linked documentation redirects to version 0.0.3, has
-% no content about this plugin and contains dead links; the plugin's own
-% mkdocs.yml references docs/userguide.md and docs/plugins.md, which do not
-% exist, so its build is broken.  Either publish the plugin documentation and
-% point C7/S6 at it, or point C7 at a page that is actually useful.
 \begin{table}[H]
 \setlength{\tabcolsep}{4pt}
 \begin{tabular}{|l|p{5.6cm}|p{6.4cm}|}
 \hline
 \textbf{Nr.} & \textbf{Code metadata description} & \textbf{Value} \\
 \hline
-C1 & Current code version & 0.0.6 \\
+C1 & Current code version & 0.0.7 \\
 \hline
 C2 & Permanent link to code/repository used for this code version &
-\url{https://github.com/euro-hpc-pl/omnisolver-bruteforce/releases/tag/0.0.6} \\
+\url{https://github.com/euro-hpc-pl/omnisolver-bruteforce/releases/tag/0.0.7} \\
 \hline
 C3 & Legal Code License & Apache License 2.0 \\
 \hline
@@ -520,10 +511,10 @@ above are recomputed from those two sets of raw timings.
 The search phase itself involves no inter-worker communication: each of the
 $2^{k}$ subproblems is an independent Ray task that fixes its own variables, runs
 the CUDA search over the remaining $N-k$ and returns only the requested
-\texttt{num\_states} samples. The single point of centralization is the
-controller, which retrieves the $2^{k}$ partial sample sets and merges them into
-one. Whether that centralization limits the decomposition is a fair question, and part of it can be
-answered without a large allocation: the number of subproblems is set by
+\texttt{num\_states} samples. All $2^{k}$ partial sample sets are received by the controller
+which then merges them into one. Naturally, one has to ask if synchronization happening
+on the controller limits the decomposition. Partial answer can be
+given without a large allocation: the number of subproblems is set by
 \texttt{num\_fixed\_vars} and is independent of the number of devices, so the controller can be
 driven on a CPU alone with the partial results that workers would have returned.
 Table~\ref{tab:controller} reports that measurement for $2^{k}$ subproblems with $k$ up to
@@ -531,15 +522,13 @@ $16$, comparing the direct merge --- collect every partial result on the control
 concatenate once --- with a hierarchical merge performed by a tree of Ray tasks, and both
 against the floor set by Ray's task scheduling alone.
 
-It is worth emphasising what this does and does not cover. Running on one machine,
-every partial result is local and every task is scheduled by the local raylet, so the numbers
-contain merge arithmetic and local scheduling but no inter-node transfer. They are therefore a
-lower bound on controller cost at a given $P$, not an estimate of the total: a real allocation
-would additionally move result bytes across the fabric and place scheduling load on a shared
-head node. Within that bound, three things follow. First, the direct merge grows essentially
-linearly in the number of subproblems, as expected for sequential concatenation: a log--log fit
-to the measured points gives $O(P^{0.99})$ over four decades, rather than the logarithmic
-scaling that a tree reduction would exhibit. Second, merge arithmetic is not the limiting local component: at
+Note that this comparison provides only a lower bound on the total controller cost.
+Indeed, a real allocation of tasks would add cost of exchanging data over the network and
+of a scheduling happening on the shared head node. Within that bound, three things follow. 
+First, the direct merge grows essentially linearly in the number of subproblems, as expected 
+for sequential concatenation: a log--log fit to the measured points gives $O(P^{0.99})$ over 
+four decades, rather than the logarithmic scaling that a tree reduction would exhibit. 
+Second, merge arithmetic is not the limiting local component: at
 $2^{16}=65{,}536$ subproblems concatenation accounts for $2.1$\,s of the $7.4$\,s direct-merge
 measurement. Third, dispatching and collecting $2^{16}$ \emph{empty} tasks already costs
 $5.4$\,s. This is a scheduling floor only; a real payload-bearing task additionally pays for
