@@ -29,7 +29,7 @@ benchmarks/
 ## Launchers
 
 `scripts/` wraps everything below so that a full revision run is a handful of commands. They
-assume a two-node cluster and are **always started from the head node**; the worker is driven
+assume a two-node cluster and are always started from the head node; the worker is driven
 over SSH. Defaults live in `scripts/config.sh` and every one of them can be overridden from
 the environment:
 
@@ -43,7 +43,7 @@ the environment:
 | `SKIP_EXISTING` | `1` | skip a point whose result file already exists |
 
 Prerequisites: passwordless SSH from the head to the worker, and the same environment with the
-plugin installed on **both** nodes — Ray ships no code, so a worker without the package cannot
+plugin installed on both nodes. Ray ships no code, so a worker without the package cannot
 solve a subproblem. `scripts/preflight.sh` checks all of that, and compares the two nodes'
 CUDA, driver and package versions, before any GPU time is spent.
 
@@ -73,11 +73,11 @@ Individually, cheapest first:
 ```
 
 Times are derived from the measured single-GPU point at *N* = 50 (2112 s); `run_all.sh`
-without `--with-figure` therefore takes **roughly 9 to 10 hours**, dominated by E2 and E1.
+without `--with-figure` therefore takes roughly 9 to 10 hours, dominated by E2 and E1.
 
 Each writes a timestamped log to `benchmarks/logs/` and restarts or stops the Ray cluster as
-the experiment requires. Scaling launchers skip completed points, and E6--E8 create
-timestamped, non-overwriting evidence files. The short E3--E5 drivers and verification driver
+the experiment requires. Scaling launchers skip completed points, and E6-E8 create
+timestamped, non-overwriting evidence files. The short E3-E5 drivers and verification driver
 update their documented canonical outputs; copy those files first when retaining repeated runs.
 `run_e1_*` and `run_e2_*` print a speedup/efficiency summary at the end.
 
@@ -218,7 +218,7 @@ two-node layouts.
 
 ### E3 - controller cost (reviewers 2, 3)
 
-Answers "would the merge limit the algorithm at 2^16 workers?" **without** 2^16 GPUs: the
+Answers "would the merge limit the algorithm at 2^16 workers?" without needing 2^16 GPUs: the
 number of subproblems is set by `num_fixed_vars`, not by the device count, so the controller
 can be driven on a CPU with the partial results a worker would have returned. Compares the
 sequential merge used up to release 0.0.5 against the hierarchical one used now, and both
@@ -229,7 +229,7 @@ python benchmarks/exp_controller_cost.py --max-k 14          # minutes, no GPU
 python benchmarks/exp_controller_cost.py --max-k 16          # 2^16 subproblems, needs RAM
 ```
 
-Note what this does **not** measure. Running on one machine, every partial result is fetched
+Note what this does not measure. Running on one machine, every partial result is fetched
 from the local object store and every task is scheduled by the local raylet, so the sweep
 contains no network transfer at all. Its numbers bound the local component of the controller
 cost from below; they are not an estimate of what a real allocation of that size would pay.
@@ -272,7 +272,7 @@ python benchmarks/exp_precision.py --sizes 40 42 44 46
 Note that `float64` is a different numerical path, not merely a slower one: the compensated
 updates and periodic re-anchoring are enabled only for `float32`, and only from 40 variables
 per kernel upwards. On the reported H100 run, excluding the N=40 warm-up outlier, `float64`
-was only 2.9--3.3% slower; consumer GPUs with much lower FP64 throughput can behave
+was only 2.9-3.3% slower; consumer GPUs with much lower FP64 throughput can behave
 differently.
 
 ### E5 - QUBO instances (reviewer 3)
@@ -361,7 +361,7 @@ distribution.
 
 `sbm.py` implements the discrete simulated bifurcation dynamics (dSB) in NumPy: all replicas
 are integrated at once, so a step is one dense `(N, N) @ (N, R)` product and the total cost is
-`O(N^2 * replicas * steps)` — independent of the exponential cost of *certifying* the optimum.
+`O(N^2 * replicas * steps)`, independent of the exponential cost of *certifying* the optimum.
 N = 60 with 4096 replicas and 3000 steps takes well under a minute on a CPU.
 
 ```shell
@@ -373,16 +373,16 @@ on the same instances, and writes the `bf_sbm_verification_*` tables. With `--ch
 acts as a regression gate, exiting non-zero if the heuristic failed to reach the certified
 optimum on any instance.
 
-It reaches the certified optimum on every stored brute-force result — all twenty runs,
-N = 38…60 — returning configurations **identical** to the certified ground states (Hamming
+It reaches the certified optimum on every stored brute-force result, all twenty runs from
+N = 38 to N = 60, returning configurations identical to the certified ground states (Hamming
 distance 0), with energies agreeing to `float64` round-off.
 
 ## Conventions
 
 Instances are `i j value` triples, zero-based, with `i <= j`. A diagonal entry is a linear
 bias, an off-diagonal entry a coupling, and the energy of a spin configuration is
-`E(s) = sum_i h_i s_i + sum_{i<j} J_ij s_i s_j` — exactly how `dimod` reads the same file with
-`vartype="SPIN"`.
+`E(s) = sum_i h_i s_i + sum_{i<j} J_ij s_i s_j`, which is exactly how `dimod` reads the same
+file with `vartype="SPIN"`.
 
 The shipped Fig. 1 instance files are the canonical inputs and `bf.py` preserves them by
 default. The `--seed` option affects files that are actually generated. When files are
