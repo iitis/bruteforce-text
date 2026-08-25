@@ -212,7 +212,7 @@ python benchmarks/exp_weak_scaling.py --topology 2x4        # N=53, k=3
 Roughly 40 minutes per point at 2^50 configurations per GPU.
 
 The top-level E1/E2 JSON files are the second measurement pass quoted in the manuscript. The
-first H100 pass remains in repository history at commit `36a318c`; comparing the two gives a
+first H100 pass remains in repository history at commit `d965e54`; comparing the two gives a
 maximum change of 0.08% for single-node layouts (0.02% in strong scaling) and 1.5% for
 two-node layouts.
 
