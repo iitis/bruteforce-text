@@ -8,8 +8,6 @@
 \usepackage{amssymb}
 \usepackage{xcolor}
 \usepackage{enumitem}
-\usepackage{comment}
-\usepackage{booktabs}
 \PassOptionsToPackage{hyphens}{url}
 \usepackage[colorlinks=true,linkcolor=black,urlcolor=blue,citecolor=black]{hyperref}
 
@@ -17,17 +15,6 @@
 \setlength{\parskip}{0.6em}
 \emergencystretch=3em
 \sloppy
-
-% ---------------------------------------------------------------------------------------
-% Internal notes.
-%
-% These record what still has to happen before a paragraph is truthful, and they must not
-% reach the reviewers. They are excluded by default; switch the line below to
-% \includecomment{internal} only while drafting.
-% ---------------------------------------------------------------------------------------
-\excludecomment{internal}
-\newcommand{\internalhead}{\textcolor{red}{\textbf{[Internal note: remove before
-submission]}}\par\nobreak}
 
 % Quoted reviewer comment.
 \newenvironment{reviewercomment}
@@ -56,16 +43,6 @@ Original Software Publication update)
 \textbf{Authors:} K.~Ja\l{}owiecki, J.~Paw\l{}owski, B.~Gardas, \L{}.~Pawela
 
 \hrule
-
-\begin{internal}
-\internalhead
-All six experiments (E1--E6) have been performed on $8\times$ H100 across two nodes, and their
-results are in the manuscript. What remains is purely administrative: tag release
-\texttt{0.0.6}, deploy the plugin documentation, and make the data repository publicly
-reachable. Statuses are tracked in \texttt{REVIEW\_ANALYSIS.md}~\S0. Set
-\texttt{\textbackslash excludecomment\{internal\}} in the preamble to hide every note like
-this one.
-\end{internal}
 
 \hrule
 
@@ -220,15 +197,6 @@ distributed sweep result underlying Fig.~1, all twenty runs at $N=38,\dots,60$ r
 nine of the submitted version, and on each of them it returns a configuration identical to the
 certified ground state, with energies agreeing to $6\times10^{-14}$.
 
-\begin{internal}
-\internalhead
-This answer requires the article repository to be \textbf{publicly reachable} at the URL given
-by \texttt{\textbackslash datarepo} in the manuscript preamble (or archived with a DOI) at the
-moment of resubmission. Verify before sending. This is the only outstanding item for R2.1:
-\texttt{benchmarks/} now holds a single set of verification tables,
-\texttt{bf\_sbm\_verification\_*}, produced by the shipped solver.
-\end{internal}
-
 \point{R2.2}{While the code achieves near ideal strong scaling for $N \ge 44$, corresponding
 weak scaling tests are absent \dots\ This should help quantify the slowdown associated with the
 controller merge step \dots\ which should ideally scale as the logarithm of processor count
@@ -293,12 +261,6 @@ explicitly.
 used for the reported measurements ($12.4$), together with \texttt{ray >= 2.9}, which is
 required by the distributed sampler.
 \end{itemize}
-
-\begin{internal}
-\internalhead
-S6 (link to user manual) still points at the framework documentation and is contingent on the
-publishing step under R3.7.
-\end{internal}
 
 \point{R2.4}{I couldn't locate \texttt{code/bf.py} in the directory containing the repository
 (C2). This is presumably also available at [omni-bench], but the link doesn't work currently.
@@ -467,19 +429,6 @@ a single version, and S4 records the target architecture of the measurements (NV
 the package metadata (\texttt{license} field) and included in the distribution. C1--C3 and
 S1--S3 refer to the release that contains it.
 
-\begin{internal}
-\internalhead
-The repository work is done (\texttt{LICENSE}, \texttt{pyproject.toml} metadata,
-\texttt{MANIFEST.in}, SPDX headers in 5 files; \texttt{validate-pyproject} passes), but it is
-\textbf{not released yet}. Before sending: (1)~confirm the copyright holder, since the headers
-currently say ``The Omnisolver developers'', the alternative being the institutions;
-(2)~merge \texttt{lp/add-docs} and \texttt{lp/better-merge}, tag \texttt{0.0.6} (the version
-is derived by \texttt{setuptools\_scm}, so the tag is the release) and upload the sdist to
-PyPI. C1, C2, S1, S2 and the contribution list already say \texttt{0.0.6}, so until the tag
-exists and is on PyPI, the paragraph above and those table entries are a promise rather than
-a fact.
-\end{internal}
-
 \point{R3.7}{The documentation linked in C7 is currently almost empty, contains several 404
 errors, and is of little practical use in its current state.}
 
@@ -490,21 +439,6 @@ covering installation, single- and multi-GPU usage, the meaning and selection of
 parameter, the size limits, the precision and stabilization semantics and the reported timings.
 The reference manual is generated from the docstrings, and the build is exercised in continuous
 integration.
-
-\begin{internal}
-\internalhead
-Done in the repository: \texttt{docs/index.md} rewritten; \texttt{docs/userguide.md} written;
-\texttt{mkdocs.yml} repaired (dead \texttt{plugins.md} nav entry, missing
-\texttt{stylesheets/extra.css}, wrong \texttt{repo\_url}, defunct polyfill.io, fragile
-\texttt{with-pdf}); two configuration errors that broke the build on their own fixed (renderer
-options nested under \texttt{docstring\_options}, and a Sphinx dependency stack declared for an
-mkdocs project); \texttt{.readthedocs.yml} removed (it never built, and Read the Docs
-\emph{cannot} build these docs because mkdocstrings imports the compiled CUDA extension),
-replaced by a GitHub Pages workflow using \texttt{mike} on the CUDA-capable runner.
-\texttt{mkdocs build --strict} succeeds. Before sending: run the workflow, put the published
-URL into C7 and S6, and archive or redirect the stale Read the Docs project, since deleting the
-config does not remove the site.
-\end{internal}
 
 \point{R3.8}{There are still a few minor typographical and grammatical errors throughout the
 manuscript. A careful proofreading would help eliminate them.}
