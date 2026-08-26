@@ -75,7 +75,7 @@ and a revised precision analysis. We are particularly grateful to Reviewer~3 for
 that the plugin was already announced in the original publication; acting on that comment led
 us to rewrite the contribution claim from scratch.
 
-Two numbers from the submitted version have changed, and we state them up front:
+Two numbers from the submitted version have changed:
 
 \begin{enumerate}[leftmargin=*]
 \item \textbf{Speedup.} The parallel-efficiency table requested by Reviewer~1 gives $43\%$
@@ -113,7 +113,7 @@ local controller components and identifies plausible limits (see R2.2), and it c
 pointing back to that caveat.
 \end{itemize}
 
-The projection now rests on measurement rather than on argument. Table~5 reports the
+The projection is now backed by measurement. Table~5 reports the
 controller cost up to $2^{16}$ subproblems, $7.4$~s merging directly and $3.8$~s
 hierarchically, of which the merge \emph{arithmetic} is only $2.1$~s; that measurement runs on
 one machine, so it bounds the local component from below rather than estimating the total, as
@@ -122,8 +122,8 @@ size, giving $2.00\times$ on two GPUs, $3.99\times$ on four and $7.86\times$ on 
 $98.2\%$ parallel efficiency, with weak scaling flat to within $0.2\%$; the whole series was
 measured twice, on separate days.
 
-What remains extrapolated is behavior beyond eight devices and beyond one node boundary.
-\emph{Limitations and intended scope} now closes on exactly that.
+What remains extrapolated is behavior beyond eight devices and beyond one node boundary,
+which is what \emph{Limitations and intended scope} now states.
 
 \point{R1.2}{The paper positions the plugin as a ground-truth oracle and briefly checks results
 against SBM, but it does not provide a broad benchmark against multiple exact or heuristic
@@ -156,7 +156,7 @@ and instance hashes are in
 \path{benchmarks/results/multi_solver/run_20260816_125511.json}, produced by
 \texttt{benchmarks/exp\_multi\_solver.py}.
 
-The revision also adds the complementary case, a family on which the heuristic \emph{fails}.
+We also added the complementary case, a family on which the heuristic \emph{fails}.
 On the Wishart ensemble (Hamze et al., Phys.\ Rev.\ E \textbf{101}, 052102 (2020)) we run two
 paired arms: \emph{unplanted} instances, whose optimum is certified only by enumeration, and
 \emph{planted} ones, whose closed-form $E_0$ anchors the certificates. Under the same dSB
@@ -168,9 +168,9 @@ only because brute force found them. The planted arm gives statistically indisti
 counts, so the difficulty is not a planting artifact, and it also checks the pipeline against
 references independent of both solvers: all $140$ planted certificates match the analytic
 $E_0$ to $7\times10^{-15}$, and all $140$ unplanted ones lie strictly above the analytic lower
-bound. This is the plugin's intended role made concrete (new paragraph \emph{A rugged family
-where certification is decisive}; driver \texttt{benchmarks/exp\_wishart.py}, launcher
-\texttt{run\_e9\_wishart.sh}, re-checkable without a GPU on the planted arm).
+bound. The new paragraph \emph{A rugged family where certification is decisive} presents this,
+with driver \texttt{benchmarks/exp\_wishart.py} and launcher
+\texttt{run\_e9\_wishart.sh}; the planted arm is re-checkable without a GPU.
 
 Fig.~2(b) quantifies what relying on the heuristic costs there. One hundred independently
 seeded dSB runs per instance at the two hardest points give each instance a success
@@ -181,8 +181,8 @@ even under the most optimistic success rates the data allow. The caption states 
 per-attempt and certification times, so the ratios rescale for a faster implementation.
 
 For implementation correctness we retain the comparison with \texttt{dimod.ExactSolver} at
-CPU-enumerable sizes and independent \texttt{float64} recomputation at benchmark scale, as
-correctness checks rather than claims about comparative performance.
+CPU-enumerable sizes and independent \texttt{float64} recomputation at benchmark scale; these
+are correctness checks, not claims about comparative performance.
 
 \point{R1.3}{The paper claims near-ideal speedup, but does not explicitly calculate or report
 parallel efficiency.}
@@ -211,7 +211,7 @@ $N$ & $t_1$ [s] & $t_8$ [s] & $S$ & $E$ \\
 \end{tabular}
 \end{center}
 
-The table dates the full $\approx\!8\times$ speedup from $N=52$ rather than from
+The table dates the full $\approx\!8\times$ speedup from $N=52$ and not from
 $N \gtrsim 44$, and the abstract, \emph{Architecture}, \emph{Performance} and the caption of
 Fig.~1 now say so. Below the crossover the decomposition is dominated by fixed overheads; at
 $N=40$ the eight-way split is $2.1\times$ \emph{slower} than a single GPU, which the revision
@@ -219,7 +219,7 @@ states explicitly as the reason the single-GPU sampler remains the right choice 
 
 The value at $N=54$ is reported as measured ($E=100.1\%$), with a sentence noting that it lies
 within the run-to-run variability of these single-run timings and should be read as ideal
-rather than superlinear scaling. The revision also documents why the $N=40$ row overstates the
+rather than superlinear scaling. We also document why the $N=40$ row overstates the
 efficiency: being the first measurement of its sweep, $t_1$ there includes the one-off creation
 of the CUDA context, and drops from $2.74$~s to $2.11$~s when re-measured after a warm-up.
 
@@ -229,7 +229,7 @@ of the CUDA context, and drops from $2.74$~s to $2.11$~s when re-measured after 
 used for verification currently doesn't work. So, this section should contain the updated
 link.}
 
-\textbf{The data now ships with the article rather than in a separate repository.} The
+\textbf{The data now ships with the article itself.} The
 instances, the raw per-run results and the verification tables all live in the article
 repository under \texttt{benchmarks/}:
 
@@ -309,7 +309,7 @@ given $P$, covering the arithmetic and the local scheduling, and the manuscript 
 the text and the table caption.
 \item \textbf{Empty-task scheduling already exceeds both.} With no network involved,
 dispatching and collecting $2^{16}$ \emph{empty} tasks costs $5.4$~s, more than the entire
-hierarchical merge. This is a scheduling floor rather than the total cost of a payload-bearing
+hierarchical merge. That is a scheduling floor, not the total cost of a payload-bearing
 task, which additionally pays serialization, delivery and materialization; task grouping is
 therefore listed as future work, without claiming that scheduling alone sets the
 large-allocation ceiling.
@@ -326,8 +326,8 @@ after \texttt{ray.get} has materialized every result; matched tasks receive the 
 and construct the same payload, but only one returns it, and local, remote and mixed
 placements are measured with every repetition retained. The remote-minus-local difference
 between the payload-minus-discard contrasts is our observable for the node-boundary effect.
-Since the measurement follows Ray's ordinary task-return path rather than forcing a particular
-storage mechanism, it does not separately identify serialization, transport, scheduling or
+Since the measurement follows Ray's ordinary task-return path and does not force a particular
+storage mechanism, it cannot separately identify serialization, transport, scheduling or
 materialization, and we neither fold it into Table~5 nor extrapolate it to thousands of
 raylets.
 
@@ -347,7 +347,7 @@ the concatenation is cheap enough that performing it in remote tasks merely adds
 scheduling; both strategies ship in the plugin and the released sampler selects between them on
 that measured threshold.
 
-The revision also defines what the reported times measure. For the single-GPU sampler the timer
+We have also defined what the reported times measure. For the single-GPU sampler the timer
 brackets the CUDA search itself, excluding host-side assembly of the QUBO matrix and decoding
 of the returned configurations; for the distributed sampler it brackets subproblem dispatch and
 completion of every subproblem search, excluding the final merge, which is now reported
@@ -368,8 +368,8 @@ software metadata table.}
 
 \begin{itemize}[leftmargin=*]
 \item \textbf{S2}: the PyPI distribution is a source archive only, so the ``executables'' are
-compiled at installation time against the user's CUDA Toolkit. We state this in the table
-rather than leaving it implicit.
+compiled at installation time against the user's CUDA Toolkit, which the table states
+explicitly.
 \item \textbf{S5}: lists the CUDA Toolkit version used in continuous integration and the one
 used for the reported measurements ($12.4$), together with \texttt{ray >= 2.9}, which is
 required by the distributed sampler.
@@ -402,7 +402,7 @@ $N=40,\dots,46$ in both precisions on one H100 gives, after excluding the $N=40$
 outlier, a \texttt{float64} penalty of only $2.0$--$2.3\%$ (ratios of $1.02$ at
 $N=42,44,46$), with both precisions returning the same configuration at every size. The
 enumeration is bound by memory traffic and integer bookkeeping rather than by floating-point
-throughput, so on this hardware single precision buys working-set size rather than speed, and
+throughput, so on this hardware single precision buys working-set size, not speed, and
 the \emph{Architecture} paragraph now says so.
 
 Three code defects along the same path have been fixed. The SPIN$\,\to\,$BINARY recursion in
@@ -505,14 +505,14 @@ within $0.08\%$ across both sweeps ($0.02\%$ in the strong-scaling half) and two
 moving by up to $1.5\%$, which places both figures inside the repeatability of two-node
 timings. A single node boundary therefore changes full-solver wall-clock time by less than we
 can resolve, with the $1.5\%$ set by that repeatability rather than by any systematic effect.
-This is consistent with the absence of inter-worker communication during the search, and
-localizes the variability to the two-node/second-host path rather than to a particular
+That is consistent with the absence of inter-worker communication during the search, and
+localizes the variability to the two-node/second-host path, not to a particular
 mechanism. The top-level E1/E2 result files contain the quoted second pass, and the first H100
 pass is retained in the article repository history at commit \texttt{d965e54}.
 
 \emph{More than two nodes} is the one question our hardware cannot settle: two nodes with four
 H100s each on standard Ethernet is the entire cluster available to us. \emph{Limitations and
-intended scope} closes on that, and extending the study past two node boundaries is now one of
+intended scope} states that, and extending the study past two node boundaries is now one of
 the stated next steps in the conclusions, since a return-path effect or an effect below our
 $1.5\%$ bound could still compound over many boundaries.
 
