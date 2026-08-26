@@ -52,11 +52,11 @@ and a revised precision analysis. We are particularly grateful to Reviewer~3 for
 that the plugin was already announced in the original publication. Acting on that comment led
 us to rewrite the contribution claim from scratch.
 
-Two numbers from the submitted version have changed:
+Two numerical results from the submitted version have changed:
 
 \begin{enumerate}[leftmargin=*]
-\item \textbf{Speedup.} The parallel-efficiency table requested by Reviewer~1 gives $43\%$
-efficiency at $N=44$, so the ideal $8\times$ speedup is now dated from $N=52$: the two samplers
+\item \textbf{Speedup.} The parallel-efficiency table requested by Reviewer~1 shows $43\%$
+efficiency at $N=44$, so the ideal $8\times$ speedup is now claimed from $N=52$: the two samplers
 cross between $N=40$ and $N=42$, efficiency exceeds $90\%$ from $N=48$, and saturates from
 $N=52$ onwards.
 \item \textbf{Precision.} The verification tables cover $N=40,\dots,54$ (single-GPU) and $N=60$
@@ -79,7 +79,7 @@ Three changes:
 
 \begin{itemize}[leftmargin=*]
 \item The projection target is now $2^{14}=16{,}384$ GPUs rather than $2^{16}$, which is the
-scale we can defend as within reach of current leadership-class systems. The revised paragraph
+scale we can safely assume as within reach of current leadership-class systems. The revised paragraph
 gives $N=60$ in $\approx\!2.2$~min and $N=64$ in $\approx\!35$~min at $2^{14}$ GPUs, with a
 one-month budget reaching $N \lesssim 74$. $2^{16}$ now appears only as an explicitly
 hypothetical bound, with the observation that quadrupling the resources buys two variables.
@@ -130,7 +130,7 @@ only because brute force found them, while certification takes seconds. A paired
 with a closed-form $E_0$ gives indistinguishable counts, so the difficulty is not a planting
 artifact, and its certificates match the analytic $E_0$ to $7\times10^{-15}$. Fig.~2(b) puts
 certification two to three orders of magnitude ahead in time-to-solution at the two hardest
-points. All of this is the new Fig.~2 and the paragraph \emph{A rugged family where
+points. These results constitute the new Fig.~2 and the paragraph \emph{A rugged family where
 certification is decisive}.
 
 For implementation correctness we retain the comparison with \texttt{dimod.ExactSolver} at
@@ -145,7 +145,8 @@ Table~3 of the revision reports the speedup $S=t_1/t_8$ and the efficiency $E=S/
 size, computed from the raw result files, since both samplers ran on identical instances. It
 dates the full $\approx\!8\times$ speedup from $N=52$ and not from $N \gtrsim 44$: efficiency
 is $43\%$ at $N=44$, exceeds $90\%$ from $N=48$ and saturates from $N=52$ on. The abstract,
-\emph{Architecture}, \emph{Performance} and the Fig.~1 caption now say so. Below the crossover
+\emph{Architecture}, \emph{Performance} and the Fig.~1 caption now contain exactly this claim.
+Below the crossover
 fixed overheads dominate, and the eight-way split at $N=40$ is $2.1\times$ \emph{slower} than a
 single GPU, which is why the single-GPU sampler remains the right choice there.
 
@@ -234,7 +235,7 @@ fold it into Table~5 nor extrapolate it to thousands of raylets. The record ship
 \path{benchmarks/results/boundary_cost/2x1_production_20260816T122920_076038Z.json}.
 
 That uncertainty is the architectural case for hierarchical reduction, which leaves the
-controller receiving one object instead of $P$. We have implemented it. It overtakes the direct
+controller receiving one object instead of $P$. We have implemented it, and it overtakes the direct
 merge only from $P=64$ upwards, since below that the concatenation is cheap enough that
 performing it in remote tasks merely adds scheduling rounds, and the released sampler selects
 between the two on that measured threshold.
