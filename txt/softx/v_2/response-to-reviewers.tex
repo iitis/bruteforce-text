@@ -72,7 +72,7 @@ this one.
 We thank all three reviewers for a careful and constructive reading. The revision reframes the
 contribution, adds five tables, a section on reproducing the results, several new paragraphs
 and a revised precision analysis. We are particularly grateful to Reviewer~3 for pointing out
-that the plugin was already announced in the original publication; acting on that comment led
+that the plugin was already announced in the original publication. Acting on that comment led
 us to rewrite the contribution claim from scratch.
 
 Two numbers from the submitted version have changed:
@@ -115,11 +115,11 @@ pointing back to that caveat.
 
 The projection is now backed by measurement. Table~5 reports the
 controller cost up to $2^{16}$ subproblems, $7.4$~s merging directly and $3.8$~s
-hierarchically, of which the merge \emph{arithmetic} is only $2.1$~s; that measurement runs on
+hierarchically, of which the merge \emph{arithmetic} is only $2.1$~s. That measurement runs on
 one machine, so it bounds the local component from below rather than estimating the total, as
 the text and caption state. Table~4 measures every GPU count and node layout at fixed problem
 size, giving $2.00\times$ on two GPUs, $3.99\times$ on four and $7.86\times$ on eight, i.e.\
-$98.2\%$ parallel efficiency, with weak scaling flat to within $0.2\%$; the whole series was
+$98.2\%$ parallel efficiency, with weak scaling flat to within $0.2\%$. The whole series was
 measured twice, on separate days.
 
 What remains extrapolated is behavior beyond eight devices and beyond one node boundary,
@@ -143,7 +143,7 @@ heuristic mechanisms on each against the exhaustive certificate: dSB with $4096$
 $3000$ integration steps, seed 42 and \texttt{float64} dynamics, and
 \texttt{dwave.samplers.SimulatedAnnealingSampler} with $4096$ reads, $3000$ sweeps, a geometric
 inverse-temperature schedule and deterministic seeds $420000,\dots,420019$. These are
-method-specific budgets; we do not equate a dSB integration step with an SA sweep.
+method-specific budgets, and we do not equate a dSB integration step with an SA sweep.
 
 Both heuristics reached a certified optimum on \textbf{all twenty instances}, with the selected
 state identical to the stored certificate on seventeen instances for dSB and sixteen for SA.
@@ -151,7 +151,7 @@ Every differing state occurs in the bimodal family at the same integer energy, s
 degenerate ground states rather than optimization failures, and independent \texttt{float64}
 evaluation places each selected energy within $3.2\times10^{-13}$ of the certificate. The new
 Table~6 reports optimum hits and median wall time by family, both heuristics having been rerun
-sequentially by the same E8 driver on one CPU host; the complete states, seeds, gaps, timings
+sequentially by the same E8 driver on one CPU host. The complete states, seeds, gaps, timings
 and instance hashes are in
 \path{benchmarks/results/multi_solver/run_20260816_125511.json}, produced by
 \texttt{benchmarks/exp\_multi\_solver.py}.
@@ -170,7 +170,7 @@ references independent of both solvers: all $140$ planted certificates match the
 $E_0$ to $7\times10^{-15}$, and all $140$ unplanted ones lie strictly above the analytic lower
 bound. The new paragraph \emph{A rugged family where certification is decisive} presents this,
 with driver \texttt{benchmarks/exp\_wishart.py} and launcher
-\texttt{run\_e9\_wishart.sh}; the planted arm is re-checkable without a GPU.
+\texttt{run\_e9\_wishart.sh}. The planted arm is re-checkable without a GPU.
 
 Fig.~2(b) quantifies what relying on the heuristic costs there. One hundred independently
 seeded dSB runs per instance at the two hardest points give each instance a success
@@ -181,7 +181,7 @@ even under the most optimistic success rates the data allow. The caption states 
 per-attempt and certification times, so the ratios rescale for a faster implementation.
 
 For implementation correctness we retain the comparison with \texttt{dimod.ExactSolver} at
-CPU-enumerable sizes and independent \texttt{float64} recomputation at benchmark scale; these
+CPU-enumerable sizes and independent \texttt{float64} recomputation at benchmark scale. These
 are correctness checks, not claims about comparative performance.
 
 \point{R1.3}{The paper claims near-ideal speedup, but does not explicitly calculate or report
@@ -213,7 +213,7 @@ $N$ & $t_1$ [s] & $t_8$ [s] & $S$ & $E$ \\
 
 The table dates the full $\approx\!8\times$ speedup from $N=52$ and not from
 $N \gtrsim 44$, and the abstract, \emph{Architecture}, \emph{Performance} and the caption of
-Fig.~1 now say so. Below the crossover the decomposition is dominated by fixed overheads; at
+Fig.~1 now say so. Below the crossover the decomposition is dominated by fixed overheads. At
 $N=40$ the eight-way split is $2.1\times$ \emph{slower} than a single GPU, which the revision
 states explicitly as the reason the single-GPU sampler remains the right choice there.
 
@@ -310,19 +310,19 @@ the text and the table caption.
 \item \textbf{Empty-task scheduling already exceeds both.} With no network involved,
 dispatching and collecting $2^{16}$ \emph{empty} tasks costs $5.4$~s, more than the entire
 hierarchical merge. That is a scheduling floor, not the total cost of a payload-bearing
-task, which additionally pays serialization, delivery and materialization; task grouping is
+task, which additionally pays serialization, delivery and materialization. Task grouping is
 therefore listed as future work, without claiming that scheduling alone sets the
 large-allocation ceiling.
 \end{enumerate}
 
 The network term remains separate. Ray may return a small value inline with the
 task-completion reply, which avoids a second object-store pull but not the transmission itself,
-and Table~5 uses empty tasks with local merge inputs throughout; we therefore keep its
+and Table~5 uses empty tasks with local merge inputs throughout. We therefore keep its
 lower-bound interpretation and infer no network cost from it.
 
 To probe the aggregate effect Table~5 omits, the reproduction package now includes
 \texttt{benchmarks/exp\_boundary\_cost.py}. Its timer starts before submission and ends only
-after \texttt{ray.get} has materialized every result; matched tasks receive the same request
+after \texttt{ray.get} has materialized every result. Matched tasks receive the same request
 and construct the same payload, but only one returns it, and local, remote and mixed
 placements are measured with every repetition retained. The remote-minus-local difference
 between the payload-minus-discard contrasts is our observable for the node-boundary effect.
@@ -344,12 +344,12 @@ leaves the controller receiving one object instead of $P$ and so reduces central
 memory pressure without relying on a favorable two-node timing. We have implemented it. It is
 not uniformly better, overtaking the direct merge only from $P=64$ upwards, because below that
 the concatenation is cheap enough that performing it in remote tasks merely adds rounds of
-scheduling; both strategies ship in the plugin and the released sampler selects between them on
-that measured threshold.
+scheduling. Both strategies ship in the plugin, and the released sampler selects between them
+on that measured threshold.
 
 We have also defined what the reported times measure. For the single-GPU sampler the timer
 brackets the CUDA search itself, excluding host-side assembly of the QUBO matrix and decoding
-of the returned configurations; for the distributed sampler it brackets subproblem dispatch and
+of the returned configurations. For the distributed sampler it brackets subproblem dispatch and
 completion of every subproblem search, excluding the final merge, which is now reported
 separately in the sampler's own metadata. Both exclusions are polynomial in $N$ and negligible
 at the reported sizes, but they matter for the extrapolations.
@@ -357,7 +357,7 @@ at the reported sizes, but they matter for the extrapolations.
 Finally, the trade-off in $k$ is now explicit: at fixed $N$, incrementing $k$ halves the work
 per subproblem while doubling the number of results to combine, so a break-even point in $k$
 necessarily exists. The measurement quantifies the growing controller term and locates the
-direct-versus-hierarchical merge crossover; it does not locate the full solver's
+direct-versus-hierarchical merge crossover, but it does not locate the full solver's
 search-versus-controller break-even on a large allocation.
 
 \point{R2.3}{While I could locate the code metadata table, I couldn't find the corresponding
@@ -421,7 +421,7 @@ of $2.7\times10^{-5}$ at $N=46$ seen in an earlier version of this experiment wa
 dropped coupling rather than accumulation error. Both precisions return the same configuration
 at every size, confirmed independently. Our guidance is unchanged: use the
 default \texttt{float32} path and recompute the energy of the returned configuration in
-\texttt{float64} on the host when a certified numerical value is needed; extending the
+\texttt{float64} on the host when a certified numerical value is needed. Extending the
 stabilization to the (currently unstabilized) double-precision path is listed as future work.
 
 \section*{Reviewer 3}
@@ -450,9 +450,9 @@ misleading. The paper should clearly state what is actually introduced by the so
 described here.}
 
 \textbf{The reviewer is correct, and the contribution claim has been rewritten from scratch.}
-The original publication not only lists the plugin and notes that it can be GPU-accelerated; it
-also reports a benchmark of the GPU sampler on $1$, $2$, $4$ and $8$ NVIDIA A100 GPUs, and
-describes the plugin as usable up to about $50$ variables. Neither ``first-class Omnisolver
+The original publication lists the plugin, notes that it can be GPU-accelerated, reports a
+benchmark of the GPU sampler on $1$, $2$, $4$ and $8$ NVIDIA A100 GPUs, and describes the
+plugin as usable up to about $50$ variables. Neither ``first-class Omnisolver
 plugin'' nor ``distributed multi-GPU execution'' is therefore presented as new any more:
 
 \begin{itemize}[leftmargin=*]
@@ -496,11 +496,11 @@ explicitly unmeasured.
 \emph{Does the node layout matter to full-solver wall-clock time?} Not measurably. Holding the
 GPU count fixed and adding a node boundary ($2\times1$ against $1\times2$, and
 $2\times2$ against $1\times4$) changes
-the wall-clock time by $-0.03\%$ and $-0.12\%$ respectively; the two-node configuration is
+the wall-clock time by $-0.03\%$ and $-0.12\%$ respectively. The two-node configuration is
 slightly faster in these runs, but the differences are below the experiment's resolution.
 
 We measured the series twice to establish that resolution. A first pass gave $+1.47\%$ and
-$+1.12\%$; repeating it on a different day showed single-node configurations reproducing to
+$+1.12\%$. Repeating it on a different day showed single-node configurations reproducing to
 within $0.08\%$ across both sweeps ($0.02\%$ in the strong-scaling half) and two-node ones
 moving by up to $1.5\%$, which places both figures inside the repeatability of two-node
 timings. A single node boundary therefore changes full-solver wall-clock time by less than we
@@ -525,11 +525,11 @@ target use case for the framework.}
 
 \textbf{The measured path is in fact the QUBO path, which the revision now makes explicit.}
 Both samplers convert a SPIN model to its BINARY equivalent, solve it as a QUBO on the GPU and
-convert the result back, so the timings in Fig.~1 are QUBO timings; the only Ising-specific
+convert the result back, so the timings in Fig.~1 are QUBO timings. The only Ising-specific
 cost is an $O(N^{2})$ host-side transformation outside the measured region. Loading the same
 coefficient files once with each variable type gives a BINARY-to-SPIN wall-clock ratio of
 $0.998$--$1.000$ over $N=42,\dots,50$. The energies differ, as they must, since the same
-coefficients define different objectives under the two variable types; the runtimes do not.
+coefficients define different objectives under the two variable types. The runtimes do not.
 
 \point{R3.5}{The paper should also specify which version of the CUDA Toolkit was used. \dots\
 Which versions of the CUDA Toolkit are supported?}
@@ -538,14 +538,14 @@ Which versions of the CUDA Toolkit are supported?}
 \textbf{CUDA Toolkit 12.4}, and the revision-experiment drivers record the toolchain, driver,
 GPU and package descriptors with their outputs (the original Figure~1 files predate that
 field). On supported versions, the plugin is built and tested in continuous integration on a
-$12.4$ and $12.5$ matrix under Python 3.10 and 3.11; C6 and S5 now state that range rather than
+$12.4$ and $12.5$ matrix under Python 3.10 and 3.11. C6 and S5 now state that range rather than
 a single version, and S4 records the target architecture of the measurements (NVIDIA H100
 96\,GB, compute capability \texttt{sm\_90}).
 
 \point{R3.6}{The license listed in C3 does not exist in C2.}
 
 \textbf{Corrected in the repository.} The Apache-2.0 license text is now present, declared in
-the package metadata (\texttt{license} field) and included in the distribution; C1--C3 and
+the package metadata (\texttt{license} field) and included in the distribution. C1--C3 and
 S1--S3 refer to the release that contains it.
 
 \begin{internal}
@@ -568,8 +568,8 @@ errors, and is of little practical use in its current state.}
 of the \emph{framework's} landing page, describing Omnisolver in general and installing a
 different plugin in its quickstart. The plugin now has its own front page and a user guide
 covering installation, single- and multi-GPU usage, the meaning and selection of every sampler
-parameter, the size limits, the precision and stabilization semantics and the reported timings;
-the reference manual is generated from the docstrings, and the build is exercised in continuous
+parameter, the size limits, the precision and stabilization semantics and the reported timings.
+The reference manual is generated from the docstrings, and the build is exercised in continuous
 integration.
 
 \begin{internal}
@@ -594,7 +594,7 @@ manuscript. A careful proofreading would help eliminate them.}
 in ``certified reference, i.e.\ lowest-energy, solutions'', ``compute'' used as a noun, the
 colloquial ``is clean already at $N=40$'', the typography of ``H100\,/\,96\,GB'', the
 capitalization of ``Parallel Tempering'' and the double colon in the title (addressed with
-R3.2); spelling is now consistently American English.
+R3.2). Spelling is now consistently American English.
 
 \section*{Summary of changes to the manuscript}
 
