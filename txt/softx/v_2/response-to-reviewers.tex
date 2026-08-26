@@ -26,7 +26,7 @@
 % \includecomment{internal} only while drafting.
 % ---------------------------------------------------------------------------------------
 \excludecomment{internal}
-\newcommand{\internalhead}{\textcolor{red}{\textbf{[Internal note --- remove before
+\newcommand{\internalhead}{\textcolor{red}{\textbf{[Internal note: remove before
 submission]}}\par\nobreak}
 
 % Quoted reviewer comment.
@@ -50,7 +50,7 @@ submission]}}\par\nobreak}
 \end{center}
 
 \textbf{Manuscript:} \emph{Omnisolver: An extensible interface to Ising spin--glass and QUBO
-solvers --- a numerically stabilized, distributed GPU exhaustive-search plugin} (SoftwareX,
+solvers -- a numerically stabilized, distributed GPU exhaustive-search plugin} (SoftwareX,
 Original Software Publication update)
 
 \textbf{Authors:} K.~Ja\l{}owiecki, J.~Paw\l{}owski, B.~Gardas, \L{}.~Pawela
@@ -83,14 +83,14 @@ numbers that appeared in the submitted version:
 \begin{enumerate}[leftmargin=*]
 \item \textbf{The claim of near-ideal speedup ``from $N \gtrsim 44$'' was wrong.} While
 computing the parallel-efficiency table requested by Reviewer~1, we found that at $N=44$ the
-measured efficiency is $43\%$, not $\approx\!100\%$. The correct statement --- now used
-throughout --- is that the two samplers cross between $N=40$ and $N=42$, efficiency exceeds
+measured efficiency is $43\%$, not $\approx\!100\%$. The correct statement, now used
+throughout, is that the two samplers cross between $N=40$ and $N=42$, efficiency exceeds
 $90\%$ from $N=48$, and the ideal $8\times$ speedup is attained from $N=52$ onwards.
 \item \textbf{The precision paragraph quoted a range not covered by our data.} The submitted
 text reported deviations and Hamming distances ``at $N=56$, $58$ and $60$''; the verification
 tables in fact cover $N=40,\dots,54$ (single-GPU) and $N=60$ (distributed). The paragraph has
-been rewritten around the instances that are actually verified --- and, with the CPU heuristic
-described under R2.1, the verification now covers all twenty stored runs, $N=38,\dots,60$, so
+been rewritten around the instances that are actually verified. With the CPU heuristic
+described under R2.1 the verification now covers all twenty stored runs, $N=38,\dots,60$, so
 the claim ends up broader than the one withdrawn.
 \end{enumerate}
 
@@ -124,8 +124,8 @@ and it closes by pointing back to that caveat.
 The projection is also no longer supported by argument alone. Table~5 of the revision reports
 the controller cost up to $2^{16}$ subproblems: $7.4$~s merging directly and $3.8$~s merging
 hierarchically. That measurement runs on one machine and so excludes network transfer, which we
-state in the caption and in the text --- it bounds the local component from below rather than
-estimating the total --- but it is enough to establish that the merge \emph{arithmetic}
+state in the caption and in the text (it bounds the local component from below rather than
+estimating the total), but it is enough to establish that the merge \emph{arithmetic}
 ($2.1$~s of the $7.4$~s) is not what would limit the projection.
 Nor is the linear-scaling assumption an assumption any more within our envelope: Table~4
 measures every GPU count and node layout at fixed problem size, giving $2.00\times$ on two
@@ -133,8 +133,8 @@ GPUs, $3.99\times$ on four and $7.86\times$ on eight, i.e.\ $98.2\%$ parallel ef
 weak scaling flat to within $0.2\%$. We measured the whole series twice, on separate days, and
 quote the reproducibility in the table caption.
 
-What remains extrapolated is behavior beyond eight devices and beyond one node boundary. Item
-(v) of \emph{Limitations and intended scope} now states exactly that.
+What remains extrapolated is behavior beyond eight devices and beyond one node boundary.
+\emph{Limitations and intended scope} now closes on exactly that.
 
 \point{R1.2}{The paper positions the plugin as a ground-truth oracle and briefly checks results
 against SBM, but it does not provide a broad benchmark against multiple exact or heuristic
@@ -172,7 +172,7 @@ timings and instance hashes are in
 \path{benchmarks/results/multi_solver/run_20260816_125511.json}, produced by
 \texttt{benchmarks/exp\_multi\_solver.py}.
 
-The revision also adds the case manifestly different from the previous four families: a family
+The revision also adds a case manifestly different from the previous four families: a family
 on which the heuristic \emph{fails}. On the Wishart ensemble (Hamze et al., Phys.\ Rev.\ E
 \textbf{101}, 052102 (2020)) we run two paired arms: \emph{unplanted} instances, whose
 optimum is unknown a priori and is certified only by enumeration, and \emph{planted} ones,
@@ -194,8 +194,8 @@ Fig.~2(b) further quantifies the cost of relying on the heuristic where it strug
 hundred independently seeded dSB runs per instance at the two hardest points give each
 instance a success probability and hence a time-to-solution. Against from-scratch
 \texttt{float64} certification of the same instance, certification is $24$--$354\times$
-faster at $\alpha=0.3$, and at $\alpha=0.2$ --- where $26$ of $40$ instances are never
-solved in one hundred attempts --- at least $\approx\!600\times$ faster even under the most
+faster at $\alpha=0.3$, and at $\alpha=0.2$ (where $26$ of $40$ instances are never
+solved in one hundred attempts) at least $\approx\!600\times$ faster even under the most
 optimistic success rates the data allow. The per-attempt and certification times are stated
 in the caption, so the ratios can be rescaled for any faster heuristic implementation.
 
@@ -206,8 +206,8 @@ are just correctness checks, not intended to be claims about comparative perform
 \point{R1.3}{The paper claims near-ideal speedup, but does not explicitly calculate or report
 parallel efficiency.}
 
-\textbf{We agree with the insigthful comment, and we have added a parallel-efficiency table, which
-revealed an error in the submitted version.}
+\textbf{We agree with the insightful comment, and we have added a parallel-efficiency table,
+which revealed an error in the submitted version.}
 
 The revision contains a new table (Table~3) and a new paragraph (\emph{Strong scaling and
 parallel efficiency}). Both samplers were run on identical instances, so the two curves of
@@ -231,8 +231,8 @@ $N$ & $t_1$ [s] & $t_8$ [s] & $S$ & $E$ \\
 \end{tabular}
 \end{center}
 
-This shows that our original statement --- full $\approx\!8\times$ speedup ``from
-$N \gtrsim 44$'' --- was incorrect, and we have corrected it in the abstract, in
+This shows that our original statement of a full $\approx\!8\times$ speedup ``from
+$N \gtrsim 44$'' was incorrect, and we have corrected it in the abstract, in
 \emph{Architecture}, in \emph{Performance} and in the caption of Fig.~1. Below the crossover
 the decomposition is dominated by fixed overheads; at $N=40$ the eight-way split is in fact
 $2.1\times$ \emph{slower} than a single GPU, which we now state explicitly as the reason the
@@ -288,14 +288,14 @@ in the paper, backed by the code that implements it, is more durable than a poin
 The implementation is deliberately structured so that the comparison is cheap to repeat: all
 replicas are integrated simultaneously, so one step is a single dense
 $(N\!\times\!N)(N\!\times\!4096)$ product and the whole run costs
-$\mathcal{O}(N^{2}R\,\times\,\mathrm{steps})$ --- independent of the exponential cost of
+$\mathcal{O}(N^{2}R\,\times\,\mathrm{steps})$, independent of the exponential cost of
 \emph{certifying} the optimum, and a matter of seconds even at $N=60$ on a CPU. A reader with
 no GPU can therefore reproduce the entire verification from this repository alone.
 
 Doing so also let us widen the claim. The heuristic is now compared against every stored
-single-GPU and distributed sweep result underlying Fig.~1 --- all twenty runs,
-$N=38,\dots,60$, rather than the nine of the
-submitted version --- and on each of them it returns a configuration identical to the certified
+single-GPU and distributed sweep result underlying Fig.~1 (all twenty runs,
+$N=38,\dots,60$, rather than the nine of the submitted version), and on each of them it
+returns a configuration identical to the certified
 ground state, with energies agreeing to $6\times10^{-14}$. The verification and precision
 paragraphs have been widened accordingly.
 
@@ -406,7 +406,7 @@ search-versus-controller break-even on a large allocation.
 \point{R2.3}{While I could locate the code metadata table, I couldn't find the corresponding
 software metadata table.}
 
-\textbf{We added requested table.} The revision contains the \emph{Current executable software version} table
+\textbf{We have added the requested table.} The revision contains the \emph{Current executable software version} table
 (S1--S7) as Table~2, next to the existing code metadata table.
 
 \begin{itemize}[leftmargin=*]
@@ -454,7 +454,7 @@ We have also fixed three defects that affected the precision analysis.
 The SPIN$\,\to\,$BINARY recursion in the distributed sampler dropped the
 requested \texttt{dtype}, so SPIN inputs always ran in single precision; the command line's
 \texttt{--dtype} never worked at all, because NumPy resolves both \texttt{"float"} and
-\texttt{"double"} to \texttt{float64} --- so from the command line \emph{both} choices ran in
+\texttt{"double"} to \texttt{float64}, so from the command line \emph{both} choices ran in
 double precision and the stabilized single-precision path was unreachable; and the COO reader
 used by the benchmark scripts silently dropped any coupling whose magnitude falls below
 $10^{-4}$ (its line parser does not accept exponent notation), which affected one coupling in
@@ -506,22 +506,22 @@ plugin'' and ``distributed multi-GPU execution''. We have rewritten the contribu
 accordingly:
 
 \begin{itemize}[leftmargin=*]
-\item The \textbf{title} changed to ``\dots\ --- a numerically stabilized, distributed GPU
+\item The \textbf{title} changed to ``\dots\ -- a numerically stabilized, distributed GPU
 exhaustive-search plugin'', which also removes the double colon.
 \item The \textbf{abstract} now says the plugin, ``together with a preliminary multi-GPU
 benchmark, was already announced in the original publication'' before listing what this update
 adds.
 \item A \textbf{new paragraph}, \emph{Relation to the original publication and to the
-predecessor solver}, states the provenance explicitly --- the plugin entry and the
-1/2/4/8-A100 benchmark in ref.~[1], and the single-GPU CUDA solver of ref.~[2] underneath it
---- and concludes that what the update contributes is not the existence of a GPU-accelerated or
+predecessor solver}, states the provenance explicitly (the plugin entry and the
+1/2/4/8-A100 benchmark in ref.~[1], and the single-GPU CUDA solver of ref.~[2] underneath it),
+and concludes that what the update contributes is not the existence of a GPU-accelerated or
 multi-GPU exhaustive search, but its maturation into a dependable certification backend.
 \item The \textbf{contribution list} was rewritten around what is verifiable in the released
-code: (i) a released, versioned, API-stable distributed sampler in place of the unreleased code
-path behind the earlier benchmark; (ii) numerical stabilization of the \texttt{float32}
-ground-state path; (iii) 64-bit-safe enumeration bookkeeping; (iv) certification reach extended
+code: a released, versioned, API-stable distributed sampler in place of the unreleased code
+path behind the earlier benchmark; numerical stabilization of the \texttt{float32}
+ground-state path; 64-bit-safe enumeration bookkeeping; certification reach extended
 from $N\approx50$ to $N=60$, i.e.\ three orders of magnitude in enumerated configurations, with
-an explicit strong-scaling analysis; (v) end-to-end verification of the returned optima.
+an explicit strong-scaling analysis; and end-to-end verification of the returned optima.
 \item The \textbf{conclusions} open with the same framing rather than with ``promotes \dots\ to
 a first-class Omnisolver plugin''.
 \end{itemize}
@@ -535,8 +535,8 @@ scaling outlook also appears somewhat optimistic.}
 rather than with argument.}
 
 \emph{Does the controller become a bottleneck?} Not through its arithmetic. Table~5 measures
-the local cost up to $2^{16}$ subproblems --- $7.4$~s collecting directly, $3.8$~s reducing
-hierarchically, against Ray's $5.4$~s task-scheduling floor for the same number of tasks --- so
+the local cost up to $2^{16}$ subproblems: $7.4$~s collecting directly, $3.8$~s reducing
+hierarchically, against Ray's $5.4$~s task-scheduling floor for the same number of tasks. So
 scheduling already exceeds the hierarchical merge before any network is involved. We are careful not to claim
 more than that: the measurement runs on one machine and excludes both the transfer of $P$
 partial results into one node and any contention at the head. Those are the terms we expect to
@@ -545,8 +545,8 @@ reply, so we do not treat them as transfer-free. The revised manuscript keeps Ta
 lower bound and leaves many-node transfer and contention explicitly unmeasured.
 
 \emph{Does the node layout matter to full-solver wall-clock time?} Not measurably. Holding the
-GPU count fixed and adding a node boundary --- $2\times1$ against $1\times2$, and
-$2\times2$ against $1\times4$ --- changes
+GPU count fixed and adding a node boundary ($2\times1$ against $1\times2$, and
+$2\times2$ against $1\times4$) changes
 the wall-clock time by $-0.03\%$ and $-0.12\%$ respectively; the two-node configuration is
 slightly faster in these runs, but the differences are below the experiment's resolution.
 
@@ -554,7 +554,7 @@ We should report how we arrived at that conclusion, because our first attempt in
 of the series gave $+1.47\%$ and $+1.12\%$, which we were going to present as a small but
 real boundary cost. Repeating the entire series on a different day showed that single-node
 configurations reproduce to within $0.08\%$ across both sweeps ($0.02\%$ in the strong-scaling
-half), while two-node ones move by up to $1.5\%$ --- and
+half), while two-node ones move by up to $1.5\%$, and
 that the first pass had been an artifact. The correct statement
 is therefore that a single node boundary changes full-solver wall-clock time by less than we
 can resolve, with an upper bound of about $1.5\%$ set by the reproducibility of two-node
@@ -566,8 +566,9 @@ retained in the article repository history at commit \texttt{d965e54}.
 
 \emph{More than two nodes} is the one question our hardware cannot settle: two nodes with four
 H100s each, connected by standard Ethernet, is the entire cluster available to us. Rather than
-leave that implicit, item~(v) of \emph{Limitations and intended scope} states it, and extending
-the study past two node boundaries is now item~(ii) of the conclusions rather than a silent omission:
+leave that implicit, \emph{Limitations and intended scope} closes on it, and extending
+the study past two node boundaries is now one of the stated next steps in the conclusions
+rather than a silent omission:
 one boundary changes full-solver wall-clock time by less than we can resolve, but a return-path
 effect or an effect below our $1.5\%$ bound could still compound over many of them.
 
@@ -583,13 +584,13 @@ GPU, and convert the result back, so the timings in Fig.~1 are QUBO timings; the
 Ising-specific cost is an $O(N^{2})$ host-side transformation performed outside the measured
 region. Loading the same coefficient files once with each variable type and solving both, the
 ratio of BINARY to SPIN wall-clock time is $0.998$--$1.000$ over $N=42,\dots,50$. The energies
-differ, as they must --- the same coefficients define different objectives under the two
-variable types --- but the runtimes do not.
+differ, as they must, since the same coefficients define different objectives under the two
+variable types; the runtimes do not.
 
 \point{R3.5}{The paper should also specify which version of the CUDA Toolkit was used. \dots\
 Which versions of the CUDA Toolkit are supported?}
 
-\textbf{We have added requested information.} The reported measurements were obtained with
+\textbf{We have added the requested information.} The reported measurements were obtained with
 \textbf{CUDA Toolkit 12.4}. The revision-experiment drivers record the toolchain, driver, GPU
 and package descriptors with their outputs; the original Figure~1 files predate that metadata
 field. As for which versions are \emph{supported}: the plugin is built and tested in
@@ -608,7 +609,7 @@ release that contains it.
 \internalhead
 The repository work is done (\texttt{LICENSE}, \texttt{pyproject.toml} metadata,
 \texttt{MANIFEST.in}, SPDX headers in 5 files; \texttt{validate-pyproject} passes), but it is
-\textbf{not released yet}. Before sending: (1)~confirm the copyright holder --- the headers
+\textbf{not released yet}. Before sending: (1)~confirm the copyright holder, since the headers
 currently say ``The Omnisolver developers'', the alternative being the institutions;
 (2)~merge \texttt{lp/add-docs} and \texttt{lp/better-merge}, tag \texttt{0.0.6} (the version
 is derived by \texttt{setuptools\_scm}, so the tag is the release) and upload the sdist to
@@ -635,8 +636,8 @@ Done in the repository: \texttt{docs/index.md} rewritten; \texttt{docs/userguide
 \texttt{stylesheets/extra.css}, wrong \texttt{repo\_url}, defunct polyfill.io, fragile
 \texttt{with-pdf}); two configuration errors that broke the build on their own fixed (renderer
 options nested under \texttt{docstring\_options}, and a Sphinx dependency stack declared for an
-mkdocs project); \texttt{.readthedocs.yml} removed --- it never built, and Read the Docs
-\emph{cannot} build these docs because mkdocstrings imports the compiled CUDA extension ---
+mkdocs project); \texttt{.readthedocs.yml} removed (it never built, and Read the Docs
+\emph{cannot} build these docs because mkdocstrings imports the compiled CUDA extension),
 replaced by a GitHub Pages workflow using \texttt{mike} on the CUDA-capable runner.
 \texttt{mkdocs build --strict} succeeds. Before sending: run the workflow, put the published
 URL into C7 and S6, and archive or redirect the stale Read the Docs project, since deleting the
@@ -652,7 +653,7 @@ device has both the memory budget and a wall-clock time within reason''; ``compu
 noun; the colloquial ``is clean already at $N=40$''; a stray line break and spacing before the
 description of the simulated-bifurcation solver; the typography of ``H100\,/\,96\,GB''; the
 inconsistent capitalization of ``Parallel Tempering''; and the double colon in the title
-(addressed with R3.2). Spelling has been made consistently American english throughout.
+(addressed with R3.2). Spelling has been made consistently American English throughout.
 
 \section*{Summary of changes to the manuscript}
 
@@ -666,16 +667,16 @@ New title; abstract rewritten & R3.2 \\
 New paragraph \emph{Relation to the original publication and to the predecessor solver} & R3.2 \\
 Contribution list rewritten around released, verifiable additions & R3.2 \\
 $N$ defined in three places; parameter glossary; Omnisolver reintroduced & R3.1 \\
-New Table~2 --- \emph{Current executable software version} (S1--S7) & R2.3 \\
-New Table~3 --- strong-scaling speedup and parallel efficiency & R1.3 \\
-New Table~4 --- strong and weak scaling over GPU count and node layout, measured twice & R1.1, R2.2, R3.3 \\
+New Table~2, \emph{Current executable software version} (S1--S7) & R2.3 \\
+New Table~3, strong-scaling speedup and parallel efficiency & R1.3 \\
+New Table~4, strong and weak scaling over GPU count and node layout, measured twice & R1.1, R2.2, R3.3 \\
 Full-solver node-boundary effect bounded below the reproducibility of two-node timings & own re-check (second run) \\
-New Table~5 --- local controller cost up to $2^{16}$ subproblems, with its scope stated & R2.2, R3.3 \\
+New Table~5, local controller cost up to $2^{16}$ subproblems, with its scope stated & R2.2, R3.3 \\
 End-to-end boundary-cost driver and two-node production result added, comparing matched
 payload/discard task returns under local, remote and mixed placement & R2.2, R3.3 \\
 New paragraph on the cost and effect of double precision & R2.5 \\
 Targeted dSB/SA comparison across four families reported, with certified gaps and timings & R1.2 \\
-New paragraph \emph{A rugged family where certification is decisive} and new Fig.~2 ---
+New paragraph \emph{A rugged family where certification is decisive} and new Fig.~2:
 paired planted/unplanted Wishart arms; the heuristic misses at small $\alpha$; per-instance
 time-to-solution at the two hardest points & R1.2 \\
 COO reader replaced by an exact parser; the known offset in three stored records documented & own re-check via R2.5 \\
@@ -694,8 +695,8 @@ New cross-check: single-GPU and distributed samplers agree bit-for-bit at all ei
 Key SBM configuration stated inline; complete implementation shipped & R2.1 \\
 CUDA Toolkit versions in C6/S5; \texttt{sm\_90} in S4 & R3.5 \\
 Section~2 repository attribution corrected; data shipped in \texttt{benchmarks/} & R2.1, R2.4 \\
-\emph{Limitations} item (i) corrected: $N-k \le 64$, hence $N \le 64+k$ & own re-check \\
-\emph{Limitations} items (iii) and (v) added: stabilization threshold; hardware extent & R2.5, R3.3 \\
+\emph{Limitations}: the $N-k \le 64$ bound corrected, hence $N \le 64+k$ & own re-check \\
+\emph{Limitations}: stabilization threshold and hardware extent added & R2.5, R3.3 \\
 Full proofread & R3.8 \\
 \bottomrule
 \end{tabular}
