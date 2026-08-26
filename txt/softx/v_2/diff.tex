@@ -1,7 +1,7 @@
 \documentclass[preprint,12pt,a4paper]{elsarticle}
 %DIF LATEXDIFF DIFFERENCE FILE
-%DIF DEL ../v_1/bruteforce.tex   Tue Aug 25 13:28:31 2026
-%DIF ADD bruteforce.tex          Tue Aug 25 18:01:05 2026
+%DIF DEL ../v_1/bruteforce.tex   Sat Aug  1 21:39:39 2026
+%DIF ADD bruteforce.tex          Thu Aug 27 00:42:27 2026
 
 \usepackage{amssymb}
 \usepackage{float}
@@ -36,13 +36,6 @@
 \restylefloat{table}
 \journal{SoftwareX}
  %DIF > 
-% --------------------------------------------------------------------------- %DIF > 
-% TODO(authors) -- resolve before resubmission: \datarepo must resolve publicly. %DIF > 
-% The instances, raw results and verification tables now live in this repository %DIF > 
-% under benchmarks/, so the link below is the article repository itself; it has %DIF > 
-% to be public (or archived with a DOI) before resubmission, since reviewers 2 %DIF > 
-% and 3 both flagged the previous, unreachable data link. %DIF > 
-% --------------------------------------------------------------------------- %DIF > 
 \newcommand{\datarepo}{https://github.com/iitis/bruteforce-text} %DIF > 
 \newcommand{\datareponame}{\texttt{iitis/bruteforce-text}} %DIF > 
  %DIF > 
@@ -113,75 +106,45 @@ of Technology, Wroc{\l}aw University of Science and Technology,
 50-370 Wroc{\l}aw, Poland}
 
 \begin{abstract}
-This software update \DIFdelbegin \DIFdel{extends
-}\DIFdelend \DIFaddbegin \DIFadd{matures }\texttt{\DIFadd{omnisolver-bruteforce}}\DIFadd{, the exhaustive-search
-plugin of }\DIFaddend Omnisolver~\cite{jalowiecki2021omnisolver}\DIFdelbegin \DIFdel{with
-}\texttt{\DIFdel{omnisolver-bruteforce}}%DIFAUXCMD
-\DIFdel{, a first-class plugin for exact exhaustive
-search of }\DIFdelend \DIFaddbegin \DIFadd{, into a released and
-API-stable exhaustive-search reference backend for }\DIFaddend QUBO and Ising
-instances on CUDA-enabled GPUs. 
-\DIFdelbegin \DIFdel{The update
+This software update extends Omnisolver~\cite{jalowiecki2021omnisolver} with
+\texttt{omnisolver-bruteforce}, \DIFdelbegin \DIFdel{a first-class plugin for exact exhaustive
+search of }\DIFdelend \DIFaddbegin \DIFadd{an API-stable exhaustive-search reference
+backend for }\DIFaddend QUBO and Ising instances on CUDA-enabled GPUs. The \DIFdelbegin \DIFdel{update
 contributes three components: packaging of the single-GPU brute-force
 kernel of~\mbox{%DIFAUXCMD
 \cite{jalowiecki2021brute} }\hskip0pt%DIFAUXCMD
-as a first-class Omnisolver plugin with a uniform Python and
-CLI interface, a }\DIFdelend %DIF >  Throughout, $N$ denotes the number of binary
-%DIF >  variables of an instance (equivalently, the number of Ising spins), so that
-%DIF >  exhaustive search enumerates all $2^{N}$ configurations. 
-\DIFaddbegin \DIFadd{The plugin itself,
-together with a preliminary multi-GPU benchmark, was already announced in the
-original publication. What this update adds is a released }\DIFaddend Ray-based distributed
-\DIFdelbegin \DIFdel{framework }\DIFdelend \DIFaddbegin \DIFadd{engine }\DIFaddend that splits the search into $2^{k}$ fixed-variable subproblems\DIFdelbegin \DIFdel{and }\DIFdelend \DIFaddbegin \DIFadd{,
-}\DIFaddend dispatches them across multiple GPUs and hosts \DIFdelbegin \DIFdel{, with a controller that gathers and merges partial results,
-and numerical stabilization of the }\DIFdelend \DIFaddbegin \DIFadd{and merges the partial results on
-a controller. The }\DIFaddend fast \texttt{float32} ground-state path \DIFaddbegin \DIFadd{is also stabilized
-numerically, }\DIFaddend through compensated incremental updates, periodic \DIFdelbegin \DIFdel{exact }\DIFdelend \DIFaddbegin \DIFadd{from-scratch
-}\DIFaddend energy re-anchoring \DIFdelbegin \DIFdel{, and }\DIFdelend \DIFaddbegin \DIFadd{and a }\DIFaddend best-buffer refresh\DIFdelbegin \DIFdel{. Stabilization activates automatically for $N \geq 40$ leaving the public sampler API is unchanged. }\DIFdelend \DIFaddbegin \DIFadd{; the stabilization is switched on
-automatically for per-kernel subproblems of at least $40$ variables and leaves
-the public API unchanged. The enumeration bookkeeping is now 64-bit safe as
-well, which lifts the reachable problem size beyond the original single-GPU
-regime. 
-}
-
-\DIFaddend On dense random Ising instances\DIFdelbegin \DIFdel{we measure exhaustive solve times up to $N=60$ on $8\times$ NVIDIA
-H100 (96\,GB) GPUs }\DIFdelend , \DIFdelbegin \DIFdel{reaching $\approx\!3.15$ days at $N=60$ in close
-agreement with the empirical $t_{N+1}=2\,t_N$ doubling rule,
-with the
-distributed sampler reaching the full $\approx\!8\times$ speedup over a
-single }\DIFdelend \DIFaddbegin \DIFadd{exhaustive-search of minima up to \(N=60\) took
-\(\approx 3.15\) days on \(8\times\) }\DIFaddend H100 \DIFdelbegin \DIFdel{from $N\!\gtrsim\!44$ onwards. The plugin thereby serves as a practical ground-truth oracle for state-of-the-art classical heuristics such
-as the Simulated Bifurcation Machine. }\DIFdelend \DIFaddbegin \DIFadd{GPUs and followed
-\(t_{N+1}=2t_N\) within \(0.3\%\). Distributed sampling reached ideal
-\(8\times\) speedup by \(N\gtrsim 52\), with \(98.2\%\) eight-GPU efficiency,
-flat weak scaling, and no node-boundary penalty. In a 20-instance four-family
-comparison, simulated bifurcation and simulated annealing always found the exhaustive
-minimum. Conversely, on rugged unplanted Wishart instances, simulated
-bifurcation missed the certified optimum in 39 of 40 cases, while planted
-certificates agreed with closed-form optima to \(7\times10^{-15}\).
-}
-
-%DIF >  On dense
-%DIF >  random Ising instances we report cross-validated exhaustive-search minima up to $N=60$ on
-%DIF >  $8\times$ NVIDIA H100 (96\,GB) GPUs, reaching $\approx\!3.15$ days at $N=60$, in
-%DIF >  agreement with the empirical $t_{N+1}=2\,t_N$ doubling rule to within $0.3\%$.
-%DIF >  Measured against the single-GPU sampler on identical instances, the distributed
-%DIF >  sampler crosses over between $N=40$ and $N=42$, attains $93\%$ parallel
-%DIF >  efficiency at $N=48$ and saturates at the ideal $8\times$ speedup from
-%DIF >  $N\!\gtrsim\!52$; a dedicated sweep over every tested power-of-two GPU count and
-%DIF >  realizable node layout gives
-%DIF >  $98.2\%$ efficiency on eight GPUs, weak scaling flat to within $0.2\%$, and no measurable
-%DIF >  change in the reported solve-phase wall-clock time from crossing a node boundary at constant
-%DIF >  computational load. In a
-%DIF >  separate twenty-instance,
-%DIF >  four-family comparison, both discrete simulated bifurcation and simulated annealing recover
-%DIF >  the same exhaustive-search minimum in every case under their stated method-specific budgets.
-%DIF >  On unplanted Wishart instances with tunable ruggedness --- whose optima are known only
-%DIF >  through enumeration --- the same simulated-bifurcation heuristic misses the certified
-%DIF >  optimum on $39$ of $40$ instances in the two most rugged settings while certification takes
-%DIF >  seconds per instance. A paired planted arm confirms every certificate against a closed-form
-%DIF >  optimum to $7\times10^{-15}$ --- the regime a certifying backend exists for.
-\DIFaddend \end{abstract}
+as a first-class Omnisolver plugin
+with a uniform Python and CLI interface, a }\DIFdelend \DIFaddbegin \DIFadd{original
+Omnisolver publication announced the plugin and reported a preliminary benchmark
+on a single host. This update presents the released implementation. Its
+}\DIFaddend Ray-based distributed \DIFdelbegin \DIFdel{framework that }\DIFdelend \DIFaddbegin \DIFadd{engine }\DIFaddend splits the search into $2^{k}$ fixed-variable
+subproblems\DIFdelbegin \DIFdel{and }\DIFdelend \DIFaddbegin \DIFadd{, }\DIFaddend dispatches them across multiple GPUs and hosts \DIFdelbegin \DIFdel{, with a controller that gathers and merges partial results,
+and numerical stabilization of the }\DIFdelend \DIFaddbegin \DIFadd{and merges the
+partial results on a controller. The }\DIFaddend fast \texttt{float32} ground-state path \DIFdelbegin \DIFdel{through }\DIFdelend \DIFaddbegin \DIFadd{has
+also been stabilized numerically. It accumulates energies with }\DIFaddend compensated
+incremental updates \DIFdelbegin \DIFdel{, periodic exact energy
+re-anchoring, and best-buffer refresh. Stabilization activates automatically for $N \geq 40$ leaving the public sampler APIis unchanged}\DIFdelend \DIFaddbegin \DIFadd{and periodically re-anchors them by recomputing from
+scratch, while refreshing the buffer of best solutions. The stabilization
+switches on automatically for per-kernel subproblems of at least $40$ variables
+and does not change the public API. The enumeration bookkeeping is 64-bit safe
+throughout, which lifts the reachable problem size beyond the single-GPU regime
+of the original benchmark}\DIFaddend . On dense random Ising instances\DIFdelbegin \DIFdel{we measure exhaustive solve times up
+to $N=60$ on $8\times$ NVIDIA
+H100 (96\,GB) GPUs , reaching $\approx\!3.15$ days at $N=60$ in close
+agreement with the empirical $t_{N+1}=2\,t_N$ doubling rule, with the
+distributed sampler reaching the full $\approx\!8\times$ speedup over a single }\DIFdelend \DIFaddbegin \DIFadd{, exhaustive search up
+to \(N=60\) took \(\approx 3.15\) days on \(8\times\) }\DIFaddend H100 \DIFdelbegin \DIFdel{from $N\!\gtrsim\!44$ onwards. The plugin thereby serves as a
+practical ground-truth oracle for state-of-the-art classical heuristics such
+as the Simulated Bifurcation Machine}\DIFdelend \DIFaddbegin \DIFadd{GPUs and followed
+\(t_{N+1}=2t_N\) to within \(0.3\%\). Distributed sampling reached the ideal
+\(8\times\) speedup by \(N\gtrsim 52\) at \(98.2\%\) eight-GPU efficiency. Weak
+scaling stayed flat and crossing a node boundary carried no penalty. In a
+comparison of 20 instances from four families, simulated bifurcation and
+simulated annealing always found the exhaustive minimum. On rugged unplanted
+Wishart instances, simulated bifurcation missed the certified optimum in 39 of
+40 cases. Planted certificates agreed with the closed-form optima to
+\(7\times10^{-15}\)}\DIFaddend .
+\end{abstract}
 
 \begin{keyword}
 QUBO \sep Ising \sep spin glass \sep exhaustive search \sep GPU \sep
@@ -264,7 +227,7 @@ NVIDIA GPU; the reported measurements were performed on NVIDIA H100 96\,GB
 }\texttt{\DIFaddFL{ray >= 2.9}} \DIFaddFL{for the distributed sampler; at build time additionally
 }\texttt{\DIFaddFL{cython}} \DIFaddFL{and }\texttt{\DIFaddFL{setuptools-cuda}} \\
 \hline
-\DIFaddFL{S6 }& \DIFaddFL{Link to user manual }& \url{https://euro-hpc-pl.github.io/omnisolver/} \\
+\DIFaddFL{S6 }& \DIFaddFL{Link to user manual }& \url{https://euro-hpc-pl.github.io/omnisolver-bruteforce/latest/} \\
 \hline
 \DIFaddFL{S7 }& \DIFaddFL{Support email for questions }& {\color{blue}%DIFAUXCMD
 \verb|lpawela@iitis.pl| %
@@ -452,10 +415,10 @@ fixed seed); }\DIFdelend \DIFaddbegin \DIFadd{; these shipped instance files,
 define the benchmark; see Sec.~\ref{sec:reproduction}) and }\DIFaddend measured on a local
 in-house cluster of $8\times$ NVIDIA H100 (96\,GB) GPUs (two nodes, 4 GPUs per
 node, interconnected by standard Ethernet). The single-GPU sampler was run on one
-of the same H100s \DIFdelbegin \DIFdel{, }\DIFdelend \DIFaddbegin \DIFadd{and }\DIFaddend the distributed sampler on all eight\DIFdelbegin \DIFdel{. }\DIFdelend \DIFaddbegin \DIFadd{, with $k=3$ so that
+of the same H100s \DIFdelbegin \DIFdel{, }\DIFdelend \DIFaddbegin \DIFadd{and }\DIFaddend the distributed sampler on all eight\DIFaddbegin \DIFadd{, with $k=3$ so that
 the $2^{3}=8$ subproblems map one-to-one onto the available GPUs; both modes used
-}\texttt{\DIFadd{suffix\_size}}\DIFadd{\,$=23$ and }\texttt{\DIFadd{num\_states}}\DIFadd{\,$=1$.
-}
+}\texttt{\DIFadd{suffix\_size}}\DIFadd{\,$=23$ and }\texttt{\DIFadd{num\_states}}\DIFadd{\,$=1$}\DIFaddend .
+\DIFaddbegin 
 
 \DIFadd{Reported times measure the solve phase only. For the single-GPU sampler the timer
 brackets the CUDA search itself, excluding host-side assembly of the QUBO matrix
@@ -1064,8 +1027,7 @@ kernel launch}\DIFdelend \DIFaddbegin \DIFadd{forming the resident enumeration c
 L2/working-set budget and \DIFdelbegin \DIFdel{is }\DIFdelend \DIFaddbegin \DIFadd{was }\DIFaddend set to $23$ on \DIFaddbegin \DIFadd{the }\DIFaddend H100 \DIFdelbegin \DIFdel{\,/\,}\DIFdelend \DIFaddbegin \DIFadd{(}\DIFaddend 96\,GB\DIFaddbegin \DIFadd{) }\DIFaddend in our runs, so
 larger $N$ \DIFdelbegin \DIFdel{must be reached by }\DIFdelend \DIFaddbegin \DIFadd{is handled by sweeping more fixed-size chunks; }\DIFaddend raising
 \texttt{num\_fixed\_vars} \DIFdelbegin \DIFdel{, not }\DIFdelend \DIFaddbegin \DIFadd{is needed to distribute that work or to maintain
-$N-k\leq64$, rather than to enlarge }\DIFaddend \texttt{suffix\_size}\DIFdelbegin \DIFdel{; (iii) the
-}\DIFdelend \DIFaddbegin \DIFadd{. The numerical
+$N-k\leq64$, rather than to enlarge }\DIFaddend \texttt{suffix\_size}\DIFdelbegin \DIFdel{; (iii) the }\DIFdelend \DIFaddbegin \DIFadd{. The numerical
 stabilization applies to the
 }\texttt{\DIFadd{float32}} \DIFadd{ground-state path and is enabled when the size seen by the
 kernel is at least $40$ variables, that is for $N-k \geq 40$ in distributed
