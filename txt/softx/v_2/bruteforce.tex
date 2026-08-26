@@ -59,29 +59,30 @@ of Technology, Wroc{\l}aw University of Science and Technology,
 50-370 Wroc{\l}aw, Poland}
 
 \begin{abstract}
-This software update extends Omnisolver~\cite{jalowiecki2021omnisolver} by
-introducing \texttt{omnisolver-bruteforce}, its exhaustive-search plugin: a
-released and API-stable reference backend for QUBO and Ising instances on
-CUDA-enabled GPUs. The original publication only announced the plugin, together
-with a preliminary single-host multi-GPU benchmark; here we present the released
-implementation. It provides a Ray-based distributed engine that splits the
-search into $2^{k}$ fixed-variable subproblems, dispatches them across multiple
-GPUs and hosts and merges the partial results on a controller. The fast
-\texttt{float32} ground-state path is stabilized numerically, through
-compensated incremental updates, periodic from-scratch energy re-anchoring and a
-best-buffer refresh; the stabilization is switched on automatically for
-per-kernel subproblems of at least $40$ variables and is transparent at the API
-level. The enumeration bookkeeping is 64-bit safe throughout, which lifts the
-reachable problem size beyond the single-GPU regime of the original benchmark.
-On dense random Ising instances, exhaustive-search of minima up to \(N=60\) took
-\(\approx 3.15\) days on \(8\times\) H100 GPUs and followed \(t_{N+1}=2t_N\)
-within \(0.3\%\). Distributed sampling reached ideal \(8\times\) speedup by
-\(N\gtrsim 52\), with \(98.2\%\) eight-GPU efficiency, flat weak scaling, and no
-node-boundary penalty. In a 20-instance four-family comparison, simulated
-bifurcation and simulated annealing always found the exhaustive minimum.
-Conversely, on rugged unplanted Wishart instances, simulated bifurcation missed
-the certified optimum in 39 of 40 cases, while planted certificates agreed with
-closed-form optima to \(7\times10^{-15}\).
+This software update extends Omnisolver~\cite{jalowiecki2021omnisolver} with
+\texttt{omnisolver-bruteforce}, an API-stable exhaustive-search reference
+backend for QUBO and Ising instances on CUDA-enabled GPUs. The original
+Omnisolver publication announced the plugin and reported a preliminary benchmark
+on a single host. This update presents the released implementation. Its
+Ray-based distributed engine splits the search into $2^{k}$ fixed-variable
+subproblems, dispatches them across multiple GPUs and hosts and merges the
+partial results on a controller. The fast \texttt{float32} ground-state path has
+also been stabilized numerically. It accumulates energies with compensated
+incremental updates and periodically re-anchors them by recomputing from
+scratch, while refreshing the buffer of best solutions. The stabilization
+switches on automatically for per-kernel subproblems of at least $40$ variables
+and does not change the public API. The enumeration bookkeeping is 64-bit safe
+throughout, which lifts the reachable problem size beyond the single-GPU regime
+of the original benchmark. On dense random Ising instances, exhaustive search up
+to \(N=60\) took \(\approx 3.15\) days on \(8\times\) H100 GPUs and followed
+\(t_{N+1}=2t_N\) to within \(0.3\%\). Distributed sampling reached the ideal
+\(8\times\) speedup by \(N\gtrsim 52\) at \(98.2\%\) eight-GPU efficiency. Weak
+scaling stayed flat and crossing a node boundary carried no penalty. In a
+comparison of 20 instances from four families, simulated bifurcation and
+simulated annealing always found the exhaustive minimum. On rugged unplanted
+Wishart instances, simulated bifurcation missed the certified optimum in 39 of
+40 cases. Planted certificates agreed with the closed-form optima to
+\(7\times10^{-15}\).
 \end{abstract}
 
 \begin{keyword}
