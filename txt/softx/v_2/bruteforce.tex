@@ -59,56 +59,29 @@ of Technology, Wroc{\l}aw University of Science and Technology,
 50-370 Wroc{\l}aw, Poland}
 
 \begin{abstract}
-This software update matures \texttt{omnisolver-bruteforce}, the exhaustive-search
-plugin of Omnisolver~\cite{jalowiecki2021omnisolver}, into a released and
-API-stable exhaustive-search reference backend for QUBO and Ising
-instances on CUDA-enabled GPUs. 
-% Throughout, $N$ denotes the number of binary
-% variables of an instance (equivalently, the number of Ising spins), so that
-% exhaustive search enumerates all $2^{N}$ configurations. 
-The plugin itself,
-together with a preliminary multi-GPU benchmark, was already announced in the
-original publication. What this update adds is a released Ray-based distributed
-engine that splits the search into $2^{k}$ fixed-variable subproblems,
-dispatches them across multiple GPUs and hosts and merges the partial results on
-a controller. The fast \texttt{float32} ground-state path is also stabilized
-numerically, through compensated incremental updates, periodic from-scratch
-energy re-anchoring and a best-buffer refresh; the stabilization is switched on
-automatically for per-kernel subproblems of at least $40$ variables and leaves
-the public API unchanged. The enumeration bookkeeping is now 64-bit safe as
-well, which lifts the reachable problem size beyond the original single-GPU
-regime. 
-
+This software update extends Omnisolver~\cite{jalowiecki2021omnisolver} by
+introducing \texttt{omnisolver-bruteforce}, its exhaustive-search plugin: a
+released and API-stable reference backend for QUBO and Ising instances on
+CUDA-enabled GPUs. The original publication only announced the plugin, together
+with a preliminary single-host multi-GPU benchmark; here we present the released
+implementation. It provides a Ray-based distributed engine that splits the
+search into $2^{k}$ fixed-variable subproblems, dispatches them across multiple
+GPUs and hosts and merges the partial results on a controller. The fast
+\texttt{float32} ground-state path is stabilized numerically, through
+compensated incremental updates, periodic from-scratch energy re-anchoring and a
+best-buffer refresh; the stabilization is switched on automatically for
+per-kernel subproblems of at least $40$ variables and is transparent at the API
+level. The enumeration bookkeeping is 64-bit safe throughout, which lifts the
+reachable problem size beyond the single-GPU regime of the original benchmark.
 On dense random Ising instances, exhaustive-search of minima up to \(N=60\) took
-\(\approx 3.15\) days on \(8\times\) H100 GPUs and followed
-\(t_{N+1}=2t_N\) within \(0.3\%\). Distributed sampling reached ideal
-\(8\times\) speedup by \(N\gtrsim 52\), with \(98.2\%\) eight-GPU efficiency,
-flat weak scaling, and no node-boundary penalty. In a 20-instance four-family
-comparison, simulated bifurcation and simulated annealing always found the exhaustive
-minimum. Conversely, on rugged unplanted Wishart instances, simulated
-bifurcation missed the certified optimum in 39 of 40 cases, while planted
-certificates agreed with closed-form optima to \(7\times10^{-15}\).
-
-% On dense
-% random Ising instances we report cross-validated exhaustive-search minima up to $N=60$ on
-% $8\times$ NVIDIA H100 (96\,GB) GPUs, reaching $\approx\!3.15$ days at $N=60$, in
-% agreement with the empirical $t_{N+1}=2\,t_N$ doubling rule to within $0.3\%$.
-% Measured against the single-GPU sampler on identical instances, the distributed
-% sampler crosses over between $N=40$ and $N=42$, attains $93\%$ parallel
-% efficiency at $N=48$ and saturates at the ideal $8\times$ speedup from
-% $N\!\gtrsim\!52$; a dedicated sweep over every tested power-of-two GPU count and
-% realizable node layout gives
-% $98.2\%$ efficiency on eight GPUs, weak scaling flat to within $0.2\%$, and no measurable
-% change in the reported solve-phase wall-clock time from crossing a node boundary at constant
-% computational load. In a
-% separate twenty-instance,
-% four-family comparison, both discrete simulated bifurcation and simulated annealing recover
-% the same exhaustive-search minimum in every case under their stated method-specific budgets.
-% On unplanted Wishart instances with tunable ruggedness --- whose optima are known only
-% through enumeration --- the same simulated-bifurcation heuristic misses the certified
-% optimum on $39$ of $40$ instances in the two most rugged settings while certification takes
-% seconds per instance. A paired planted arm confirms every certificate against a closed-form
-% optimum to $7\times10^{-15}$ --- the regime a certifying backend exists for.
+\(\approx 3.15\) days on \(8\times\) H100 GPUs and followed \(t_{N+1}=2t_N\)
+within \(0.3\%\). Distributed sampling reached ideal \(8\times\) speedup by
+\(N\gtrsim 52\), with \(98.2\%\) eight-GPU efficiency, flat weak scaling, and no
+node-boundary penalty. In a 20-instance four-family comparison, simulated
+bifurcation and simulated annealing always found the exhaustive minimum.
+Conversely, on rugged unplanted Wishart instances, simulated bifurcation missed
+the certified optimum in 39 of 40 cases, while planted certificates agreed with
+closed-form optima to \(7\times10^{-15}\).
 \end{abstract}
 
 \begin{keyword}
